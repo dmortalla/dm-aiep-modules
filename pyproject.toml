@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "dm-aiep-modules"
 version = "0.1.0"
@@ -6,6 +10,8 @@ dependencies = [
     "anthropic>=1.11.0",
     "google-genai>=2.26.0",
     "httpx>=0.28.1",
+    "jsonschema>=4.26.0",
+    "langchain-core>=1.6.6",
     "openai>=3.22.1",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.4",
@@ -20,9 +26,11 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["module-01/src"]
-testpaths = ["module-01/tests"]
+# Module 1 queue tests retain their existing direct import from test_service.
+pythonpath = ["module-01/src", "module-02/src", "module-01/tests"]
+testpaths = ["module-01/tests", "module-02/tests"]
 asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
 
 [tool.ruff]
 target-version = "py312"
@@ -34,6 +42,10 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.uv]
 package = true
 
+[tool.setuptools]
+package-dir = { ai_engineering_foundations = "module-01/src/ai_engineering_foundations", prompt_engineering_systems = "module-02/src/prompt_engineering_systems" }
+
 [tool.setuptools.packages.find]
-where = ["module-01/src"]
-include = ["ai_engineering_foundations*"]
+where = ["module-01/src", "module-02/src"]
+include = ["ai_engineering_foundations*", "prompt_engineering_systems*"]
+namespaces = false
