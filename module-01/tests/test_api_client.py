@@ -1,4 +1,4 @@
-﻿"""Tests for the asynchronous HTTP API client."""
+"""Tests for the asynchronous HTTP API client."""
 
 import httpx
 import pytest
@@ -122,3 +122,84 @@ def test_invalid_client_configuration_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="backoff_seconds"):
         AsyncAPIClient(backoff_seconds=-1)
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_respects_retry_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """HTTP 429 should respect a valid server Retry-After instruction."""
+    attempts = 0
+    delays: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+
+        if attempts == 1:
+            return httpx.Response(
+                429,
+                headers={"Retry-After": "2"},
+                request=request,
+            )
+
+        return httpx.Response(200, json={"status": "ok"}, request=request)
+
+    async def fake_sleep(delay: float) -> None:
+        delays.append(delay)
+
+    monkeypatch.setattr(
+        "ai_engineering_foundations.api_client.asyncio.sleep",
+        fake_sleep,
+    )
+
+    async with AsyncAPIClient(
+        transport=httpx.MockTransport(handler),
+        max_retries=1,
+        backoff_seconds=0.25,
+    ) as client:
+        response = await client.get_json("https://example.test/rate-limited")
+
+    assert response == {"status": "ok"}
+    assert attempts == 2
+    assert delays == [2.0]
+
+
+@pytest.mark.asyncio
+async def test_invalid_retry_after_falls_back_to_backoff(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Invalid Retry-After values should fall back to exponential backoff."""
+    attempts = 0
+    delays: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+
+        if attempts == 1:
+            return httpx.Response(
+                429,
+                headers={"Retry-After": "invalid"},
+                request=request,
+            )
+
+        return httpx.Response(200, json={"status": "ok"}, request=request)
+
+    async def fake_sleep(delay: float) -> None:
+        delays.append(delay)
+
+    monkeypatch.setattr(
+        "ai_engineering_foundations.api_client.asyncio.sleep",
+        fake_sleep,
+    )
+
+    async with AsyncAPIClient(
+        transport=httpx.MockTransport(handler),
+        max_retries=1,
+        backoff_seconds=0.25,
+    ) as client:
+        response = await client.get_json("https://example.test/rate-limited")
+
+    assert response == {"status": "ok"}
+    assert delays == [0.25]

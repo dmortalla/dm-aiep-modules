@@ -1,4 +1,4 @@
-﻿"""Production-oriented asynchronous HTTP API client."""
+"""Production-oriented asynchronous HTTP API client."""
 
 import asyncio
 import logging
@@ -133,7 +133,24 @@ class AsyncAPIClient:
                         f"API returned HTTP {exc.response.status_code}."
                     ) from exc
 
-                await self._wait_before_retry(attempt, exc)
+                retry_after = None
+
+                if exc.response.status_code == 429:
+                    retry_after_header = exc.response.headers.get("Retry-After")
+
+                    if retry_after_header is not None:
+                        try:
+                            retry_after = max(0.0, float(retry_after_header))
+                        except ValueError:
+                            logger.warning(
+                                "Ignoring invalid Retry-After header from API."
+                            )
+
+                await self._wait_before_retry(
+                    attempt,
+                    exc,
+                    retry_after=retry_after,
+                )
 
         raise APIClientError("API request failed unexpectedly.")
 
@@ -161,10 +178,16 @@ class AsyncAPIClient:
         self,
         attempt: int,
         error: Exception,
+        *,
+        retry_after: float | None = None,
     ) -> None:
-        """Log a retry and wait using exponential backoff."""
+        """Wait using server-directed or exponential retry backoff."""
 
-        delay = self._backoff_seconds * (2**attempt)
+        delay = (
+            retry_after
+            if retry_after is not None
+            else self._backoff_seconds * (2**attempt)
+        )
 
         logger.warning(
             "API request failed (%s). Retrying in %.2f seconds.",

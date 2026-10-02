@@ -1,0 +1,102 @@
+{
+  "info": {
+    "_postman_id": "d3fb13ca-25e4-4b76-8f3d-aiep-module01",
+    "name": "Module 1 - REST API Foundations",
+    "description": "Source-faithful Postman exercises for HTTP methods, authentication headers, JSON payloads, variables, and response validation. No real credentials are stored.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://postman-echo.com"
+    },
+    {
+      "key": "api_key",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET - Query Parameters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/get?topic=ai-engineering",
+          "host": ["{{base_url}}"],
+          "path": ["get"],
+          "query": [
+            {
+              "key": "topic",
+              "value": "ai-engineering"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - JSON Payload",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"Hello from Module 1\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/post",
+          "host": ["{{base_url}}"],
+          "path": ["post"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET - Bearer Authentication Pattern",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{api_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/headers",
+          "host": ["{{base_url}}"],
+          "path": ["headers"]
+        },
+        "description": "Demonstrates the bearer-token authentication pattern using an empty collection variable. Never commit a real API key."
+      }
+    }
+  ]
+}

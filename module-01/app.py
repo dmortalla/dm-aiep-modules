@@ -1,25 +1,13 @@
 """Streamlit demonstration UI for Module 1."""
 
 import asyncio
-from pathlib import Path
 
 import streamlit as st
-from ai_engineering_foundations.credentials import (
-    CredentialSecurityError,
-    delete_local_env,
-    read_local_credential,
-    read_local_credential_names,
-    read_os_credential,
-    remove_local_credentials,
-    save_local_credentials,
-)
 from ai_engineering_foundations.models import LLMRequest
 from ai_engineering_foundations.providers.anthropic_provider import AnthropicProvider
 from ai_engineering_foundations.providers.gemini_provider import GeminiProvider
 from ai_engineering_foundations.providers.openai_provider import OpenAIProvider
 from ai_engineering_foundations.service import LLMService, LLMServiceError
-
-ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 
 PROVIDER_CONFIG = {
     "OpenAI": {
@@ -149,130 +137,6 @@ def authorize_entered_keys() -> None:
     st.session_state["credential_notice_type"] = "success"
 
 
-def save_entered_keys() -> None:
-    """Persist entered credentials only after explicit user action."""
-    updates = {}
-
-    for config in PROVIDER_CONFIG.values():
-        widget_key = f"credential_{config['service_name']}"
-        value = st.session_state.get(widget_key, "").strip()
-
-        if value:
-            updates[config["environment_key"]] = value
-
-    if not updates:
-        st.session_state["credential_notice"] = (
-            "Enter at least one API key before saving locally."
-        )
-        st.session_state["credential_notice_type"] = "warning"
-        return
-
-    try:
-        save_local_credentials(ENV_PATH, updates)
-    except CredentialSecurityError:
-        st.session_state["credential_notice"] = (
-            "The credential update was rejected by the security boundary."
-        )
-        st.session_state["credential_notice_type"] = "error"
-        return
-
-    for config in PROVIDER_CONFIG.values():
-        st.session_state[f"credential_{config['service_name']}"] = ""
-
-    st.session_state["credential_notice"] = (
-        "Selected credentials saved locally. They are not automatically "
-        "authorized for this session."
-    )
-    st.session_state["credential_notice_type"] = "success"
-
-
-def authorize_local_key(provider_label: str) -> None:
-    """Explicitly authorize one stored local credential for this session."""
-    config = PROVIDER_CONFIG[provider_label]
-    value = read_local_credential(ENV_PATH, config["environment_key"])
-
-    if not value:
-        st.session_state["credential_notice"] = (
-            f"No project-local {provider_label} credential is stored."
-        )
-        st.session_state["credential_notice_type"] = "warning"
-        return
-
-    st.session_state[f"authorized_{config['service_name']}"] = value
-    st.session_state["credential_notice"] = (
-        f"{provider_label} local credential authorized for this session."
-    )
-    st.session_state["credential_notice_type"] = "success"
-
-
-def authorize_os_key(provider_label: str) -> None:
-    """Explicitly authorize one OS credential for this session."""
-    config = PROVIDER_CONFIG[provider_label]
-    value = read_os_credential(config["environment_key"])
-
-    if not value:
-        st.session_state["credential_notice"] = (
-            f"No {provider_label} credential exists in the OS environment."
-        )
-        st.session_state["credential_notice_type"] = "warning"
-        return
-
-    st.session_state[f"authorized_{config['service_name']}"] = value
-    st.session_state["credential_notice"] = (
-        f"{provider_label} OS credential authorized for this session."
-    )
-    st.session_state["credential_notice_type"] = "success"
-
-
-def remove_keys() -> None:
-    """Remove only explicitly selected project-local credentials."""
-    names = {
-        config["environment_key"]
-        for config in PROVIDER_CONFIG.values()
-        if st.session_state.get(f"remove_{config['service_name']}", False)
-    }
-
-    if not names:
-        st.session_state["credential_notice"] = (
-            "Select at least one local credential to remove."
-        )
-        st.session_state["credential_notice_type"] = "warning"
-        return
-
-    try:
-        remove_local_credentials(ENV_PATH, names)
-    except CredentialSecurityError:
-        st.session_state["credential_notice"] = (
-            "The credential removal was rejected by the security boundary."
-        )
-        st.session_state["credential_notice_type"] = "error"
-        return
-
-    st.session_state["credential_notice"] = (
-        "Selected project-local credentials removed. Existing session and "
-        "operating-system credentials were not changed."
-    )
-    st.session_state["credential_notice_type"] = "success"
-
-
-def delete_env() -> None:
-    """Delete only the project-local credential file after confirmation."""
-    if not st.session_state.get("confirm_delete_env", False):
-        st.session_state["credential_notice"] = (
-            "Confirm local .env deletion before continuing."
-        )
-        st.session_state["credential_notice_type"] = "warning"
-        return
-
-    delete_local_env(ENV_PATH)
-    st.session_state["confirm_delete_env"] = False
-    st.session_state["credential_notice"] = (
-        "Project-local .env deleted. Existing session and operating-system "
-        "credentials were not changed."
-    )
-    st.session_state["credential_notice_type"] = "success"
-
-
 st.set_page_config(
     page_title="LLM SDK Foundations",
     layout="wide",
@@ -354,12 +218,12 @@ with st.sidebar:
 
     with st.expander("Manage API Keys"):
         st.info(
-            "Zero-key startup: no API credential is automatically authorized. "
-            "Session-only authorization is the recommended default."
+            "Public deployment: API keys are session-only and are not saved "
+            "to a project-local credential file."
         )
 
         st.caption(
-            "Enter credentials below. Existing secret values are never displayed."
+            "Enter only credentials you want to authorize for this browser session."
         )
 
         for provider_name, config in PROVIDER_CONFIG.items():
@@ -383,114 +247,63 @@ with st.sidebar:
             use_container_width=True,
         )
 
-        st.divider()
-        st.caption("Optional project-local persistence")
-
-        st.button(
-            "Save entered keys locally",
-            on_click=save_entered_keys,
-            use_container_width=True,
-        )
-
-        local_names = read_local_credential_names(ENV_PATH)
-
-        for provider_name, config in PROVIDER_CONFIG.items():
-            environment_name = config["environment_key"]
-            is_local = environment_name in local_names
-
-            if is_local:
-                st.button(
-                    f"Authorize stored {provider_name} key",
-                    key=f"authorize_local_{config['service_name']}",
-                    on_click=authorize_local_key,
-                    args=(provider_name,),
-                    use_container_width=True,
-                )
-
-            st.checkbox(
-                f"Remove stored {provider_name} key",
-                key=f"remove_{config['service_name']}",
-                disabled=not is_local,
-                help=(
-                    "Select this project-local credential for removal."
-                    if is_local
-                    else "No project-local credential is stored for this provider."
-                ),
-            )
-
-        st.button(
-            "Remove selected stored keys",
-            on_click=remove_keys,
-            use_container_width=True,
-        )
-
-        st.checkbox(
-            "I understand this deletes the project-local .env file",
-            key="confirm_delete_env",
-        )
-
-        st.button(
-            "Delete local .env",
-            on_click=delete_env,
-            use_container_width=True,
-        )
-
-        st.divider()
-        st.caption("Optional operating-system credentials")
-
-        for provider_name, config in PROVIDER_CONFIG.items():
-            environment_name = config["environment_key"]
-
-            if read_os_credential(environment_name):
-                st.button(
-                    f"Authorize OS {provider_name} key",
-                    key=f"authorize_os_{config['service_name']}",
-                    on_click=authorize_os_key,
-                    args=(provider_name,),
-                    use_container_width=True,
-                )
-            else:
-                st.caption(f"{provider_name}: no OS credential detected.")
-
         notice = st.session_state.get("credential_notice")
         notice_type = st.session_state.get("credential_notice_type")
 
         if notice:
             if notice_type == "success":
                 st.success(notice)
-            elif notice_type == "error":
-                st.error(notice)
-            else:
+            elif notice_type == "warning":
                 st.warning(notice)
+            else:
+                st.error(notice)
+
+    st.markdown(
+        """
+        <style>
+        @keyframes securityPulse {
+            0%, 100% { opacity: 0.72; }
+            50% { opacity: 1; }
+        }
+
+        .session-security-reminder {
+            animation: securityPulse 3s ease-in-out infinite;
+            border: 1px solid rgba(250, 166, 26, 0.45);
+            border-radius: 0.5rem;
+            padding: 0.65rem 0.75rem;
+            margin: 0.75rem 0;
+            font-size: 0.86rem;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .session-security-reminder {
+                animation: none;
+            }
+        }
+        </style>
+
+        <div class="session-security-reminder">
+        <strong>Security reminder:</strong>
+        When finished, click <strong>Clear session credentials</strong> and
+        close this tab, especially on a shared computer.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.divider()
     st.subheader("API Key Safety")
 
-    stored_local_credentials = read_local_credential_names(ENV_PATH)
-
     st.info(
-        "This app starts in a zero-key state. No API key is automatically "
-        "authorized when the app starts. Explicitly authorize a credential "
-        "before making a provider request."
+        "This public app starts in a zero-key state. API keys must be explicitly "
+        "authorized for the current session and are not persisted by this UI."
     )
-
-    if stored_local_credentials:
-        st.warning(
-            "Project-local API credentials are currently stored. Before leaving "
-            "this application, remove local keys you no longer need."
-        )
-    else:
-        st.success("No project-local API keys are currently stored.")
 
     st.caption(
-        "Session-only credentials are recommended. Removing a key from this app "
-        "does not revoke it with the provider. For cost protection, configure "
-        "provider-side spending limits, budgets, or usage alerts where available. "
-        "Revoke compromised or retired keys directly with the API provider."
+        "Clearing a session credential does not revoke the API key with its provider. "
+        "Revoke compromised or retired keys directly with the provider and use "
+        "provider-side spending limits or usage alerts where available."
     )
-
-st.subheader("Prompt")
-
 prompt = st.text_area(
     "Enter a prompt",
     height=180,
@@ -600,5 +413,5 @@ st.divider()
 
 st.caption(
     "Security model: zero-key startup, explicit credential authorization, "
-    "session-only credentials by default, and optional explicit persistence."
+    "session-only credentials with no public UI persistence."
 )

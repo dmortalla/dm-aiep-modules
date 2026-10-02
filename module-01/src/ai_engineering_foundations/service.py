@@ -1,4 +1,4 @@
-﻿"""Provider-independent asynchronous LLM interaction service."""
+"""Provider-independent asynchronous LLM interaction service."""
 
 import asyncio
 import logging
@@ -141,6 +141,56 @@ class LLMService:
             request.model,
         )
 
+    async def generate_queued(
+        self,
+        requests: list[tuple[str, LLMRequest]],
+        *,
+        workers: int = 2,
+    ) -> list[LLMResponse]:
+        """Process LLM requests through a bounded asynchronous worker queue."""
+        if workers <= 0:
+            raise ValueError("workers must be greater than zero")
+
+        queue: asyncio.Queue[tuple[int, str, LLMRequest] | None] = asyncio.Queue()
+        results: list[LLMResponse | None] = [None] * len(requests)
+
+        for index, (provider_name, request) in enumerate(requests):
+            await queue.put((index, provider_name, request))
+
+        worker_count = min(workers, len(requests))
+
+        for _ in range(worker_count):
+            await queue.put(None)
+
+        async def worker() -> None:
+            while True:
+                item = await queue.get()
+
+                try:
+                    if item is None:
+                        return
+
+                    index, provider_name, request = item
+                    results[index] = await self.generate(provider_name, request)
+                finally:
+                    queue.task_done()
+
+        tasks = [asyncio.create_task(worker()) for _ in range(worker_count)]
+
+        try:
+            await asyncio.gather(*tasks)
+        except Exception:
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
+
+        if any(result is None for result in results):
+            raise LLMServiceError("Queue execution completed with missing results.")
+
+        return [result for result in results if result is not None]
     async def generate_many(
         self,
         requests: list[tuple[str, LLMRequest]],

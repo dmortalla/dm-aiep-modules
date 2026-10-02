@@ -11,7 +11,7 @@ Source-faithful implementations of the AI Engineering Program, organized as inde
 
 ## Module 1 - Python, APIs, and LLM SDK Foundations
 
-Module 1 implements Python-based AI engineering foundations including REST/API interaction, provider SDKs, asynchronous execution, streaming, structured response parsing, retries, timeouts, logging, and safe API handling.
+Module 1 implements Python-based AI engineering foundations including REST/API interaction, provider SDKs, asynchronous execution, streaming, structured response parsing, retries, timeouts, rate-limit handling, token cost management, logging, queue-based execution, and safe API handling.
 
 ### Implemented Capabilities
 
@@ -22,39 +22,76 @@ Module 1 implements Python-based AI engineering foundations including REST/API i
 - Provider-independent Pydantic models
 - Async generation and streaming service
 - Concurrent request execution
+- Queue-based asynchronous execution
 - Structured response parsing and validation
-- Retry, timeout, and backoff handling
+- Token usage normalization and cost estimation
+- Retry, timeout, exponential-backoff, and HTTP 429 Retry-After handling
 - Operational logging
-- Zero-key startup and explicit credential authorization
+- Postman REST/API exercises
+- Zero-key startup and session-only public credential authorization
 - Runnable Streamlit UI
 - Incremental browser streaming
 
+### Source Requirements Traceability
+
+| Source requirement | Primary implementation evidence | Verification evidence |
+| --- | --- | --- |
+| Functions, OOP, error handling, type hints | `module-01/src/ai_engineering_foundations/` | Module 1 test suite |
+| REST APIs and HTTP methods | `api_client.py` | `test_api_client.py` |
+| Authentication patterns | `credentials.py`, Postman collection | `test_credentials.py`, `test_postman_collection.py` |
+| Rate limiting | `api_client.py` - HTTP 429 / `Retry-After` handling | `test_api_client.py` |
+| OpenAI SDK | `providers/openai_provider.py` | `test_openai_provider.py` |
+| Anthropic SDK | `providers/anthropic_provider.py` | `test_anthropic_provider.py` |
+| Gemini SDK | `providers/gemini_provider.py` | `test_gemini_provider.py` |
+| Streaming | provider implementations, `service.py`, `app.py` | provider and Streamlit contract tests |
+| Token cost management | `costs.py`, normalized `TokenUsage` models | `test_costs.py`, provider tests |
+| Retry logic and timeout handling | `api_client.py`, provider implementations | `test_api_client.py`, provider tests |
+| Logging strategies | `api_client.py`, `service.py` | API-client and service tests |
+| Safe API handling | `credentials.py`, `app.py` | `test_credentials.py`, `test_public_credential_ui.py` |
+| Async concurrency | `service.py` - `generate_many()` | `test_service.py` |
+| Queue-based execution | `service.py` - `generate_queued()` | `test_queue_execution.py` |
+| Event-driven workflows | `events.py` - `AsyncEventDispatcher` and `WorkflowEvent` | `test_events.py` |
+| Build LLM API client | provider implementations and `service.py` | provider and service tests |
+| Implement async API calls | `api_client.py`, providers, `service.py` | API-client/provider/service tests |
+| Create streaming response workflows | providers, `service.py`, `app.py` | streaming/provider/UI tests |
+| Build structured response parser | `structured.py` | `test_structured.py` |
+| Postman | `module-01/postman/module-01-rest-api-foundations.postman_collection.json` | `test_postman_collection.py` |
+| httpx | `api_client.py` | `test_api_client.py` |
+| Production-ready API client | `api_client.py` | `test_api_client.py` |
+| Async LLM interaction service | `service.py` | `test_service.py`, `test_queue_execution.py` |
+
 ### Verification
 
-- 62 automated tests
+- 84 automated tests passing
 - Ruff validation
 - pytest validation
 - Python compilation validation
 - Streamlit runtime smoke testing
 - Credential security tests
 - Provider contract tests
+- Rate-limit handling tests
+- Token-cost management tests
+- Queue-execution tests
+- Postman collection contract tests
 - Streaming regression tests
 - Live provider testing
 - Progressive Gemini browser-streaming verification
 
 ### Run Module 1
 
-Synchronize dependencies: uv sync
+Synchronize dependencies: `uv sync`
 
-Launch the UI: uv run streamlit run module-01/app.py
+Launch the UI: `uv run streamlit run module-01/app.py`
 
-Run tests: uv run pytest
+Run tests: `uv run pytest`
 
 ### Security
 
-The application starts with no automatically authorized API credential. Stored credentials remain inert until explicitly authorized by the user. Prompt text and model output have no credential-management authority.
+The public Streamlit application starts with no automatically authorized API credential. Credentials entered through the public UI are session-only and are not persisted by the UI.
 
-The local .env file is ignored by Git and must never be committed.
+The underlying credential utilities demonstrate local credential-management patterns for the academic module, while the public interface intentionally does not expose local or OS-level credential persistence controls.
+
+The local `.env` file is ignored by Git and must never be committed.
 
 ### Module 1 Definition of Done
 
@@ -63,9 +100,15 @@ The local .env file is ignored by Git and must never be committed.
 - [x] OpenAI SDK
 - [x] Anthropic SDK
 - [x] Gemini SDK
+- [x] Postman
+- [x] httpx
 - [x] Async and concurrent LLM service
+- [x] Queue-based execution
+- [x] Event-driven workflow
 - [x] Streaming
 - [x] Structured response parsing
+- [x] Token cost management
+- [x] Rate-limit handling
 - [x] Retries and timeouts
 - [x] Logging
 - [x] Safe API handling
