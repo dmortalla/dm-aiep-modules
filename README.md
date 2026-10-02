@@ -1,6 +1,19 @@
 # AI Engineering Program Modules
 
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)
+![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
+![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991)
+![Anthropic](https://img.shields.io/badge/LLM-Anthropic-D97757)
+![Gemini](https://img.shields.io/badge/LLM-Gemini-4285F4)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
+![Postman](https://img.shields.io/badge/API%20Testing-Postman-FF6C37)
+
 Source-faithful implementations of the AI Engineering Program, organized as independently demonstrable engineering modules.
+
+**Module 1 is a multi-provider LLM client that lets users interact with OpenAI, Anthropic, or Gemini through one unified interface while demonstrating production-oriented API and asynchronous Python engineering patterns.**
+
+Choose a provider and model, supply a session-only API credential, enter a prompt, and interact with the selected LLM through the Streamlit interface. Underneath that simple workflow, the module demonstrates provider abstraction, async execution, streaming, REST/API handling, retries, rate-limit handling, token-cost estimation, queue-based execution, event-driven workflows, structured response parsing, logging, and safe credential handling.
 
 ## Engineering Roadmap
 
