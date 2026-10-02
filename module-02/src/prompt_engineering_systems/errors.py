@@ -41,3 +41,19 @@ class PromptConstructionError(ValueError):
 
 class TemplateRenderingError(PromptConstructionError):
     """Select an approved template and supply exactly its bounded text variables."""
+
+
+class SafetyError(ValueError):
+    """Base for expected safety input, authorization, and execution-limit failures."""
+
+
+class SafetyInputError(SafetyError):
+    """Correct strict input fields or reduce input to supported resource bounds."""
+
+
+class ToolAuthorizationError(SafetyError):
+    """The application must authorize a registered tool; content cannot grant access."""
+
+
+class ToolBudgetError(SafetyError):
+    """Stop executing tools; only the trusted application may start a new session."""
