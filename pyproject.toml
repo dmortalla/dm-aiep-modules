@@ -1,0 +1,39 @@
+[project]
+name = "dm-aiep-modules"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=1.11.0",
+    "google-genai>=2.26.0",
+    "httpx>=0.28.1",
+    "openai>=3.22.1",
+    "pydantic>=2.13.5",
+    "python-dotenv>=1.2.4",
+    "streamlit>=1.64.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["module-01/src"]
+testpaths = ["module-01/tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.uv]
+package = true
+
+[tool.setuptools.packages.find]
+where = ["module-01/src"]
+include = ["ai_engineering_foundations*"]
