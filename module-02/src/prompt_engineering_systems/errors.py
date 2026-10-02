@@ -1,4 +1,4 @@
-"""Domain failures and recovery categories at the structured-output boundary.
+"""Domain failures at structured-output and prompt-construction boundaries.
 
 Public validation functions produce content-safe messages. Data-bearing library
 exceptions are suppressed in rendered chains; safe parser causes are retained.
@@ -33,3 +33,11 @@ class SchemaValidationError(StructuredOutputError):
 
 class TypedValidationError(StructuredOutputError):
     """Correct the model-class argument, strict fields, or application invariants."""
+
+
+class PromptConstructionError(ValueError):
+    """Correct prompt fields, role selection, or character budgets before rendering."""
+
+
+class TemplateRenderingError(PromptConstructionError):
+    """Select an approved template and supply exactly its bounded text variables."""
