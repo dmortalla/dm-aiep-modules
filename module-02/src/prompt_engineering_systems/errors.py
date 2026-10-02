@@ -57,3 +57,19 @@ class ToolAuthorizationError(SafetyError):
 
 class ToolBudgetError(SafetyError):
     """Stop executing tools; only the trusted application may start a new session."""
+
+
+class ProviderError(ValueError):
+    """Base for content-safe expected generation-provider failures."""
+
+
+class ProviderRequestError(ProviderError):
+    """Correct application provider configuration, credentials, or model access."""
+
+
+class ProviderAvailabilityError(ProviderError):
+    """Retry later or investigate provider availability without exposing SDK data."""
+
+
+class ProviderResponseError(ProviderError):
+    """Reject refused, incomplete, empty, or oversized generation responses."""
