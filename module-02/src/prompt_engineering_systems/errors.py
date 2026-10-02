@@ -73,3 +73,7 @@ class ProviderAvailabilityError(ProviderError):
 
 class ProviderResponseError(ProviderError):
     """Reject refused, incomplete, empty, or oversized generation responses."""
+
+
+class TechniqueError(ValueError):
+    """Correct technique limits or stop an exhausted/insufficient demonstration."""
