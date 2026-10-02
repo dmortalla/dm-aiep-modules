@@ -77,3 +77,7 @@ class ProviderResponseError(ProviderError):
 
 class TechniqueError(ValueError):
     """Correct technique limits or stop an exhausted/insufficient demonstration."""
+
+
+class EvaluationError(ValueError):
+    """Correct bounded evaluation definitions or inconsistent evidence."""
