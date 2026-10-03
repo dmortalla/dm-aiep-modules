@@ -13,6 +13,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 PACKAGE_ROOTS = {
     "ai_engineering_foundations": "module-01/src",
     "prompt_engineering_systems": "module-02/src",
+    "rag_engineering_foundations": "module-03/src",
 }
 
 
@@ -34,23 +35,28 @@ def test_both_package_trees_are_importable() -> None:
         assert package.__file__ is not None
 
 
-def test_pytest_covers_both_modules(pytestconfig: pytest.Config) -> None:
-    """Keep both source/test roots configured with collision-safe imports.
+def test_pytest_covers_all_modules(pytestconfig: pytest.Config) -> None:
+    """Keep all source/test roots configured with collision-safe imports.
 
     Args:
         pytestconfig: Active pytest configuration supplied by pytest.
     """
-    assert pytestconfig.getini("testpaths") == ["module-01/tests", "module-02/tests"]
+    assert pytestconfig.getini("testpaths") == [
+        "module-01/tests",
+        "module-02/tests",
+        "module-03/tests",
+    ]
     assert pytestconfig.getini("pythonpath") == [
         REPOSITORY_ROOT / "module-01/src",
         REPOSITORY_ROOT / "module-02/src",
+        REPOSITORY_ROOT / "module-03/src",
         REPOSITORY_ROOT / "module-01/tests",
     ]
     assert pytestconfig.getoption("importmode") == "importlib"
 
 
 def test_distribution_owns_only_the_intended_packages() -> None:
-    """Verify installed distribution metadata includes both package roots."""
+    """Verify installed distribution metadata includes all package roots."""
     top_level = distribution("dm-aiep-modules").read_text("top_level.txt")
     assert top_level is not None
     assert set(top_level.splitlines()) == set(PACKAGE_ROOTS)

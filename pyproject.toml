@@ -8,11 +8,15 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=1.11.0",
+    "chromadb>=1.5.9",
+    "faiss-cpu>=1.15.1",
     "google-genai>=2.26.0",
     "httpx>=0.28.1",
     "jsonschema>=4.26.0",
+    "langchain>=1.4.3",
     "langchain-core>=1.6.6",
     "openai>=3.22.1",
+    "pinecone>=10.0.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.4",
     "streamlit>=1.64.0",
@@ -27,8 +31,8 @@ dev = [
 
 [tool.pytest.ini_options]
 # Module 1 queue tests retain their existing direct import from test_service.
-pythonpath = ["module-01/src", "module-02/src", "module-01/tests"]
-testpaths = ["module-01/tests", "module-02/tests"]
+pythonpath = ["module-01/src", "module-02/src", "module-03/src", "module-01/tests"]
+testpaths = ["module-01/tests", "module-02/tests", "module-03/tests"]
 asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
 
@@ -43,9 +47,9 @@ select = ["E", "F", "I", "UP", "B"]
 package = true
 
 [tool.setuptools]
-package-dir = { ai_engineering_foundations = "module-01/src/ai_engineering_foundations", prompt_engineering_systems = "module-02/src/prompt_engineering_systems" }
+package-dir = { ai_engineering_foundations = "module-01/src/ai_engineering_foundations", prompt_engineering_systems = "module-02/src/prompt_engineering_systems", rag_engineering_foundations = "module-03/src/rag_engineering_foundations" }
 
 [tool.setuptools.packages.find]
-where = ["module-01/src", "module-02/src"]
-include = ["ai_engineering_foundations*", "prompt_engineering_systems*"]
+where = ["module-01/src", "module-02/src", "module-03/src"]
+include = ["ai_engineering_foundations*", "prompt_engineering_systems*", "rag_engineering_foundations*"]
 namespaces = false
