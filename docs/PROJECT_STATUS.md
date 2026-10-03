@@ -4,14 +4,34 @@
 
 | Item | State |
 | --- | --- |
-| Branch | main |
-| Current module | Module 1 |
+| Branch | feature/module-02 |
+| Accepted checkpoint | c7d7f2736a4bb6475aa329173ab2b12d83027098 (Module 2 Story 9) |
+| Current module | Module 2 |
 | Module 1 | Complete |
-| Automated tests | 62 passing |
+| Module 2 | Implemented and verified; Stories 1–9 accepted; Story 10 human acceptance pending |
+| Automated tests | 457 passing: Module 1 84, Module 2 373 (including 19 UI tests) |
 | UI | Streamlit |
 | Credential startup | Zero-key |
 | .env | Ignored and untracked |
-| Next module | Module 2 |
+| Next module | Module 3, after Module 2 acceptance |
+
+## Module 2 completion evidence
+
+The accepted implementation includes prompt anatomy/hierarchy/context/roles/
+few-shot construction, executable bounded techniques, strict structured-output
+validation, independent local-tool safety controls, synthetic red-team replay,
+local evaluation with retained failures, OpenAI JSON Mode and PromptLayer
+integration boundaries, and the four-area offline Streamlit UI.
+
+Story 10 adds [usage/security documentation](../module-02/README.md), a
+[source traceability map](../module-02/docs/TRACEABILITY.md), and
+[verification evidence](../module-02/docs/VERIFICATION.md). The audited map covers
+28/28 frozen requirements; quality-gate results are recorded separately.
+This work is uncommitted and pending human acceptance, with no release/tag claim.
+
+Module 2 needs no UI credentials. OpenAI and PromptLayer verification is mocked,
+not evidence of live provider output or remote storage. Evaluation and tool
+authority remain independent of observability and lexical detection.
 
 ## Module 1 Verified Scope
 
@@ -32,7 +52,7 @@
 
 ## Verification
 
-- 62 automated tests
+- 84 Module 1 automated tests (current regression results recorded in the Module 2 verification record)
 - Ruff validation
 - pytest validation
 - Python compilation validation
@@ -54,4 +74,6 @@
 
 ## Next Action
 
-Run the final Module 1 quality gates and repository review before creating the Module 1 checkpoint.
+Review Module 2 Story 10 documentation, 28-requirement traceability, and ordered
+verification evidence. Human acceptance is required before marking Module 2
+complete; staging, committing, release, and tag actions are outside this story.

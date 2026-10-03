@@ -1,7 +1,7 @@
 # AI Engineering Program Modules
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-457%20passing-brightgreen)
 ![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
 ![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991)
 ![Anthropic](https://img.shields.io/badge/LLM-Anthropic-D97757)
@@ -20,7 +20,30 @@ Choose a provider and model, supply a session-only API credential, enter a promp
 | Module | Status |
 | --- | --- |
 | Module 1 - Python, APIs, and LLM SDK Foundations | Complete |
-| Modules 2-12 | Planned |
+| Module 2 - Prompt Engineering & Structured Output Systems | Implemented and verified; Story 10 human acceptance pending |
+| Modules 3-12 | Planned |
+
+## Module 2 - Prompt Engineering & Structured Output Systems
+
+Module 2 demonstrates application-owned prompt construction, strict JSON/schema
+and typed-output validation, bounded advanced prompting techniques, independent
+tool authorization, repeatable red-team simulation, and deterministic evaluation
+with separate PromptLayer observability. Its four Streamlit areas run locally
+using synthetic responses without accounts, credentials, or external services.
+
+Stories 1–9 are accepted. Story 10 documentation and completion evidence remain
+pending human acceptance on `feature/module-02`; Module 2 is not marked released.
+OpenAI JSON Mode and PromptLayer have genuine adapters with mocked verification;
+offline receipts are not evidence of live output or remote storage.
+
+```powershell
+uv sync --locked
+uv run streamlit run module-02/app.py --browser.gatherUsageStats false
+```
+
+See the [Module 2 guide](module-02/README.md),
+[28-requirement evidence map](module-02/docs/TRACEABILITY.md), and
+[verification record](module-02/docs/VERIFICATION.md).
 
 ## Module 1 - Python, APIs, and LLM SDK Foundations
 
