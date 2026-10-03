@@ -1,7 +1,7 @@
 # AI Engineering Program Modules
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-457%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-1054%20passing-brightgreen)
 ![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
 ![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991)
 ![Anthropic](https://img.shields.io/badge/LLM-Anthropic-D97757)
@@ -21,7 +21,39 @@ Choose a provider and model, supply a session-only API credential, enter a promp
 | --- | --- |
 | Module 1 - Python, APIs, and LLM SDK Foundations | Complete |
 | Module 2 - Prompt Engineering & Structured Output Systems | ✅ Complete |
-| Modules 3-12 | Planned |
+| Module 3 - RAG Engineering Foundations | Complete / release-ready |
+| Modules 4-12 | Planned |
+
+## Module 3 - RAG Engineering Foundations
+
+Module 3 implementation and Story 1-10 engineering work are complete and
+release-ready for human review. The [28-requirement evidence map](module-03/docs/TRACEABILITY.md)
+and [verification record](module-03/docs/VERIFICATION.md) document the source
+reconciliation, deterministic gates, and supplied human approval of the Story 9 UI.
+No Module 3 Git release/tag is claimed; publication is a separate human action.
+
+The nine-area Streamlit UI demonstrates ingestion and provenance, fixed/recursive/
+semantic chunking, embedding metrics, vector retrieval/stores, query transformation,
+bounded context, core/LangChain RAG, and corpus-refresh knowledge freshness.
+FAISS, ChromaDB and LangChain have genuine local runtime verification. Pinecone
+has a genuine SDK/integration boundary with deterministic offline verification;
+OpenAI Embeddings has a genuine provider adapter with offline request-response
+verification. Live remote OpenAI/Pinecone verification is not established.
+
+LocalHashEmbedder, the tiny semantic topic signal, and LocalExtractiveGenerator
+are explicitly limited teaching implementations. They do not establish trained
+semantic quality or source truth. Normal tests and default UI paths are
+credential-free; the optional OpenAI panel requires an explicitly supplied key.
+
+```powershell
+uv sync --locked
+uv run streamlit run module-03/app.py --browser.gatherUsageStats false
+uv run python module-03/examples/rag_freshness.py
+```
+
+See the [frozen architecture](module-03/docs/ARCHITECTURE.md),
+[source requirements](module-03/docs/SOURCE_REQUIREMENTS.md), and
+[Story 10 closeout](module-03/docs/STORY_10.md).
 
 ## Module 2 - Prompt Engineering & Structured Output Systems
 

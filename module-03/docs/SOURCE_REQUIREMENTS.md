@@ -25,46 +25,46 @@ Teach developers how to design scalable Retrieval-Augmented Generation systems.
 
 | ID | Requirement | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-RAG-01 | Demonstrate RAG architecture | Implementation + tests + runnable demonstration | Pending |
-| M3-RAG-02 | Explain and demonstrate the knowledge-freshness problem addressed by RAG | Documentation + runnable demonstration | Pending |
-| M3-RAG-03 | Implement a retrieval pipeline | Implementation + tests + runnable demonstration | Pending |
-| M3-RAG-04 | Implement query transformation | Implementation + tests + runnable demonstration | Pending |
+| M3-RAG-01 | Demonstrate RAG architecture | Implementation + tests + runnable demonstration | Complete |
+| M3-RAG-02 | Explain and demonstrate the knowledge-freshness problem addressed by RAG | Documentation + runnable demonstration | Complete |
+| M3-RAG-03 | Implement a retrieval pipeline | Implementation + tests + runnable demonstration | Complete |
+| M3-RAG-04 | Implement query transformation | Implementation + tests + runnable demonstration | Complete |
 
 ### Embeddings and Semantic Retrieval
 
 | ID | Requirement | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-RET-01 | Generate embeddings for retrieval | Implementation + tests | Pending |
-| M3-RET-02 | Demonstrate vector similarity and distance metrics | Implementation + tests + runnable demonstration | Pending |
-| M3-RET-03 | Implement semantic retrieval | Implementation + tests + runnable demonstration | Pending |
-| M3-RET-04 | Demonstrate indexing strategies and approximate-nearest-neighbor concepts | Implementation/demonstration + tests where applicable | Pending |
+| M3-RET-01 | Generate embeddings for retrieval | Implementation + tests | Complete |
+| M3-RET-02 | Demonstrate vector similarity and distance metrics | Implementation + tests + runnable demonstration | Complete |
+| M3-RET-03 | Implement semantic retrieval | Implementation + tests + runnable demonstration | Complete |
+| M3-RET-04 | Demonstrate indexing strategies and approximate-nearest-neighbor concepts | Implementation/demonstration + tests where applicable | Complete |
 
 ### Vector Stores
 
 | ID | Requirement | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-VS-01 | Integrate FAISS for vector retrieval | Genuine runtime integration + tests | Pending |
-| M3-VS-02 | Integrate ChromaDB for vector retrieval | Genuine runtime integration + tests | Pending |
-| M3-VS-03 | Integrate Pinecone for vector retrieval | Genuine integration boundary + tests and/or live verification | Pending |
+| M3-VS-01 | Integrate FAISS for vector retrieval | Genuine runtime integration + tests | Complete |
+| M3-VS-02 | Integrate ChromaDB for vector retrieval | Genuine runtime integration + tests | Complete |
+| M3-VS-03 | Integrate Pinecone for vector retrieval | Genuine integration boundary + tests and/or live verification | Complete |
 
 ### Chunking and Context Engineering
 
 | ID | Requirement | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-CTX-01 | Implement fixed chunking | Implementation + tests + runnable demonstration | Pending |
-| M3-CTX-02 | Implement recursive chunking | Implementation + tests + runnable demonstration | Pending |
-| M3-CTX-03 | Implement semantic chunking | Implementation + tests + runnable demonstration | Pending |
-| M3-CTX-04 | Implement metadata enrichment | Implementation + tests | Pending |
-| M3-CTX-05 | Implement context optimisation | Implementation + tests + runnable demonstration | Pending |
+| M3-CTX-01 | Implement fixed chunking | Implementation + tests + runnable demonstration | Complete |
+| M3-CTX-02 | Implement recursive chunking | Implementation + tests + runnable demonstration | Complete |
+| M3-CTX-03 | Implement semantic chunking | Implementation + tests + runnable demonstration | Complete |
+| M3-CTX-04 | Implement metadata enrichment | Implementation + tests | Complete |
+| M3-CTX-05 | Implement context optimisation | Implementation + tests + runnable demonstration | Complete |
 
 ## Hands-On Labs
 
 | ID | Source Lab | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-LAB-01 | Build a document-ingestion pipeline | Runnable implementation + tests + UI demonstration | Pending |
-| M3-LAB-02 | Create a vector-search workflow | Runnable implementation + tests + UI demonstration | Pending |
-| M3-LAB-03 | Implement chunking strategies | Runnable fixed/recursive/semantic implementations + comparison evidence | Pending |
-| M3-LAB-04 | Build a RAG prototype | Runnable end-to-end implementation + tests + UI demonstration | Pending |
+| M3-LAB-01 | Build a document-ingestion pipeline | Runnable implementation + tests + UI demonstration | Complete |
+| M3-LAB-02 | Create a vector-search workflow | Runnable implementation + tests + UI demonstration | Complete |
+| M3-LAB-03 | Implement chunking strategies | Runnable fixed/recursive/semantic implementations + comparison evidence | Complete |
+| M3-LAB-04 | Build a RAG prototype | Runnable end-to-end implementation + tests + UI demonstration | Complete |
 
 ## Required Tools
 
@@ -74,18 +74,18 @@ alone.
 
 | ID | Tool | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-TOOL-01 | FAISS | Runtime integration + tests | Pending |
-| M3-TOOL-02 | ChromaDB | Runtime integration + tests | Pending |
-| M3-TOOL-03 | Pinecone | Integration boundary + tests and/or live verification | Pending |
-| M3-TOOL-04 | LangChain | Runtime RAG/retrieval integration + tests | Pending |
-| M3-TOOL-05 | OpenAI Embeddings | Provider integration + tests and/or live verification | Pending |
+| M3-TOOL-01 | FAISS | Runtime integration + tests | Complete |
+| M3-TOOL-02 | ChromaDB | Runtime integration + tests | Complete |
+| M3-TOOL-03 | Pinecone | Integration boundary + tests and/or live verification | Complete |
+| M3-TOOL-04 | LangChain | Runtime RAG/retrieval integration + tests | Complete |
+| M3-TOOL-05 | OpenAI Embeddings | Provider integration + tests and/or live verification | Complete |
 
 ## Required Deliverables
 
 | ID | Deliverable | Acceptance Evidence | Status |
 | --- | --- | --- | --- |
-| M3-DEL-01 | Working RAG pipeline | Runnable end-to-end implementation + tests + documentation | Pending |
-| M3-DEL-02 | Vector retrieval system | Runnable implementation + tests + retrieval evidence | Pending |
+| M3-DEL-01 | Working RAG pipeline | Runnable end-to-end implementation + tests + documentation | Complete |
+| M3-DEL-02 | Vector retrieval system | Runnable implementation + tests + retrieval evidence | Complete |
 
 ## Portfolio Demonstration Requirement
 
@@ -100,7 +100,7 @@ source-required implementation.
 
 | ID | Requirement | Required Evidence | Status |
 | --- | --- | --- | --- |
-| M3-PORT-01 | Runnable self-explanatory Module 3 demonstration UI | UI contract tests + manual/live verification | Pending |
+| M3-PORT-01 | Runnable self-explanatory Module 3 demonstration UI | UI contract tests + manual/live verification | Complete |
 
 ## Python Engineering Standards
 
@@ -136,30 +136,30 @@ All Module 3 Python implementation must:
 
 ## Definition of Done
 
-- [ ] RAG architecture is demonstrated.
-- [ ] Knowledge-freshness problem is demonstrated.
-- [ ] Document-ingestion pipeline is implemented.
-- [ ] Fixed chunking is implemented.
-- [ ] Recursive chunking is implemented.
-- [ ] Semantic chunking is implemented.
-- [ ] Metadata enrichment is implemented.
-- [ ] Embedding generation is implemented.
-- [ ] Vector similarity and distance metrics are demonstrated.
-- [ ] Semantic retrieval is implemented.
-- [ ] Indexing strategies and ANN concepts are demonstrated.
-- [ ] FAISS is genuinely integrated.
-- [ ] ChromaDB is genuinely integrated.
-- [ ] Pinecone is genuinely integrated.
-- [ ] LangChain is genuinely integrated.
-- [ ] OpenAI Embeddings are genuinely integrated.
-- [ ] Query transformation is implemented.
-- [ ] Context optimisation is implemented.
-- [ ] Vector-search workflow is runnable.
-- [ ] End-to-end RAG prototype is runnable.
-- [ ] Working RAG pipeline is complete.
-- [ ] Vector retrieval system is complete.
-- [ ] Self-explanatory Streamlit UI demonstrates Module 3 functionality.
-- [ ] Automated tests cover required behavior and failure paths.
-- [ ] Repository quality gates pass in fail-fast order.
-- [ ] Source-to-evidence traceability has no unexplained gaps.
-- [ ] Human review confirms source faithfulness.
+- [x] RAG architecture is demonstrated.
+- [x] Knowledge-freshness problem is demonstrated.
+- [x] Document-ingestion pipeline is implemented.
+- [x] Fixed chunking is implemented.
+- [x] Recursive chunking is implemented.
+- [x] Semantic chunking is implemented.
+- [x] Metadata enrichment is implemented.
+- [x] Embedding generation is implemented.
+- [x] Vector similarity and distance metrics are demonstrated.
+- [x] Semantic retrieval is implemented.
+- [x] Indexing strategies and ANN concepts are demonstrated.
+- [x] FAISS is genuinely integrated.
+- [x] ChromaDB is genuinely integrated.
+- [x] Pinecone is genuinely integrated.
+- [x] LangChain is genuinely integrated.
+- [x] OpenAI Embeddings are genuinely integrated.
+- [x] Query transformation is implemented.
+- [x] Context optimisation is implemented.
+- [x] Vector-search workflow is runnable.
+- [x] End-to-end RAG prototype is runnable.
+- [x] Working RAG pipeline is complete.
+- [x] Vector retrieval system is complete.
+- [x] Self-explanatory Streamlit UI demonstrates Module 3 functionality.
+- [x] Automated tests cover required behavior and failure paths.
+- [x] Repository quality gates pass in fail-fast order.
+- [x] Source-to-evidence traceability has no unexplained gaps.
+- [x] Human review confirms source faithfulness.
