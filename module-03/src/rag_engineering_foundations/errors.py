@@ -45,3 +45,11 @@ class RetrievalError(ValueError):
 
 class FaissOperationError(RetrievalError):
     """Investigate FAISS/application index-state consistency; not caller input."""
+
+
+class ChromaOperationError(RetrievalError):
+    """Verify Chroma SDK configuration, collection state, or provider responses."""
+
+
+class PineconeOperationError(RetrievalError):
+    """Verify Pinecone access, index readiness, or provider response integrity."""
