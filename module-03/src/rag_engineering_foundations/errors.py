@@ -1,5 +1,5 @@
-"""Content-safe failures at ingestion, chunking, vector, embedding, and retrieval
-boundaries.
+"""Content-safe failures at ingestion, chunking, vector, embedding, retrieval,
+query-transformation, and context-optimization boundaries.
 """
 
 
@@ -53,3 +53,19 @@ class ChromaOperationError(RetrievalError):
 
 class PineconeOperationError(RetrievalError):
     """Verify Pinecone access, index readiness, or provider response integrity."""
+
+
+class RetrievalWorkflowError(RetrievalError):
+    """Correct embedder/index dimension agreement or inconsistent merged results."""
+
+
+class QueryTransformationError(ValueError):
+    """Correct query text, transformation configuration, or expander output."""
+
+
+class QuerySignalError(QueryTransformationError):
+    """Repair the application-supplied query expander or its returned formulations."""
+
+
+class ContextOptimizationError(ValueError):
+    """Correct context-optimization configuration or candidate input shape."""
