@@ -1,4 +1,6 @@
-"""Content-safe failures at ingestion, chunking, vector, and embedding boundaries."""
+"""Content-safe failures at ingestion, chunking, vector, embedding, and retrieval
+boundaries.
+"""
 
 
 class IngestionError(ValueError):
@@ -35,3 +37,11 @@ class EmbeddingAvailabilityError(EmbeddingError):
 
 class EmbeddingResponseError(EmbeddingError):
     """Reject malformed provider output; check indices, dimensions, and numeric data."""
+
+
+class RetrievalError(ValueError):
+    """Correct retrieval contracts, index configuration, or query shape."""
+
+
+class FaissOperationError(RetrievalError):
+    """Investigate FAISS/application index-state consistency; not caller input."""
