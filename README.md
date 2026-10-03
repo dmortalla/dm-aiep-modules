@@ -20,7 +20,7 @@ Choose a provider and model, supply a session-only API credential, enter a promp
 | Module | Status |
 | --- | --- |
 | Module 1 - Python, APIs, and LLM SDK Foundations | Complete |
-| Module 2 - Prompt Engineering & Structured Output Systems | Implemented and verified; Story 10 human acceptance pending |
+| Module 2 - Prompt Engineering & Structured Output Systems | ✅ Complete |
 | Modules 3-12 | Planned |
 
 ## Module 2 - Prompt Engineering & Structured Output Systems
@@ -31,8 +31,8 @@ tool authorization, repeatable red-team simulation, and deterministic evaluation
 with separate PromptLayer observability. Its four Streamlit areas run locally
 using synthetic responses without accounts, credentials, or external services.
 
-Stories 1–9 are accepted. Story 10 documentation and completion evidence remain
-pending human acceptance on `feature/module-02`; Module 2 is not marked released.
+Stories 1–10 are accepted. Module 2 implementation, documentation, source
+traceability, automated verification, and human review are complete.
 OpenAI JSON Mode and PromptLayer have genuine adapters with mocked verification;
 offline receipts are not evidence of live output or remote storage.
 

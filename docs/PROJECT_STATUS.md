@@ -8,12 +8,12 @@
 | Accepted checkpoint | c7d7f2736a4bb6475aa329173ab2b12d83027098 (Module 2 Story 9) |
 | Current module | Module 2 |
 | Module 1 | Complete |
-| Module 2 | Implemented and verified; Stories 1–9 accepted; Story 10 human acceptance pending |
+| Module 2 | ✅ Complete — Stories 1–10 accepted |
 | Automated tests | 457 passing: Module 1 84, Module 2 373 (including 19 UI tests) |
 | UI | Streamlit |
 | Credential startup | Zero-key |
 | .env | Ignored and untracked |
-| Next module | Module 3, after Module 2 acceptance |
+| Next module | Module 3 |
 
 ## Module 2 completion evidence
 
@@ -27,7 +27,7 @@ Story 10 adds [usage/security documentation](../module-02/README.md), a
 [source traceability map](../module-02/docs/TRACEABILITY.md), and
 [verification evidence](../module-02/docs/VERIFICATION.md). The audited map covers
 28/28 frozen requirements; quality-gate results are recorded separately.
-This work is uncommitted and pending human acceptance, with no release/tag claim.
+Story 10 was accepted after semantic review and deterministic verification. Module 2 is complete; release/tag publication is handled separately.
 
 Module 2 needs no UI credentials. OpenAI and PromptLayer verification is mocked,
 not evidence of live provider output or remote storage. Evaluation and tool
@@ -74,6 +74,4 @@ authority remain independent of observability and lexical detection.
 
 ## Next Action
 
-Review Module 2 Story 10 documentation, 28-requirement traceability, and ordered
-verification evidence. Human acceptance is required before marking Module 2
-complete; staging, committing, release, and tag actions are outside this story.
+Complete Module 2 release publication, then begin Module 3 from the authoritative source requirements.

@@ -7,9 +7,8 @@ evaluation pipeline, with an offline Streamlit interface for inspecting their
 behavior. Application instructions, lower-trust content, untrusted provider
 output, and tool authority have separate boundaries.
 
-Stories 1–9 are accepted at `c7d7f2736a4bb6475aa329173ab2b12d83027098`.
-Story 10 documentation and verification are pending human acceptance on
-`feature/module-02`; this is not a release or tag.
+Stories 1–10 are accepted. Module 2 implementation, documentation, 28-requirement
+traceability, deterministic verification, runnable UI, and human review are complete.
 See [traceability](docs/TRACEABILITY.md), [verification](docs/VERIFICATION.md),
 the [frozen requirements](docs/SOURCE_REQUIREMENTS.md), and
 [architecture](docs/ARCHITECTURE.md).

@@ -5,7 +5,7 @@
 Audit date: 2026-10-03. Branch: `feature/module-02`.
 Accepted baseline: `c7d7f2736a4bb6475aa329173ab2b12d83027098` (Story 9).
 Initial working tree was clean. Story 10 changes documentation only and remains
-uncommitted, unstaged, and pending human acceptance. No release/tag is asserted.
+accepted after semantic review and deterministic verification. Release/tag publication is recorded separately.
 
 | Accepted story | Commit | Scope |
 | --- | --- | --- |
@@ -92,7 +92,7 @@ No accepted implementation defect was identified in the requirement audit.
    credential ownership; no remote storage is asserted.
 3. Check the four UI exercise descriptions against the accepted Story 9 UI.
 4. Review the gate evidence, protected-file integrity, and 28-ID coverage.
-5. Accept or reject Story 10 before changing Module 2's completion/release state.
+5. Story 10 was accepted before Module 2's completion state was changed.
 
 ## Automation/design observation
 

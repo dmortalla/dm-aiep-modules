@@ -2,11 +2,11 @@
 
 This map supplements the unchanged [frozen source](SOURCE_REQUIREMENTS.md) and
 [architecture](ARCHITECTURE.md). Their original `Pending` markers remain frozen;
-this artifact is the completion ledger. Story 10 requires human acceptance.
+this artifact is the completion ledger. Story 10 has completed human acceptance.
 
 Audit baseline: clean `feature/module-02` at
 `c7d7f2736a4bb6475aa329173ab2b12d83027098`. Stories 1–9 are accepted.
-The documentation deliverables complete the evidence package for review.
+The documentation deliverables complete the accepted Module 2 evidence package.
 
 Implementation links below point into the accepted core package. Verification
 links name concrete test functions; parameterized cases are included in the
