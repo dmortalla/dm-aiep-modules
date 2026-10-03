@@ -69,3 +69,23 @@ class QuerySignalError(QueryTransformationError):
 
 class ContextOptimizationError(ValueError):
     """Correct context-optimization configuration or candidate input shape."""
+
+
+class GenerationError(ValueError):
+    """Correct bounded generation input, output, or citation contracts."""
+
+
+class GenerationOperationError(GenerationError):
+    """Repair the injected generator or check its provider availability."""
+
+
+class RagPipelineError(ValueError):
+    """Correct RAG configuration or inconsistent cross-stage evidence."""
+
+
+class RagRetrievalError(RagPipelineError):
+    """Repair the injected embedding/index adapter or verify retrieval state."""
+
+
+class LangChainIntegrationError(RagPipelineError):
+    """Repair the LangChain runtime or its RAG sequencing boundary."""
