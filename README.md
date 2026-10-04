@@ -19,18 +19,18 @@ Choose a provider and model, supply a session-only API credential, enter a promp
 
 | Module | Status |
 | --- | --- |
-| Module 1 - Python, APIs, and LLM SDK Foundations | Complete |
+| Module 1 - Python, APIs, and LLM SDK Foundations | ✅ Complete |
 | Module 2 - Prompt Engineering & Structured Output Systems | ✅ Complete |
-| Module 3 - RAG Engineering Foundations | Complete / release-ready |
+| Module 3 - RAG Engineering Foundations | ✅ Complete |
 | Modules 4-12 | Planned |
 
 ## Module 3 - RAG Engineering Foundations
 
-Module 3 implementation and Story 1-10 engineering work are complete and
-release-ready for human review. The [28-requirement evidence map](module-03/docs/TRACEABILITY.md)
-and [verification record](module-03/docs/VERIFICATION.md) document the source
-reconciliation, deterministic gates, and supplied human approval of the Story 9 UI.
-No Module 3 Git release/tag is claimed; publication is a separate human action.
+Module 3 implementation and Stories 1-10 are complete, human-approved, released,
+and published as the annotated Git tag `v0.3.0-module-3`. The
+[28-requirement evidence map](module-03/docs/TRACEABILITY.md) and
+[verification record](module-03/docs/VERIFICATION.md) document the source
+reconciliation, deterministic gates, and human acceptance evidence.
 
 The nine-area Streamlit UI demonstrates ingestion and provenance, fixed/recursive/
 semantic chunking, embedding metrics, vector retrieval/stores, query transformation,
