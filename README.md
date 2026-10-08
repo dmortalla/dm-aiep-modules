@@ -1,7 +1,7 @@
 # AI Engineering Program Modules
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-1054%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-1844%20passing-brightgreen)
 ![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
 ![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991)
 ![Anthropic](https://img.shields.io/badge/LLM-Anthropic-D97757)
@@ -22,7 +22,44 @@ Choose a provider and model, supply a session-only API credential, enter a promp
 | Module 1 - Python, APIs, and LLM SDK Foundations | ✅ Complete |
 | Module 2 - Prompt Engineering & Structured Output Systems | ✅ Complete |
 | Module 3 - RAG Engineering Foundations | ✅ Complete |
-| Modules 4-12 | Planned |
+| Module 4 - Advanced RAG & Evaluation Systems | ✅ Complete |
+| Modules 5-12 | Planned |
+
+## Module 4 - Advanced RAG & Evaluation Systems
+
+Module 4 Stories 1-12 are complete and human-approved, and Module 4 is
+released under the annotated Git tag `v0.4.0-module-4`. All 29 source
+requirements are complete: 26 complete and 3 complete with approved
+limitations (LangSmith, LangFuse and Pinecone). The
+[29-requirement evidence map](module-04/docs/TRACEABILITY.md) and
+[verification record](module-04/docs/VERIFICATION.md) document the source
+reconciliation, deterministic gates, and the human Streamlit verification.
+
+The 12-section Streamlit evaluation dashboard runs the real hybrid pipeline:
+dynamic retrieval, BM25 and ChromaDB semantic retrieval fused by Reciprocal
+Rank Fusion, reranking, context filtering, retrieval caching, latency and cost
+telemetry, RAGAS faithfulness/context precision/relevancy, LangSmith tracing,
+LangFuse monitoring, and failure analysis. Module 4 is standalone and does not
+import Modules 1-3.
+
+Approved limitations: LangSmith and LangFuse use genuine SDK integrations
+verified offline; live remote delivery is outside the final Module 4 scope.
+Pinecone uses the genuine SDK boundary with deterministic offline
+verification; live service verification was not performed. Generation is
+extractive rather than LLM-generated, cost is an estimate rather than provider
+billing, semantic embeddings use the accepted local deterministic
+implementation, and dashboard RAGAS uses fixed judgments rather than a live
+model judge. Normal tests and default UI paths are credential-free.
+
+```powershell
+uv sync --locked
+uv run streamlit run module-04/app.py --browser.gatherUsageStats false
+uv run python module-04/examples/hybrid_rag_workflow.py
+```
+
+See the [frozen architecture](module-04/docs/ARCHITECTURE.md),
+[source requirements](module-04/docs/SOURCE_REQUIREMENTS.md), and
+[Story 12 closeout](module-04/docs/STORY_12.md).
 
 ## Module 3 - RAG Engineering Foundations
 

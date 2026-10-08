@@ -119,19 +119,42 @@ def test_integration_claims_preserve_verification_qualifications() -> None:
 
 
 def test_frozen_architecture_and_module_roadmap() -> None:
-    """Keep the accepted architecture blob and separate engineering/release state."""
+    """Keep the accepted architecture blob; require release claims to match a real tag.
+
+    Story 10 closeout left Module 3 "release-ready" with no tag claimed. A
+    later, separate release action created and published the release tag;
+    `fcd9c8e` (`docs: record module 3 release`) subsequently recorded that
+    release in the README. This test was updated accordingly so its
+    release-claim check verifies the claim
+    against a real, resolvable Git tag rather than re-asserting the
+    superseded pre-release wording.
+    """
     architecture = (DOCS / "ARCHITECTURE.md").read_text(encoding="utf-8").encode()
     header = f"blob {len(architecture)}\0".encode()
     assert hashlib.sha1(header + architecture).hexdigest() == ARCHITECTURE_BLOB
     assert architecture.decode() == _baseline("module-03/docs/ARCHITECTURE.md")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "| Module 3 - RAG Engineering Foundations | ✅ Complete |" in readme
+    # Module 4's release legitimately moved it out of the planned range.
     assert (
-        "| Module 3 - RAG Engineering Foundations | Complete / release-ready |"
-        in readme
+        "| Module 4 - Advanced RAG & Evaluation Systems | ✅ Complete |" in readme
     )
-    assert "| Modules 4-12 | Planned |" in readme
+    assert "| Modules 5-12 | Planned |" in readme
     assert "Modules 3-12 | Planned" not in readme
-    assert "No Module 3 Git release/tag is claimed" in readme
+    release_match = re.search(
+        r"published as the annotated Git tag `([^`]+)`", readme
+    )
+    assert release_match, "README must name the Git tag backing its release claim"
+    tag = release_match.group(1)
+    tags = subprocess.run(
+        ["git", "tag", "--list", tag],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    ).stdout.split()
+    assert tags == [tag], f"README claims tag {tag!r}, which does not exist"
     for heading in (
         "## Module 2 - Prompt Engineering & Structured Output Systems",
         "## Module 1 - Python, APIs, and LLM SDK Foundations",
