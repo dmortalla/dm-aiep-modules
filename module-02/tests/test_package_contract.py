@@ -15,6 +15,7 @@ PACKAGE_ROOTS = {
     "prompt_engineering_systems": "module-02/src",
     "rag_engineering_foundations": "module-03/src",
     "advanced_rag_evaluation": "module-04/src",
+    "ai_agent_engineering": "module-05/src",
 }
 
 
@@ -47,12 +48,14 @@ def test_pytest_covers_all_modules(pytestconfig: pytest.Config) -> None:
         "module-02/tests",
         "module-03/tests",
         "module-04/tests",
+        "module-05/tests",
     ]
     assert pytestconfig.getini("pythonpath") == [
         REPOSITORY_ROOT / "module-01/src",
         REPOSITORY_ROOT / "module-02/src",
         REPOSITORY_ROOT / "module-03/src",
         REPOSITORY_ROOT / "module-04/src",
+        REPOSITORY_ROOT / "module-05/src",
         REPOSITORY_ROOT / "module-01/tests",
     ]
     assert pytestconfig.getoption("importmode") == "importlib"

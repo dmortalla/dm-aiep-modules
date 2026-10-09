@@ -392,10 +392,62 @@ def test_row_builders_read_accepted_fields(demo) -> None:
     hybrid = app.hybrid_rows(result)
     assert len(hybrid) == len(result.retrieval.hybrid.candidates)
     single_leg = [row for row in hybrid if row["bm25_rank"] is None]
-    assert single_leg and all(row["bm25_score"] is None for row in single_leg)
+    assert all(row["bm25_score"] is None for row in single_leg)
     summary = app.leg_summary(result)
     assert sum(summary.values()) == len(hybrid)
     assert summary["semantic only"] == len(single_leg)
+
+    # Projection behavior for a semantic-only candidate is a deterministic
+    # row-builder contract; do not depend on Chroma returning a particular
+    # overlap pattern with BM25 for this assertion.
+    synthetic_candidate = type(
+        "SyntheticCandidate",
+        (),
+        {
+            "rank": 0,
+            "rrf_score": 0.1,
+            "lexical_rank": None,
+            "lexical_score": None,
+            "semantic_rank": 0,
+            "semantic_score": 0.9,
+            "chunk_id": "semantic-only",
+            "chunk": type(
+                "SyntheticChunk",
+                (),
+                {"content": "Deterministic semantic-only projection fixture."},
+            )(),
+            "in_lexical_leg": False,
+            "in_semantic_leg": True,
+        },
+    )()
+    synthetic_result = type(
+        "SyntheticResult",
+        (),
+        {
+            "retrieval": type(
+                "SyntheticRetrieval",
+                (),
+                {
+                    "hybrid": type(
+                        "SyntheticHybrid",
+                        (),
+                        {"candidates": (synthetic_candidate,)},
+                    )()
+                },
+            )()
+        },
+    )()
+
+    synthetic_row = app.hybrid_rows(synthetic_result)[0]
+    assert synthetic_row["bm25_rank"] is None
+    assert synthetic_row["bm25_score"] is None
+    assert synthetic_row["semantic_rank"] == 0
+    assert synthetic_row["semantic_score"] == 0.9
+    assert app.leg_summary(synthetic_result) == {
+        "both legs": 0,
+        "BM25 only": 0,
+        "semantic only": 1,
+    }
     citation = app.citation_rows(result)[0]
     item = result.answer.citations[0].item
     assert citation["rerank_score"] == item.rerank_score
