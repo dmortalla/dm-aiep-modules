@@ -11,7 +11,6 @@ from __future__ import annotations
 import ast
 import importlib
 import importlib.util
-import re
 import socket
 import sys
 from pathlib import Path
@@ -143,7 +142,8 @@ def test_labs_and_deliverables_map_to_existing_areas(page):
 # --- Evidence labels -----------------------------------------------------
 
 
-def test_evidence_labels_never_claim_live_verification(page):
+def test_evidence_labels_distinguish_live_from_non_live_verification(page):
+    """Evidence labels must distinguish implemented live paths from live evidence."""
     for key in ("run_langchain", "run_openai", "run_anthropic"):
         page.button(key=key).click().run()
         assert not page.exception
@@ -154,9 +154,21 @@ def test_evidence_labels_never_claim_live_verification(page):
     assert app.EVIDENCE_LANGCHAIN in text
     assert app.EVIDENCE_STAND_IN in text
 
-    for line in text.splitlines():
-        if re.search(r"\blive\b", line, re.IGNORECASE):
-            assert re.search(r"\b(not|no)\b", line, re.IGNORECASE), line
+    # PR-02 implements an explicitly user-initiated OpenAI live path, so the
+    # pre-PR-02 invariant that every use of "live" must say "not" or "no" is no
+    # longer valid. Evidence must instead state that LIVE evidence requires a
+    # real successful provider call and that Anthropic live remains deferred.
+    assert (
+        "labelled LIVE evidence only after a real user-initiated provider call "
+        "succeeds"
+    ) in text
+    assert "Anthropic live execution remains deferred to PR-03" in text
+
+    # Exercising the deterministic integration buttons above must still produce
+    # only their non-live evidence classes.
+    demo = page.session_state["integration_demo"]
+    assert demo.evidence != app.EVIDENCE_LIVE
+    assert "mock" in demo.evidence.lower()
 
 
 # --- Autonomous Agent ----------------------------------------------------

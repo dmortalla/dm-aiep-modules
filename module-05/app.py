@@ -132,11 +132,15 @@ EVIDENCE_GENUINE_MEM0 = (
     "Face hub offline. Not remote or cloud Mem0."
 )
 EVIDENCE_LIVE = (
-    "Live OpenAI / Anthropic execution is not enabled by PR-01. "
-    "Session credentials may be explicitly authorized below, but the existing "
-    "integration buttons remain deterministic mocked-transport demonstrations "
-    "until the live-provider paths are separately implemented and verified."
+    "Live provider execution is opt-in and potentially billable. OpenAI live "
+    "execution is implemented but is labelled LIVE evidence only after a real "
+    "user-initiated provider call succeeds. Anthropic live execution remains "
+    "deferred to PR-03. Deterministic mocked-transport demos remain available."
 )
+OPENAI_LIVE_MODEL = "gpt-5.6-terra"
+OPENAI_LIVE_MAX_REQUESTS = 3
+OPENAI_LIVE_MAX_TOOL_CALLS = 4
+OPENAI_LIVE_TIMEOUT_SECONDS = 20.0
 
 PROVIDER_CREDENTIALS = {
     "OpenAI": {
@@ -984,6 +988,78 @@ def run_openai_demo(goal: str, *, hostile: bool = False) -> IntegrationDemo:
     return demo
 
 
+
+def run_openai_live(goal: str, *, api_key: str) -> IntegrationDemo:
+    """Run one explicitly authorized, bounded live OpenAI tool-use workflow.
+
+    The credential is supplied by the Streamlit session caller and is used only
+    to construct the OpenAI client for this invocation. Provider output remains
+    untrusted and every proposed tool call must pass through the application-
+    owned ToolRegistry before execution.
+
+    Args:
+        goal: User goal sent to the live OpenAI Responses API.
+        api_key: Explicitly authorized session credential.
+
+    Returns:
+        Visible integration evidence with the provider result or a sanitized
+        failure classification.
+
+    Raises:
+        ValueError: If the goal or credential is empty.
+    """
+    if not isinstance(goal, str) or not goal.strip():
+        raise ValueError("The live OpenAI goal must not be empty.")
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise ValueError("OpenAI has no authorized session credential.")
+
+    executed: list[str] = []
+    registry = observed_registry(executed.append)
+    demo = IntegrationDemo(
+        integration="OpenAI Function Calling - LIVE",
+        evidence=(
+            "OpenAI live mode was explicitly requested. Successful LIVE provider "
+            "evidence has not yet been established for this run."
+        ),
+        tools_sent=list(response_tools(registry)),
+        requests=[],
+        executed=executed,
+    )
+
+    try:
+        client = OpenAI(
+            api_key=api_key,
+            max_retries=0,
+            timeout=OPENAI_LIVE_TIMEOUT_SECONDS,
+        )
+        result = run_openai_function_calling(
+            client,
+            registry,
+            model=OPENAI_LIVE_MODEL,
+            user_input=goal,
+            max_requests=OPENAI_LIVE_MAX_REQUESTS,
+            max_tool_calls=OPENAI_LIVE_MAX_TOOL_CALLS,
+        )
+        demo.output_text = result.output_text
+        demo.evidence = (
+            "LIVE OpenAI evidence: a real user-initiated provider workflow "
+            "completed successfully through the bounded application-owned "
+            "ToolRegistry path."
+        )
+    except (
+        *DENIAL_ERRORS,
+        OpenAIToolCallError,
+        OpenAIToolLoopBudgetError,
+    ) as exc:
+        demo.error = (
+            f"{type(exc).__name__}: request stopped by application controls."
+        )
+    except Exception as exc:
+        # Remote exception text is deliberately not reflected into the UI.
+        # Provider errors may contain sensitive request metadata.
+        demo.error = f"{type(exc).__name__}: live OpenAI request failed safely."
+
+    return demo
 def _anthropic_client(
     first_calls: list[PlannedCall],
     requests: list[Any],
@@ -1594,10 +1670,15 @@ def _render_integration_result(demo: IntegrationDemo) -> None:
     st.markdown(f"**{demo.integration}**")
     st.caption(demo.evidence)
     if demo.error is not None:
-        st.error(
-            "Denied before any tool ran: the whole proposal batch is validated "
-            "by ToolRegistry first."
-        )
+        if demo.executed:
+            st.error(
+                "Execution stopped safely after one or more allowlisted tools ran. "
+                "No further provider or tool execution was permitted."
+            )
+        else:
+            st.error(
+                "Execution stopped safely before any tool ran."
+            )
         st.code(demo.error, language=None)
     else:
         st.success("Completed")
@@ -1606,12 +1687,20 @@ def _render_integration_result(demo: IntegrationDemo) -> None:
     st.json({"executed": demo.executed})
     with st.expander("Tool schemas sent (from the registry allowlist)"):
         st.json(demo.tools_sent)
-    label = (
-        "Agent messages" if demo.integration == "LangChain Agents" else
-        "Exact request bodies the SDK sent (to the mock transport)"
-    )
+    if demo.integration == "LangChain Agents":
+        label = "Agent messages"
+    elif demo.integration.endswith("- LIVE"):
+        label = "Live request evidence"
+    else:
+        label = "Exact request bodies the SDK sent (to the mock transport)"
     with st.expander(label):
-        st.json(demo.requests)
+        if demo.integration.endswith("- LIVE"):
+            st.text(
+                "Live request bodies are intentionally not retained or displayed. "
+                "This avoids reflecting credentials or sensitive request metadata."
+            )
+        else:
+            st.json(demo.requests)
 
 
 def _render_integrations_area() -> None:
@@ -1699,6 +1788,12 @@ def _render_integrations_area() -> None:
     goal = GOAL_PRESETS[preset]
     hostile = behaviour != "Well-behaved"
 
+    st.caption(
+        "Demo buttons below are deterministic/mock-backed and remain zero-cost. "
+        "The separate OpenAI LIVE button performs a real provider request only "
+        "when you press it and may consume your OpenAI quota."
+    )
+
     columns = st.columns(3)
     if columns[0].button("Run LangChain agent", key="run_langchain"):
         st.session_state["integration_demo"] = run_langchain_demo(goal)
@@ -1707,6 +1802,34 @@ def _render_integrations_area() -> None:
     if columns[2].button("Run Anthropic tool use", key="run_anthropic"):
         st.session_state["integration_demo"] = run_anthropic_demo(
             goal, hostile=hostile
+        )
+
+    openai_key = authorized_session_key("OpenAI")
+    st.markdown("#### OpenAI Live")
+    st.caption(
+        f"Application-owned model: {OPENAI_LIVE_MODEL}. "
+        f"Maximum provider requests: {OPENAI_LIVE_MAX_REQUESTS}; "
+        f"maximum tool calls: {OPENAI_LIVE_MAX_TOOL_CALLS}. "
+        "Pressing the button below can incur provider cost."
+    )
+    if st.button(
+        "Run OpenAI LIVE - may incur cost",
+        key="run_openai_live",
+        type="primary",
+        disabled=openai_key is None,
+    ):
+        if openai_key is None:
+            st.error("Authorize an OpenAI credential for this session first.")
+        else:
+            st.session_state["integration_demo"] = run_openai_live(
+                goal,
+                api_key=openai_key,
+            )
+
+    if openai_key is None:
+        st.caption(
+            "OpenAI LIVE is disabled until an OpenAI credential is explicitly "
+            "authorized for this browser session."
         )
 
     demo: IntegrationDemo | None = st.session_state.get("integration_demo")

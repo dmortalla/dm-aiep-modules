@@ -53,9 +53,22 @@ The released application does not implement this path.
 
 ### PR-02 — Genuine live OpenAI execution
 
-The OpenAI SDK integration is exercised through mocked HTTP transport, but the
-released application does not provide an explicitly authorized live execution
-path using a user-supplied session credential.
+Implemented on the production-readiness feature branch. The public application
+now provides a separate, explicitly user-initiated OpenAI live path using the
+session-only credential boundary introduced by PR-01. The live path constructs
+the genuine OpenAI SDK client only after the live button is pressed, disables
+SDK retries, applies a finite request timeout, and reuses the existing bounded
+`run_openai_function_calling` loop and application-owned `ToolRegistry`.
+
+The deterministic mocked-transport OpenAI demonstration remains separate and
+zero-cost. Normal automated tests replace the OpenAI constructor and provider
+runner with local stand-ins and therefore make no remote provider calls.
+
+Implementation alone is **not live provider evidence**. The UI records an
+attempted live run separately from successful LIVE evidence, and failure
+messaging distinguishes failures before tool execution from failures after an
+allowlisted tool has already run. A LIVE claim still requires a successful real
+OpenAI request under explicit human authorization, as governed by PR-06.
 
 ### PR-03 — Genuine live Anthropic execution
 
