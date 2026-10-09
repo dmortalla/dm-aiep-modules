@@ -1,7 +1,7 @@
 # AI Engineering Program Modules
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-1844%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-2069%20passing-brightgreen)
 ![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
 ![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991)
 ![Anthropic](https://img.shields.io/badge/LLM-Anthropic-D97757)
@@ -24,9 +24,13 @@ The Engineering Roadmap below records the verified completion state of each modu
 | Module 3 - RAG Engineering Foundations | ✅ Complete |
 | Module 4 - Advanced RAG & Evaluation Systems | ✅ Complete |
 | Module 5 - AI Agent Engineering | ✅ Complete |
-| Modules 6-12 | Planned |
+| Module 6 | Planned |
 
 ## Module 5 - AI Agent Engineering
+
+### Start here: hands-on application guide
+
+New to the module? **[Launch the live Streamlit application](https://dm-aiep-module-05.streamlit.app/)**, then use the **[Module 5 Streamlit User Guide](module-05/docs/USER_GUIDE.md)** for four end-to-end walkthroughs with ready-to-use sample inputs, expected results, security and reliability demonstrations, and a 10-minute reviewer path through the application.
 
 Module 5 is complete, human-approved, and released under the annotated Git tag
 `v0.5.0-module-5`. All 30 source requirements are traced to implementation,
@@ -43,9 +47,11 @@ Memory, Tool Integrations, and Reliability workflows. The ordinary UI is
 credential-free and uses local/deterministic execution with mocked provider
 transports; genuine local Mem0 has a separate offline launch path.
 
-**Repository:** [`module-05/`](module-05/)
+**Module:** [`module-05/`](module-05/)
 **Documentation:** [`module-05/README.md`](module-05/README.md)
-**Streamlit UI:** [`module-05/app.py`](module-05/app.py)
+**User Guide:** [`module-05/docs/USER_GUIDE.md`](module-05/docs/USER_GUIDE.md)
+**Live Demo:** [Launch Streamlit app](https://dm-aiep-module-05.streamlit.app/)
+**Streamlit source:** [`module-05/app.py`](module-05/app.py)
 ## Module 4 - Advanced RAG & Evaluation Systems
 
 Module 4 Stories 1-12 are complete and human-approved, and Module 4 is
