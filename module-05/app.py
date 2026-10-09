@@ -132,15 +132,21 @@ EVIDENCE_GENUINE_MEM0 = (
     "Face hub offline. Not remote or cloud Mem0."
 )
 EVIDENCE_LIVE = (
-    "Live provider execution is opt-in and potentially billable. OpenAI live "
-    "execution is implemented but is labelled LIVE evidence only after a real "
-    "user-initiated provider call succeeds. Anthropic live execution remains "
-    "deferred to PR-03. Deterministic mocked-transport demos remain available."
+    "Live provider execution is opt-in and potentially billable. OpenAI and "
+    "Anthropic live execution paths are implemented, but a run is labelled LIVE "
+    "evidence only after the explicitly user-initiated provider workflow succeeds. "
+    "Deterministic mocked-transport demos remain available."
 )
 OPENAI_LIVE_MODEL = "gpt-5.6-terra"
 OPENAI_LIVE_MAX_REQUESTS = 3
 OPENAI_LIVE_MAX_TOOL_CALLS = 4
 OPENAI_LIVE_TIMEOUT_SECONDS = 20.0
+
+ANTHROPIC_LIVE_MODEL = "claude-sonnet-5-5"
+ANTHROPIC_LIVE_MAX_REQUESTS = 3
+ANTHROPIC_LIVE_MAX_TOOL_CALLS = 4
+ANTHROPIC_LIVE_MAX_OUTPUT_TOKENS = 1024
+ANTHROPIC_LIVE_TIMEOUT_SECONDS = 20.0
 
 PROVIDER_CREDENTIALS = {
     "OpenAI": {
@@ -1060,6 +1066,70 @@ def run_openai_live(goal: str, *, api_key: str) -> IntegrationDemo:
         demo.error = f"{type(exc).__name__}: live OpenAI request failed safely."
 
     return demo
+def run_anthropic_live(goal: str, *, api_key: str) -> IntegrationDemo:
+    """Run one explicitly authorized bounded Anthropic live workflow.
+
+    Args:
+        goal: Untrusted user goal supplied to the provider workflow.
+        api_key: Session-only credential explicitly authorized by the user.
+
+    Returns:
+        Integration evidence with provider output and allowlisted tool records.
+
+    Raises:
+        ValueError: If the goal or authorized credential is empty.
+    """
+    if not goal.strip():
+        raise ValueError("A non-empty goal is required for Anthropic live execution.")
+    if not api_key.strip():
+        raise ValueError(
+            "An explicitly authorized Anthropic session credential is required."
+        )
+
+    executed: list[str] = []
+    registry = observed_registry(executed.append)
+    demo = IntegrationDemo(
+        integration="Anthropic Tool Use - LIVE",
+        evidence=(
+            "Anthropic live mode was explicitly requested. Successful LIVE provider "
+            "evidence has not yet been established for this run."
+        ),
+        output_text="",
+        requests=[],
+        executed=executed,
+        tools_sent=registry.names(),
+    )
+
+    try:
+        client = Anthropic(
+            api_key=api_key,
+            max_retries=0,
+            timeout=ANTHROPIC_LIVE_TIMEOUT_SECONDS,
+        )
+        result = run_anthropic_tool_use(
+            client,
+            registry,
+            model=ANTHROPIC_LIVE_MODEL,
+            user_input=goal,
+            max_tokens=ANTHROPIC_LIVE_MAX_OUTPUT_TOKENS,
+            max_requests=ANTHROPIC_LIVE_MAX_REQUESTS,
+            max_tool_calls=ANTHROPIC_LIVE_MAX_TOOL_CALLS,
+        )
+        demo.output_text = result.output_text
+        demo.evidence = (
+            "LIVE Anthropic evidence: a real user-initiated provider workflow "
+            "completed successfully through the bounded application-owned "
+            "ToolRegistry path."
+        )
+    except (UnknownToolError, ToolValidationError) as exc:
+        demo.error = f"{type(exc).__name__}: tool proposal denied safely."
+    except Exception as exc:
+        # Remote exception text is deliberately excluded from the UI because
+        # provider errors may contain sensitive request metadata.
+        demo.error = f"{type(exc).__name__}: live Anthropic request failed safely."
+
+    return demo
+
 def _anthropic_client(
     first_calls: list[PlannedCall],
     requests: list[Any],
@@ -1790,8 +1860,8 @@ def _render_integrations_area() -> None:
 
     st.caption(
         "Demo buttons below are deterministic/mock-backed and remain zero-cost. "
-        "The separate OpenAI LIVE button performs a real provider request only "
-        "when you press it and may consume your OpenAI quota."
+        "The separate OpenAI LIVE and Anthropic LIVE buttons perform real provider "
+        "requests only when you press them and may consume your provider quota."
     )
 
     columns = st.columns(3)
@@ -1830,6 +1900,29 @@ def _render_integrations_area() -> None:
         st.caption(
             "OpenAI LIVE is disabled until an OpenAI credential is explicitly "
             "authorized for this browser session."
+        )
+
+    anthropic_live_key = authorized_session_key("Anthropic")
+    st.markdown("#### Anthropic Live")
+    st.caption(
+        f"Application-owned model: {ANTHROPIC_LIVE_MODEL}. "
+        f"Maximum provider requests: {ANTHROPIC_LIVE_MAX_REQUESTS}; "
+        f"maximum tool calls: {ANTHROPIC_LIVE_MAX_TOOL_CALLS}; "
+        f"maximum output tokens/request: {ANTHROPIC_LIVE_MAX_OUTPUT_TOKENS}. "
+        "Pressing the button below can incur provider cost."
+    )
+    if st.button(
+        "Run Anthropic LIVE - may incur cost",
+        key="run_anthropic_live",
+        type="primary",
+        disabled=anthropic_live_key is None,
+    ):
+        st.session_state["integration_demo"] = run_anthropic_live(
+            goal,
+            api_key=anthropic_live_key or "",
+        )
+        st.caption(
+            "Live request bodies are intentionally not retained or displayed."
         )
 
     demo: IntegrationDemo | None = st.session_state.get("integration_demo")

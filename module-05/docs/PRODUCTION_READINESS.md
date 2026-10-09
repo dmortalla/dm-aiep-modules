@@ -53,8 +53,8 @@ The released application does not implement this path.
 
 ### PR-02 — Genuine live OpenAI execution
 
-Implemented on the production-readiness feature branch. The public application
-now provides a separate, explicitly user-initiated OpenAI live path using the
+Implemented on the production-readiness feature branch. The feature-branch
+application provides a separate, explicitly user-initiated OpenAI live path using the
 session-only credential boundary introduced by PR-01. The live path constructs
 the genuine OpenAI SDK client only after the live button is pressed, disables
 SDK retries, applies a finite request timeout, and reuses the existing bounded
@@ -72,9 +72,21 @@ OpenAI request under explicit human authorization, as governed by PR-06.
 
 ### PR-03 — Genuine live Anthropic execution
 
-The Anthropic SDK integration is exercised through mocked HTTP transport, but
-the released application does not provide an explicitly authorized live
-execution path using a user-supplied session credential.
+Implemented on the production-readiness feature branch. The feature-branch
+application provides a separate, explicitly user-initiated Anthropic live path
+using the session-only credential boundary introduced by PR-01. The live path constructs
+the genuine Anthropic SDK client only after the live button is pressed, disables
+SDK retries, applies a finite request timeout, and reuses the existing bounded
+`run_anthropic_tool_use` loop and application-owned `ToolRegistry`.
+
+The deterministic mocked-transport Anthropic demonstration remains separate and
+zero-cost. Normal automated tests replace the Anthropic constructor and provider
+runner with local stand-ins and therefore make no remote provider calls.
+
+Implementation alone is **not live provider evidence**. The UI records an
+attempted live run separately from successful LIVE evidence. A LIVE claim still
+requires a successful real Anthropic request under explicit human authorization,
+as governed by PR-06.
 
 ### PR-04 — Integrated reliability
 

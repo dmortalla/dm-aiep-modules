@@ -154,15 +154,15 @@ def test_evidence_labels_distinguish_live_from_non_live_verification(page):
     assert app.EVIDENCE_LANGCHAIN in text
     assert app.EVIDENCE_STAND_IN in text
 
-    # PR-02 implements an explicitly user-initiated OpenAI live path, so the
-    # pre-PR-02 invariant that every use of "live" must say "not" or "no" is no
-    # longer valid. Evidence must instead state that LIVE evidence requires a
-    # real successful provider call and that Anthropic live remains deferred.
+    # PR-03 implements explicitly user-initiated OpenAI and Anthropic live paths.
+    # Implementation is not itself LIVE provider evidence: a run earns that label
+    # only after its explicitly user-initiated provider workflow succeeds.
+    assert "OpenAI and Anthropic live execution paths are implemented" in text
     assert (
-        "labelled LIVE evidence only after a real user-initiated provider call "
-        "succeeds"
+        "a run is labelled LIVE evidence only after the explicitly user-initiated "
+        "provider workflow succeeds"
     ) in text
-    assert "Anthropic live execution remains deferred to PR-03" in text
+    assert "Anthropic live execution remains deferred to PR-03" not in text
 
     # Exercising the deterministic integration buttons above must still produce
     # only their non-live evidence classes.
