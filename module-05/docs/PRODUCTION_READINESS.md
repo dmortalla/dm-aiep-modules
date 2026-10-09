@@ -141,8 +141,27 @@ fallback paths entered; reconciliation does not double-count either field.
 Deterministic, mocked, local, and live evidence must remain explicitly
 distinguished.
 
-A live provider claim may be made only after an actual provider call succeeds
-under the approved live-test or user-authorized UI path.
+The production-readiness feature branch now includes two independent automated
+live-provider smoke tests. Each provider test is eligible only when
+`RUN_LIVE_LLM_TESTS=1` and that provider's credential is present. Credential
+presence alone cannot enable either test, and normal test execution remains
+zero-cost.
+
+The smoke tests reuse the existing bounded OpenAI and Anthropic live paths and
+require successful execution through the application-owned calculator tool.
+No separate provider implementation or authority path is introduced.
+
+The deterministic gate implementation is now supplemented by successful
+human-authorized live verification. OpenAI and Anthropic were exercised
+independently and sequentially through their existing bounded live paths;
+both genuine provider workflows completed successfully through the
+application-owned calculator tool.
+
+The verification used the explicit `RUN_LIVE_LLM_TESTS=1` process-scoped
+opt-in, restored the gate afterward, disclosed no credential values, and made
+no repository mutation. This evidence supports genuine LIVE provider
+functionality for both OpenAI and Anthropic; it does not by itself constitute
+deployment verification or a final production-ready claim.
 
 ## Credential and Authority Invariants
 
