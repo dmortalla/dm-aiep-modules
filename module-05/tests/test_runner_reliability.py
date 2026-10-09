@@ -1,11 +1,20 @@
 """Tests for reliability integrated into the primary ReAct runner."""
 
+from collections.abc import Mapping
+from typing import Any
+
 import pytest
 from ai_agent_engineering.agent.react import AgentDecision, DecisionKind
 from ai_agent_engineering.agent.runner import run_agent
 from ai_agent_engineering.models import AgentRunState, AgentStatus
 from ai_agent_engineering.resilience import RetryExhaustedError
-from ai_agent_engineering.tools import UnknownToolError, build_default_registry
+from ai_agent_engineering.tools import (
+    ToolAuthorizationError,
+    ToolDefinition,
+    ToolRegistry,
+    UnknownToolError,
+    build_default_registry,
+)
 
 
 def _finish(message: str) -> AgentDecision:
@@ -193,5 +202,197 @@ def test_fallback_decision_cannot_bypass_tool_registry() -> None:
 
     assert state.retry_count == 2
     assert state.fallback_history == ["decision_provider"]
+    assert state.selected_tools == []
+    assert state.observations == []
+
+def test_retry_exhaustion_reconciles_failed_state() -> None:
+    """Exhausted bounded retry becomes FAILED without double counting."""
+    state = AgentRunState(goal="Reconcile exhausted retries.")
+
+    def unavailable(_: AgentRunState) -> AgentDecision:
+        raise ConnectionError("still unavailable")
+
+    with pytest.raises(RetryExhaustedError) as captured:
+        run_agent(state, build_default_registry(), unavailable)
+
+    assert captured.value.attempts == 3
+    assert isinstance(captured.value.__cause__, ConnectionError)
+    assert state.status is AgentStatus.FAILED
+    assert state.retry_count == 2
+    assert state.terminal_failure == "Runtime execution failed safely."
+
+
+def test_nonretryable_decision_failure_reconciles_failed_state() -> None:
+    """A non-retryable decision failure terminates as FAILED."""
+    calls = 0
+    state = AgentRunState(goal="Reconcile one failed decision.")
+
+    def invalid(_: AgentRunState) -> AgentDecision:
+        nonlocal calls
+        calls += 1
+        raise ValueError("provider-contract-detail")
+
+    with pytest.raises(ValueError, match="provider-contract-detail"):
+        run_agent(state, build_default_registry(), invalid)
+
+    assert calls == 1
+    assert state.status is AgentStatus.FAILED
+    assert state.retry_count == 0
+    assert state.terminal_failure == "Runtime execution failed safely."
+    assert "provider-contract-detail" not in state.terminal_failure
+
+
+def test_ambiguous_timeout_is_failed_not_timed_out() -> None:
+    """A plain synchronous TimeoutError cannot imply cancellation."""
+    state = AgentRunState(goal="Keep timeout evidence truthful.")
+
+    def ambiguous(_: AgentRunState) -> AgentDecision:
+        raise TimeoutError("completion status unknown")
+
+    with pytest.raises(TimeoutError, match="completion status unknown"):
+        run_agent(state, build_default_registry(), ambiguous)
+
+    assert state.status is AgentStatus.FAILED
+    assert state.retry_count == 0
+    assert state.terminal_failure == "Runtime execution failed safely."
+
+
+def test_failed_fallback_reconciles_state_and_preserves_history() -> None:
+    """Fallback failure is FAILED while path-entry evidence remains canonical."""
+    state = AgentRunState(goal="Reconcile fallback failure.")
+
+    def unavailable(_: AgentRunState) -> AgentDecision:
+        raise ConnectionError("primary unavailable")
+
+    def failed_fallback(_: AgentRunState) -> AgentDecision:
+        raise ValueError("fallback-detail")
+
+    with pytest.raises(ValueError, match="fallback-detail"):
+        run_agent(
+            state,
+            build_default_registry(),
+            unavailable,
+            fallback_decide=failed_fallback,
+        )
+
+    assert state.status is AgentStatus.FAILED
+    assert state.retry_count == 2
+    assert state.fallback_history == ["decision_provider"]
+    assert state.terminal_failure == "Runtime execution failed safely."
+
+
+def test_hostile_fallback_reconciles_failed_state() -> None:
+    """Denied fallback authority becomes FAILED without executing a tool."""
+    state = AgentRunState(goal="Reject fallback authority.")
+
+    def unavailable(_: AgentRunState) -> AgentDecision:
+        raise ConnectionError("primary unavailable")
+
+    def forged(_: AgentRunState) -> AgentDecision:
+        return AgentDecision(
+            kind=DecisionKind.TOOL,
+            rationale="Attempt unauthorized execution.",
+            tool_name="shell",
+            arguments={"command": "whoami"},
+        )
+
+    with pytest.raises(UnknownToolError):
+        run_agent(
+            state,
+            build_default_registry(),
+            unavailable,
+            fallback_decide=forged,
+        )
+
+    assert state.status is AgentStatus.FAILED
+    assert state.retry_count == 2
+    assert state.fallback_history == ["decision_provider"]
+    assert state.selected_tools == []
+    assert state.observations == []
+
+
+def test_typed_timeout_from_sync_provider_is_failed_not_timed_out() -> None:
+    """An exception type alone cannot prove synchronous cancellation."""
+    from ai_agent_engineering.resilience import OperationTimeoutError
+
+    state = AgentRunState(goal="Keep synchronous timeout evidence truthful.")
+
+    def synchronous_timeout(_: AgentRunState) -> AgentDecision:
+        raise OperationTimeoutError("deadline expired")
+
+    with pytest.raises(OperationTimeoutError, match="deadline expired"):
+        run_agent(
+            state,
+            build_default_registry(),
+            synchronous_timeout,
+            decision_retry_on=(ConnectionError,),
+        )
+
+    assert state.status is AgentStatus.FAILED
+    assert state.retry_count == 0
+    assert state.terminal_failure == "Runtime execution failed safely."
+
+def test_tool_authorization_denial_reconciles_failed_state() -> None:
+    """Authorization denial becomes FAILED without handler execution."""
+    called = False
+
+    def blocked_handler(arguments: Mapping[str, Any]) -> str:
+        nonlocal called
+        called = True
+        return str(arguments)
+
+    blocked = ToolDefinition(
+        name="blocked",
+        description="Deliberately unauthorized test tool.",
+        input_schema={"type": "object"},
+        handler=blocked_handler,
+        authorized=False,
+    )
+    registry = ToolRegistry((blocked,))
+    state = AgentRunState(goal="Reject unauthorized execution.")
+
+    def propose_blocked(_: AgentRunState) -> AgentDecision:
+        return AgentDecision(
+            kind=DecisionKind.TOOL,
+            rationale="Propose an application-denied tool.",
+            tool_name="blocked",
+            arguments={},
+        )
+
+    with pytest.raises(ToolAuthorizationError):
+        run_agent(state, registry, propose_blocked)
+
+    assert called is False
+    assert state.status is AgentStatus.FAILED
+    assert state.terminal_failure == "Runtime execution failed safely."
+    assert state.selected_tools == []
+    assert state.observations == []
+
+
+def test_tool_handler_failure_reconciles_failed_state() -> None:
+    """A validated tool-handler failure terminates as FAILED."""
+    state = AgentRunState(goal="Exercise deterministic handler failure.")
+
+    def divide_by_zero(_: AgentRunState) -> AgentDecision:
+        return AgentDecision(
+            kind=DecisionKind.TOOL,
+            rationale="Exercise the calculator failure boundary.",
+            tool_name="calculator",
+            arguments={
+                "operation": "divide",
+                "left": 10,
+                "right": 0,
+            },
+        )
+
+    with pytest.raises(ValueError, match="Division by zero"):
+        run_agent(
+            state,
+            build_default_registry(),
+            divide_by_zero,
+        )
+
+    assert state.status is AgentStatus.FAILED
+    assert state.terminal_failure == "Runtime execution failed safely."
     assert state.selected_tools == []
     assert state.observations == []

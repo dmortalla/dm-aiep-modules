@@ -1,4 +1,4 @@
-﻿"""Tests for bounded ReAct execution."""
+"""Tests for bounded ReAct execution."""
 
 import pytest
 from ai_agent_engineering.agent.react import AgentDecision, DecisionKind
@@ -133,7 +133,8 @@ def test_unknown_tool_proposal_cannot_gain_authority() -> None:
             forge_tool,
         )
 
-    assert state.status is AgentStatus.TOOL_SELECTED
+    assert state.status is AgentStatus.FAILED
+    assert state.terminal_failure == "Runtime execution failed safely."
     assert state.selected_tools == []
     assert state.observations == []
 
@@ -165,6 +166,8 @@ def test_invalid_tool_arguments_never_execute() -> None:
             inject_argument,
         )
 
+    assert state.status is AgentStatus.FAILED
+    assert state.terminal_failure == "Runtime execution failed safely."
     assert state.selected_tools == []
     assert state.observations == []
 

@@ -29,6 +29,21 @@ class AgentExecutionError(RuntimeError):
     """Raised when bounded agent execution cannot safely continue."""
 
 
+def _reconcile_runtime_failure(state: AgentRunState) -> None:
+    """Reconcile an escaped synchronous failure with application-owned state.
+
+    Exception detail is deliberately excluded from terminal_failure because
+    provider or tool errors may contain sensitive remote/request metadata.
+    The synchronous runner cannot prove genuine cancellation from an exception
+    type alone, so escaped failures reconcile to FAILED.
+
+    Args:
+        state: Active application-owned run state.
+    """
+    transition(state, AgentStatus.FAILED)
+    state.terminal_failure = "Runtime execution failed safely."
+
+
 def _prepare_state(state: AgentRunState) -> None:
     """Advance a fresh state to its reasoning phase."""
     if state.status is not AgentStatus.RECEIVED:
@@ -151,13 +166,17 @@ def run_agent(
             state.terminal_failure = "Execution-step budget exhausted."
             break
 
-        decision = _decide_with_reliability(
-            state,
-            decide,
-            fallback_decide=fallback_decide,
-            max_attempts=decision_max_attempts,
-            retry_on=decision_retry_on,
-        )
+        try:
+            decision = _decide_with_reliability(
+                state,
+                decide,
+                fallback_decide=fallback_decide,
+                max_attempts=decision_max_attempts,
+                retry_on=decision_retry_on,
+            )
+        except Exception:
+            _reconcile_runtime_failure(state)
+            raise
 
         if not isinstance(decision, AgentDecision):
             transition(state, AgentStatus.FAILED)
@@ -187,15 +206,23 @@ def run_agent(
         assert decision.tool_name is not None
         assert decision.arguments is not None
 
-        tool, validated = registry.validate_call(
-            decision.tool_name,
-            decision.arguments,
-        )
+        try:
+            tool, validated = registry.validate_call(
+                decision.tool_name,
+                decision.arguments,
+            )
+        except Exception:
+            _reconcile_runtime_failure(state)
+            raise
 
         transition(state, AgentStatus.VALIDATED)
         transition(state, AgentStatus.EXECUTING)
 
-        observation: Any = tool.handler(validated)
+        try:
+            observation: Any = tool.handler(validated)
+        except Exception:
+            _reconcile_runtime_failure(state)
+            raise
 
         state.selected_tools.append(tool.name)
         state.observations.append(

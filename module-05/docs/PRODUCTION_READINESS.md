@@ -117,11 +117,25 @@ failures escape the runner.
 
 ### PR-05 — Runtime state reconciliation
 
-The released `run_agent` path does not fully populate the reliability-related
-state already represented by the architecture, including retry/fallback
-evidence, and does not exercise the timeout lifecycle during normal integrated
-execution.
+Implemented on the production-readiness feature branch. Escaped decision,
+authorization, validation, fallback, and tool-execution failures are now
+reconciled with application-owned terminal lifecycle state before the original
+exception continues to the caller.
 
+`FAILED` represents escaped failure from the current synchronous runner.
+`TIMED_OUT` remains reserved for a future genuinely cancellable integrated
+boundary. Neither `TimeoutError` nor `OperationTimeoutError` raised through
+the synchronous decision/tool path is treated as proof that cancellation
+actually occurred.
+
+`terminal_failure` uses normalized application-owned descriptions rather than
+copying arbitrary provider or tool exception text. `ToolRegistry` authority,
+bounded retry/fallback behavior, and original exception contracts remain
+unchanged.
+
+`retry_count` canonically records retries consumed beyond each initial
+preferred-provider attempt. `fallback_history` records application-owned
+fallback paths entered; reconciliation does not double-count either field.
 ### PR-06 — Live evidence
 
 Deterministic, mocked, local, and live evidence must remain explicitly
