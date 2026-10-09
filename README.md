@@ -9,11 +9,11 @@
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
 ![Postman](https://img.shields.io/badge/API%20Testing-Postman-FF6C37)
 
-Source-faithful implementations of the AI Engineering Program, organized as independently demonstrable engineering modules.
+Source-faithful implementations of Modules 1-6 of the AI Engineering Program, organized as independently demonstrable engineering modules.
 
-**Module 1 is a multi-provider LLM client that lets users interact with OpenAI, Anthropic, or Gemini through one unified interface while demonstrating production-oriented API and asynchronous Python engineering patterns.**
+This repository progresses from LLM API and asynchronous Python foundations through prompt engineering, structured outputs, retrieval-augmented generation, advanced RAG evaluation, AI agent engineering, and the final Module 6 scope. Each module remains standalone while applying production-oriented engineering practices, automated verification, source traceability, and an appropriate runnable demonstration interface.
 
-Choose a provider and model, supply a session-only API credential, enter a prompt, and interact with the selected LLM through the Streamlit interface. Underneath that simple workflow, the module demonstrates provider abstraction, async execution, streaming, REST/API handling, retries, rate-limit handling, token-cost estimation, queue-based execution, event-driven workflows, structured response parsing, logging, and safe credential handling.
+The Engineering Roadmap below records the verified completion state of each module. Detailed module documentation preserves implementation, testing, limitations, release evidence, and source-requirement traceability for each completed system.
 
 ## Engineering Roadmap
 
