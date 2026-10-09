@@ -12,6 +12,7 @@ The module is standalone. It imports nothing from Modules 1-4.
 | [`docs/SOURCE_REQUIREMENTS.md`](docs/SOURCE_REQUIREMENTS.md) | The authoritative course source: 30 requirements |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | The approved, frozen design, and (section 28) how the build differs from it |
 | [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) | Each requirement mapped to code, tests and evidence class |
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | Hands-on walkthroughs, sample inputs, expected results, and a 10-minute reviewer demo |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | Story-by-story evidence and the final gate results |
 
 ## Status
