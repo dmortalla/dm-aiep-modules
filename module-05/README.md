@@ -90,6 +90,10 @@ timeout and fallback are not wired into `run_agent`.
 
 ## Streamlit demonstration
 
+### Start here: hands-on user guide
+
+If you are trying the application for the first time, begin with the **[Streamlit User Guide](docs/USER_GUIDE.md)**. It provides four end-to-end walkthroughs with ready-to-use sample inputs, expected results, security and reliability demonstrations, and a 10-minute reviewer path through the application.
+
 The page has four tabs, each with "what to do / what to expect / what it
 proves" guidance:
 
