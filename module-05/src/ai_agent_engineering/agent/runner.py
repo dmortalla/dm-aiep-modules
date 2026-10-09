@@ -1,4 +1,4 @@
-﻿"""Bounded deterministic ReAct runner for Module 5."""
+"""Bounded deterministic ReAct runner for Module 5."""
 
 from __future__ import annotations
 
@@ -12,9 +12,17 @@ from ai_agent_engineering.agent.react import (
     DecisionRecord,
 )
 from ai_agent_engineering.models import AgentRunState, AgentStatus
+from ai_agent_engineering.resilience import (
+    RetryExhaustedError,
+    run_with_fallback,
+    run_with_retry,
+)
 from ai_agent_engineering.tools import ToolRegistry
 
 DecisionProvider = Callable[[AgentRunState], AgentDecision]
+
+DEFAULT_DECISION_MAX_ATTEMPTS = 3
+DEFAULT_DECISION_RETRY_ON: tuple[type[Exception], ...] = (ConnectionError,)
 
 
 class AgentExecutionError(RuntimeError):
@@ -33,21 +41,95 @@ def _prepare_state(state: AgentRunState) -> None:
     transition(state, AgentStatus.REASONING)
 
 
+def _decide_with_reliability(
+    state: AgentRunState,
+    decide: DecisionProvider,
+    *,
+    fallback_decide: DecisionProvider | None,
+    max_attempts: int,
+    retry_on: tuple[type[Exception], ...],
+) -> AgentDecision:
+    """Obtain one decision through bounded retry and optional fallback.
+
+    The decision provider is synchronous, so this boundary intentionally does
+    not claim cancellable timeout enforcement. Genuine deadlines remain at
+    genuinely cancellable provider/async boundaries.
+
+    Args:
+        state: Application-owned run state supplied to decision providers.
+        decide: Preferred decision provider.
+        fallback_decide: Optional application-owned recovery provider.
+        max_attempts: Maximum preferred-provider attempts per decision.
+        retry_on: Explicit exception types eligible for retry.
+
+    Returns:
+        Decision produced by the preferred or fallback provider.
+
+    Raises:
+        RetryExhaustedError: If retryable failures exhaust the attempt budget
+            and no fallback provider is configured.
+        Exception: If a non-retryable provider failure or fallback failure
+            occurs.
+    """
+
+    def primary() -> AgentDecision:
+        try:
+            result = run_with_retry(
+                lambda: decide(state),
+                max_attempts=max_attempts,
+                retry_on=retry_on,
+            )
+        except RetryExhaustedError as exc:
+            state.retry_count += max(exc.attempts - 1, 0)
+            raise
+
+        state.retry_count += max(result.attempts - 1, 0)
+        return result.value
+
+    if fallback_decide is None:
+        return primary()
+
+    def fallback() -> AgentDecision:
+        state.fallback_history.append("decision_provider")
+        return fallback_decide(state)
+
+    return run_with_fallback(
+        primary,
+        fallback,
+        fallback_on=(RetryExhaustedError,),
+    ).value
+
+
 def run_agent(
     state: AgentRunState,
     registry: ToolRegistry,
     decide: DecisionProvider,
+    *,
+    fallback_decide: DecisionProvider | None = None,
+    decision_max_attempts: int = DEFAULT_DECISION_MAX_ATTEMPTS,
+    decision_retry_on: tuple[type[Exception], ...] = DEFAULT_DECISION_RETRY_ON,
 ) -> tuple[AgentRunState, tuple[DecisionRecord, ...]]:
     """Execute a bounded application-controlled ReAct loop.
 
     The decision provider may propose actions, but lifecycle authority,
     execution budgets, tool authorization, argument validation, and actual
-    execution remain application-owned.
+    execution remain application-owned. Decision-provider calls use bounded,
+    exception-selective retry and may use an explicit application-owned
+    fallback provider after retry exhaustion.
+
+    The current DecisionProvider contract is synchronous. This runner therefore
+    does not claim a cancellable timeout around decision execution; genuine
+    timeout enforcement belongs at an awaitable or provider boundary that can
+    actually be cancelled.
 
     Args:
         state: Fresh application-owned run state.
         registry: Application-owned allowlisted tool registry.
-        decide: Decision provider used to propose the next action.
+        decide: Preferred decision provider used to propose the next action.
+        fallback_decide: Optional application-owned provider used only after
+            retryable preferred-provider failures exhaust their attempt budget.
+        decision_max_attempts: Maximum preferred-provider attempts per decision.
+        decision_retry_on: Explicit exception types eligible for retry.
 
     Returns:
         Final run state and immutable application-visible decision records.
@@ -55,6 +137,8 @@ def run_agent(
     Raises:
         AgentExecutionError: If execution begins from an invalid state or the
             decision provider returns an invalid object.
+        RetryExhaustedError: If retryable decision-provider failures exhaust
+            the attempt budget and no fallback provider is configured.
         Tool-related exceptions: If a proposed tool call fails application
             authorization or validation.
     """
@@ -67,7 +151,13 @@ def run_agent(
             state.terminal_failure = "Execution-step budget exhausted."
             break
 
-        decision = decide(state)
+        decision = _decide_with_reliability(
+            state,
+            decide,
+            fallback_decide=fallback_decide,
+            max_attempts=decision_max_attempts,
+            retry_on=decision_retry_on,
+        )
 
         if not isinstance(decision, AgentDecision):
             transition(state, AgentStatus.FAILED)

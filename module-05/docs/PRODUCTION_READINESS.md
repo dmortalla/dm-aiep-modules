@@ -90,11 +90,30 @@ as governed by PR-06.
 
 ### PR-04 — Integrated reliability
 
-Retry, timeout, and fallback are implemented and tested as standalone
-primitives, but they are not integrated into the primary agent execution path.
+The feature-branch primary `run_agent` path now composes the existing bounded
+retry and explicit fallback primitives at the synchronous decision-provider
+boundary. Retry is restricted to explicitly configured transient exception
+types, attempts are finite, retry consumption is recorded in `retry_count`,
+and the safe default retries only `ConnectionError`. Ambiguous synchronous
+timeouts are not replayed automatically because completion may be unknown,
+and an optional application-owned fallback is invoked only after retry
+exhaustion. Fallback use is recorded in `fallback_history`.
 
-The production-grade path must make failure handling part of actual execution
-rather than only a separate demonstration.
+Fallback decisions remain untrusted proposals: schema validation, tool
+authorization, execution budgets, lifecycle authority, and actual tool
+execution remain application-owned. A fallback therefore cannot expand the
+`ToolRegistry` allowlist or gain shell, eval, or filesystem authority.
+
+The current `DecisionProvider` contract is synchronous. PR-04 intentionally
+does not wrap that call in an uninterruptible worker thread and mislabel it as
+genuine timeout cancellation. The existing `run_with_timeout` primitive
+continues to provide real cancellation for awaitable operations, while the
+live provider integrations retain their finite SDK request timeouts. A future
+primary-runtime timeout may be added only at a genuinely cancellable boundary.
+
+PR-05 remains responsible for reconciling terminal lifecycle state when
+authorization, validation, tool execution, retry exhaustion, or other runtime
+failures escape the runner.
 
 ### PR-05 — Runtime state reconciliation
 
