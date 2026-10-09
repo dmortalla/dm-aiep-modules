@@ -23,8 +23,29 @@ Choose a provider and model, supply a session-only API credential, enter a promp
 | Module 2 - Prompt Engineering & Structured Output Systems | ✅ Complete |
 | Module 3 - RAG Engineering Foundations | ✅ Complete |
 | Module 4 - Advanced RAG & Evaluation Systems | ✅ Complete |
-| Modules 5-12 | Planned |
+| Module 5 - AI Agent Engineering | ✅ Complete |
+| Modules 6-12 | Planned |
 
+## Module 5 - AI Agent Engineering
+
+Module 5 is complete, human-approved, and released under the annotated Git tag
+`v0.5.0-module-5`. All 30 source requirements are traced to implementation,
+tests, and verification evidence.
+
+The standalone module builds a bounded, stateful autonomous AI agent with a
+ReAct-style execution loop, allowlisted tool orchestration, short-term,
+long-term, and episodic memory, plus retry, timeout, fallback, validation, and
+safe-execution controls. Required integrations include LangChain Agents,
+OpenAI Function Calling, Anthropic Tool Use, and Mem0.
+
+A four-tab Streamlit presentation layer demonstrates the Autonomous Agent,
+Memory, Tool Integrations, and Reliability workflows. The ordinary UI is
+credential-free and uses local/deterministic execution with mocked provider
+transports; genuine local Mem0 has a separate offline launch path.
+
+**Repository:** [`module-05/`](module-05/)
+**Documentation:** [`module-05/README.md`](module-05/README.md)
+**Streamlit UI:** [`module-05/app.py`](module-05/app.py)
 ## Module 4 - Advanced RAG & Evaluation Systems
 
 Module 4 Stories 1-12 are complete and human-approved, and Module 4 is

@@ -16,9 +16,9 @@ The module is standalone. It imports nothing from Modules 1-4.
 
 ## Status
 
-Stories 1-10 are accepted. Story 11 (reconciliation and release verification)
-is complete and awaits independent acceptance. Release and tagging are a human
-decision. All 30 source requirements are traced to implementation and tests.
+Stories 1-11 are complete and human-approved. Module 5 is released under the
+annotated Git tag `v0.5.0-module-5`. All 30 source requirements are traced to
+implementation, tests and verification evidence.
 
 This is a teaching implementation verified locally. It has **not** been
 verified against live OpenAI, live Anthropic or Mem0 cloud, and it is not a
@@ -198,9 +198,6 @@ non-loopback network attempts. Details are in `docs/VERIFICATION.md`.
    fallback are demonstrated as standalone primitives; `run_agent` never
    enters `timed_out` and does not populate `retry_count` or
    `fallback_history`.
-5. **Not registered in the root project.** Module 5 is not in the root
-   `pyproject.toml`, so its tests need `PYTHONPATH=module-05/src` and the root
-   `pytest` run does not include them.
-6. `Mem0MemoryAdapter.from_default_mem0()` would build Mem0 with its remote
+5. `Mem0MemoryAdapter.from_default_mem0()` would build Mem0 with its remote
    defaults. Nothing in Module 5 calls it; do not call it without configuring
    Mem0 explicitly.
