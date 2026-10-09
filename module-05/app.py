@@ -15,8 +15,10 @@ stand-ins for things that would otherwise need a remote model or service: a
 keyword planner that proposes tool calls, scripted provider responses served
 to the real SDKs through in-process mock transports, a scripted LangChain chat
 model, and an in-process backend for the Mem0 adapter. Every stand-in is
-labelled on the page. Nothing here makes a network call, reads a credential
-or environment variable, or claims live provider verification.
+labelled on the page. The public UI starts zero-key and may retain explicitly
+authorized OpenAI or Anthropic credentials only in Streamlit session state.
+PR-01 does not use those credentials for provider calls; live execution is
+introduced only by the separately verified live-provider stories.
 
 Trust boundaries: the goal, memory text, tool output and provider output are
 untrusted data. They are rendered only through ``st.text``, ``st.code``,
@@ -130,9 +132,88 @@ EVIDENCE_GENUINE_MEM0 = (
     "Face hub offline. Not remote or cloud Mem0."
 )
 EVIDENCE_LIVE = (
-    "Live OpenAI / Anthropic verification: NOT PERFORMED (deferred). "
-    "This page makes no live or paid provider calls."
+    "Live OpenAI / Anthropic execution is not enabled by PR-01. "
+    "Session credentials may be explicitly authorized below, but the existing "
+    "integration buttons remain deterministic mocked-transport demonstrations "
+    "until the live-provider paths are separately implemented and verified."
 )
+
+PROVIDER_CREDENTIALS = {
+    "OpenAI": {
+        "service_name": "openai",
+        "session_input_key": "credential_openai",
+        "session_authorized_key": "authorized_openai_api_key",
+    },
+    "Anthropic": {
+        "service_name": "anthropic",
+        "session_input_key": "credential_anthropic",
+        "session_authorized_key": "authorized_anthropic_api_key",
+    },
+}
+
+
+def authorized_session_key(provider_name: str) -> str | None:
+    """Return an explicitly authorized session credential for a provider.
+
+    Args:
+        provider_name: Application-owned provider label.
+
+    Returns:
+        The authorized session credential when present, otherwise ``None``.
+
+    Raises:
+        ValueError: If the provider is not application allowlisted.
+    """
+    config = PROVIDER_CREDENTIALS.get(provider_name)
+    if config is None:
+        raise ValueError(f"Unsupported provider: {provider_name}")
+
+    value = st.session_state.get(config["session_authorized_key"])
+    if not isinstance(value, str):
+        return None
+
+    stripped = value.strip()
+    return stripped or None
+
+
+def authorize_entered_keys() -> None:
+    """Authorize entered provider credentials for this Streamlit session only."""
+    authorized: list[str] = []
+
+    for provider_name, config in PROVIDER_CREDENTIALS.items():
+        entered = st.session_state.get(config["session_input_key"], "")
+        value = entered.strip() if isinstance(entered, str) else ""
+
+        if value:
+            st.session_state[config["session_authorized_key"]] = value
+            authorized.append(provider_name)
+
+        # Do not retain a second plaintext copy in the input widget state.
+        st.session_state[config["session_input_key"]] = ""
+
+    if authorized:
+        st.session_state["credential_notice"] = (
+            "Authorized for this browser session: " + ", ".join(authorized) + "."
+        )
+        st.session_state["credential_notice_type"] = "success"
+    else:
+        st.session_state["credential_notice"] = (
+            "No API keys were entered. Existing authorized session credentials "
+            "were left unchanged."
+        )
+        st.session_state["credential_notice_type"] = "warning"
+
+
+def clear_authorized_credentials() -> None:
+    """Remove all provider credentials retained by the current Streamlit session."""
+    for config in PROVIDER_CREDENTIALS.values():
+        st.session_state.pop(config["session_authorized_key"], None)
+        st.session_state[config["session_input_key"]] = ""
+
+    st.session_state["credential_notice"] = (
+        "All authorized session credentials were cleared."
+    )
+    st.session_state["credential_notice_type"] = "success"
 
 AREAS = ("Autonomous Agent", "Memory", "Tool Integrations", "Reliability")
 
@@ -1545,6 +1626,65 @@ def _render_integrations_area() -> None:
         "through the same application-owned authority boundary; provider "
         "output never executes anything by itself. Mem0 is in the Memory area.",
     )
+    st.info(
+        "Provider access starts in a zero-key state. You may explicitly authorize "
+        "your own OpenAI or Anthropic API key for this browser session. PR-01 "
+        "stores it only in Streamlit session state and does not make a live call."
+    )
+
+    with st.expander("Manage live-provider API keys"):
+        st.caption(
+            "Enter only credentials you want to authorize for this browser "
+            "session. Keys are masked, are not written to a project credential "
+            "file, and entering a key alone never triggers a provider request."
+        )
+
+        for provider_name, config in PROVIDER_CREDENTIALS.items():
+            st.text_input(
+                f"{provider_name} API key",
+                type="password",
+                key=config["session_input_key"],
+                placeholder="Enter key",
+            )
+
+        st.button(
+            "Authorize entered keys for this session",
+            on_click=authorize_entered_keys,
+            use_container_width=True,
+            type="primary",
+            key="authorize_session_credentials",
+        )
+
+        st.button(
+            "Clear all session credentials",
+            on_click=clear_authorized_credentials,
+            use_container_width=True,
+            key="clear_session_credentials",
+        )
+
+        notice = st.session_state.get("credential_notice")
+        notice_type = st.session_state.get("credential_notice_type")
+
+        if notice:
+            if notice_type == "success":
+                st.success(notice)
+            elif notice_type == "warning":
+                st.warning(notice)
+            else:
+                st.error(notice)
+
+        for provider_name in PROVIDER_CREDENTIALS:
+            if authorized_session_key(provider_name):
+                st.success(f"{provider_name}: session credential authorized.")
+            else:
+                st.caption(f"{provider_name}: zero-key state.")
+
+        st.warning(
+            "Security reminder: when finished, clear all session credentials "
+            "and close this tab, especially on a shared computer. Clearing the "
+            "session does not revoke the key at its provider."
+        )
+
     st.warning(EVIDENCE_LIVE)
     preset = st.selectbox(
         "Goal",
