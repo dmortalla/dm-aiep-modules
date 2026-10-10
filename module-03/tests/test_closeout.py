@@ -92,7 +92,7 @@ def test_closeout_links_and_named_test_evidence_resolve() -> None:
                 continue
             path = (document.parent / target.split("#", 1)[0]).resolve()
             assert path.is_relative_to(ROOT)
-            assert path.is_file(), f"Missing referenced file: {target}"
+            assert path.exists(), f"Missing referenced path: {target}"
             if path.suffix == ".py" and re.fullmatch(r"test_\w+", label):
                 tree = ast.parse(path.read_text(encoding="utf-8"))
                 names = {
@@ -139,7 +139,9 @@ def test_frozen_architecture_and_module_roadmap() -> None:
     assert (
         "| Module 4 - Advanced RAG & Evaluation Systems | ✅ Complete |" in readme
     )
-    assert "| Modules 5-12 | Planned |" in readme
+    # Module 5's later release legitimately moved it out of the planned range.
+    assert "| Module 5 - AI Agent Engineering | ✅ Complete |" in readme
+    assert "| Modules 5-12 | Planned |" not in readme
     assert "Modules 3-12 | Planned" not in readme
     release_match = re.search(
         r"published as the annotated Git tag `([^`]+)`", readme

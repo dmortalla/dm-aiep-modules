@@ -415,3 +415,8 @@ st.caption(
     "Security model: zero-key startup, explicit credential authorization, "
     "session-only credentials with no public UI persistence."
 )
+
+st.caption(
+    "Developed from Techademy AI Engineering program requirements. "
+    "Independent implementation, engineering enhancements, and deployment."
+)

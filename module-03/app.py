@@ -1118,3 +1118,8 @@ try:
             raise ValueError("Unsupported UI navigation selection.")
 except DOMAIN_ERRORS as exc:
     st.error(str(exc))
+
+st.caption(
+    "Developed from Techademy AI Engineering program requirements. "
+    "Independent implementation, engineering enhancements, and deployment."
+)

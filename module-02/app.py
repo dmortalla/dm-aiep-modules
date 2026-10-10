@@ -776,3 +776,8 @@ except (
     st.error(
         "Demo input rejected: use bounded nonblank inputs and a supported fixture."
     )
+
+st.caption(
+    "Developed from Techademy AI Engineering program requirements. "
+    "Independent implementation, engineering enhancements, and deployment."
+)

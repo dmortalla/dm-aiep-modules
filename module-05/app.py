@@ -1985,3 +1985,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+st.caption(
+    "Developed from Techademy AI Engineering program requirements. "
+    "Independent implementation, engineering enhancements, and deployment."
+)
