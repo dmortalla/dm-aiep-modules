@@ -104,3 +104,7 @@
 
 Create security, cost-governance, observability, traceability, and ADR artifacts,
 then verify framework/dependency compatibility before implementation.
+
+## Compatibility Evidence
+
+- [Dependency Compatibility](DEPENDENCY_COMPATIBILITY.md)
