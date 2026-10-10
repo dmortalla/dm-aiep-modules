@@ -1,13 +1,32 @@
 # AI Engineering Program Modules
 
-![Python](https://img.shields.io/badge/Python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-2069%20passing-brightgreen)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-blue)
+![pytest](https://img.shields.io/badge/tests-pytest-brightgreen)
 ![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
+![Pydantic](https://img.shields.io/badge/validation-Pydantic-blueviolet)
+
 ![OpenAI](https://img.shields.io/badge/LLM-OpenAI-412991)
 ![Anthropic](https://img.shields.io/badge/LLM-Anthropic-D97757)
 ![Gemini](https://img.shields.io/badge/LLM-Gemini-4285F4)
+![LangChain](https://img.shields.io/badge/AI-LangChain-1C3C3C)
+![Mem0](https://img.shields.io/badge/Memory-Mem0-6C5CE7)
+
+![Chroma](https://img.shields.io/badge/Vector%20DB-Chroma-orange)
+![FAISS](https://img.shields.io/badge/Vector%20Search-FAISS-blue)
+![Pinecone](https://img.shields.io/badge/Vector%20DB-Pinecone-000000)
+![Qdrant](https://img.shields.io/badge/Vector%20DB-Qdrant-DC244C)
+![RAGAS](https://img.shields.io/badge/RAG%20Evaluation-RAGAS-purple)
+
+![Sentence Transformers](https://img.shields.io/badge/Embeddings-Sentence%20Transformers-yellow)
+![Transformers](https://img.shields.io/badge/NLP-Transformers-FFD21E)
+![Tiktoken](https://img.shields.io/badge/Tokenization-Tiktoken-blue)
+
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
 ![Postman](https://img.shields.io/badge/API%20Testing-Postman-FF6C37)
+
+![Techademy](https://img.shields.io/badge/Techademy-AI%20Engineering%20Program-informational)
+
+*Developed from Techademy AI Engineering program requirements, with independent architecture, implementation, production-engineering enhancements, testing, UI, and deployment.*
 
 Source-faithful implementations of Modules 1-6 of the AI Engineering Program, organized as independently demonstrable engineering modules.
 
