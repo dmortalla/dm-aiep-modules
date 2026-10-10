@@ -14,11 +14,21 @@
 | Required deliverables | 0 / 2 complete |
 | Runtime targets | LangGraph, CrewAI, Google ADK |
 | AI tracing | LangSmith |
-| Operational telemetry | OpenTelemetry |
-| Operations dashboard | Grafana |
-| Product / evidence UI | Streamlit |
+| Operational telemetry | OpenTelemetry instrumentation and Collector/compatible collection boundary |
+| Operational metrics backend | Prometheus |
+| Operations dashboard | Grafana specialist dashboards, PromQL exploration, and alerting |
+| Product / evidence UI | Streamlit unified curated human-facing operations console |
 | Default inference | Deterministic, zero external inference cost |
 | Release | Unreleased |
+
+## Approved Amendment
+
+[ADR-006](adr/006-operational-metrics-and-unified-observation.md) records the
+human-approved additive Prometheus/collection-boundary and unified curated
+Streamlit observation decision. Architecture B+ otherwise remains frozen.
+ADRs 001–005 and all 26 source requirement IDs are unchanged. This is
+documentation only; no integration, live delivery, deployment, or production
+readiness is claimed.
 
 ## Production-Grade Definition of Done
 
@@ -75,8 +85,10 @@
 - [ ] Normalized telemetry implemented.
 - [ ] LangSmith integration verified.
 - [ ] OpenTelemetry integration verified.
-- [ ] Grafana operational view verified.
-- [ ] Streamlit per-run evidence verified.
+- [ ] Collector/compatible collection boundary and Prometheus metrics verified.
+- [ ] Grafana specialist operational view and alerting verified.
+- [ ] Streamlit curated workflow, health, reliability, cost, and trace references verified.
+- [ ] Redaction, bounded cardinality, retention, export/query resource controls verified.
 - [ ] Observability failure cannot corrupt workflow semantics.
 
 ### Engineering Evidence
@@ -97,13 +109,16 @@
 2. Genuine distributed execution must be distinguished from simulation.
 3. Free hosted-model pricing/availability must never be treated as permanent.
 4. Public deployment must not expose local/admin interfaces or credentials.
-5. LangSmith and Grafana must remain observability dependencies, not workflow
-   correctness dependencies.
+5. Collection boundary, Prometheus, LangSmith, and Grafana must remain
+   observability dependencies, not workflow correctness dependencies.
+6. Telemetry cardinality, retention, export/query resources, endpoint exposure,
+   and hosted cost require bounded deployment-specific verification.
 
 ## Next Recommended Work
 
-Create security, cost-governance, observability, traceability, and ADR artifacts,
-then verify framework/dependency compatibility before implementation.
+Use the existing security, cost-governance, observability, traceability, ADR, and
+dependency-compatibility artifacts for the next separately authorized implementation
+step. This amendment does not authorize dependencies, configuration, or implementation.
 
 ## Compatibility Evidence
 

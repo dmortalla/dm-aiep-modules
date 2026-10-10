@@ -74,6 +74,25 @@ The system should support:
 - no unnecessary remote tracing during deterministic CI;
 - environment-appropriate retention.
 
+## Operational Metrics and Console Controls
+
+Prometheus and the Collector/compatible collection boundary require bounded
+CPU, memory, storage, export queues, batch sizes, retries, and timeouts. Define
+environment-appropriate collection/scrape intervals, series limits, histogram
+buckets, and retention before deployment. Local operation still has resource
+cost; hosted telemetry, storage, egress, and LangSmith delivery can be billable.
+Credential presence must not activate paid telemetry. Deterministic CI must not
+require remote delivery; billable verification requires explicit authorization
+and a bounded budget. No infrastructure or paid service is provisioned by this
+documentation amendment.
+
+Streamlit uses bounded queries, refresh rates, and caching through application
+services for curated cost/reliability views, with Grafana/LangSmith drill-down
+references. Label estimates, provider-reported values, observation windows, and
+stale/unavailable data distinctly. Metrics report cost evidence; budget authority
+and enforcement stay in application policy. Do not use run IDs as Prometheus
+labels or turn telemetry failures into additional model calls.
+
 ## Cost Definition of Done
 
 Cost optimisation requires evidence that the platform:

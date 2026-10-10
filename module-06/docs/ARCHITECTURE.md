@@ -4,6 +4,10 @@
 
 **Architecture B+ - APPROVED AND FROZEN**
 
+The human-approved additive observability amendment is recorded in
+[ADR-006](adr/006-operational-metrics-and-unified-observation.md). All other
+B+ decisions remain unchanged; historical ADRs retain the original decisions.
+
 Material changes to trust boundaries, source coverage, runtime ownership,
 security posture, or cost exposure require explicit human review and an ADR.
 
@@ -45,9 +49,16 @@ flowchart TD
     VE --> RESULT[Validated Workflow Result]
     TE --> LS[LangSmith]
     TE --> OTEL[OpenTelemetry]
-    OTEL --> GF[Grafana]
-    RESULT --> ST[Streamlit Operations Console]
-    TE --> ST
+    OTEL --> COL[OpenTelemetry Collector / Compatible Collection Boundary]
+    COL --> PM[Prometheus Operational Metrics]
+    PM --> GF[Grafana Specialist Dashboards / Alerting]
+    RESULT --> ST[Streamlit Unified Curated Operations Console]
+    TE --> CE[Curated Validated Workflow Evidence]
+    CE --> ST
+    PM --> CM[Curated Operational Measures via Application Services]
+    CM --> ST
+    GF -. Drill-down reference .-> ST
+    LS -. AI trace reference .-> ST
 ```
 
 ## Reference Collaborative Workflow
@@ -97,7 +108,13 @@ LangSmith does not own application telemetry semantics.
 
 ### Streamlit
 
-Primary interactive product and curated per-run engineering-evidence surface.
+Unified human-facing operations console and primary interactive product.
+Aggregates curated workflow evidence, operational metrics, health, orchestration
+state, reliability, cost, and AI trace references through application services.
+Grafana and LangSmith links support specialist investigation. The goal is unified
+user observation, not unified telemetry storage; Streamlit is not a telemetry
+database and does not duplicate every specialist panel or trace. Presentation
+remains separate from domain/orchestration logic.
 
 ### LangSmith
 
@@ -111,7 +128,17 @@ Answers: How is the production system behaving across executions and over time?
 
 Preferred vendor-neutral operational instrumentation boundary.
 
-Grafana must remain replaceable without changing orchestration semantics.
+Domain/orchestration code must not couple to Prometheus or Grafana.
+
+### Collection Boundary and Prometheus
+
+OpenTelemetry instrumentation routes operational telemetry through an
+OpenTelemetry Collector or compatible collection boundary outside domain logic.
+Prometheus is the operational metrics/time-series backend; Grafana uses it for
+specialist cross-run dashboards, PromQL exploration, alerting, and deeper drill-down.
+The collection boundary must keep local and future hosted deployment practical
+without unnecessary infrastructure. Backend replacement must not change workflow
+semantics. This metrics path does not imply additional trace or log storage.
 
 ## Model Gateway
 

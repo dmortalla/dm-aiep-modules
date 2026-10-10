@@ -25,16 +25,16 @@
 | M6-012 | LangGraph | Planned | TBD | TBD | TBD |
 | M6-013 | Google ADK | Planned | TBD | TBD | TBD |
 | M6-014 | LangSmith | Planned | TBD | TBD | TBD |
-| M6-015 | Workflow state management | Planned | TBD | TBD | TBD |
-| M6-016 | Execution tracing | Planned | TBD | TBD | TBD |
-| M6-017 | Scaling workflows | Planned | TBD | TBD | TBD |
-| M6-018 | Distributed processing | Planned | TBD | TBD | TBD |
-| M6-019 | Cost optimisation | Planned | TBD | TBD | TBD |
-| M6-020 | Reliability patterns | Planned | TBD | TBD | TBD |
+| M6-015 | Workflow state management | Planned | Application-owned state; curated console transitions | State/evidence consistency | Validated state and orchestration view |
+| M6-016 | Execution tracing | Planned | LangSmith AI tracing; OpenTelemetry collection boundary; Prometheus metrics | Correlation, redaction, cardinality, bounded export failure | Distinguish offline adapters, local metrics, and live trace delivery |
+| M6-017 | Scaling workflows | Planned | Applicable throughput, active-workflow, queue/worker metrics | Bounded labels and meaningful load measurements | Curated scale view; Grafana drill-down |
+| M6-018 | Distributed processing | Planned | Applicable distributed worker metrics via collection boundary | Worker metrics and simulated/genuine evidence separation | Actual execution mode and resource observations |
+| M6-019 | Cost optimisation | Planned | Bounded usage/cost aggregates; curated console cost view | Estimate labeling, budgets, telemetry/query resource bounds | Estimated versus provider-reported cost; observation window |
+| M6-020 | Reliability patterns | Planned | Retry/timeout/failure metrics; curated health view | Unavailable telemetry, bounded retries/queues, stale views | Reliability evidence; Grafana alerting references |
 | M6-021 | Coordinator-worker lab | Planned | TBD | TBD | TBD |
 | M6-022 | Collaborative AI lab | Planned | TBD | TBD | TBD |
 | M6-023 | Distributed orchestration lab | Planned | TBD | TBD | TBD |
-| M6-024 | Multi-agent orchestration platform | Planned | TBD | TBD | TBD |
+| M6-024 | Multi-agent orchestration platform | Planned | Streamlit unified curated operations console via application services | Curated evidence consistency, safe specialist references | Workflow, health, reliability, cost; Grafana/LangSmith links |
 | M6-025 | Collaborative AI workflow | Planned | TBD | TBD | TBD |
 | M6-026 | Scalable multi-agent orchestration objective | Planned | TBD | TBD | TBD |
 
@@ -49,3 +49,11 @@ Evidence must match the type of claim being made. In particular:
 - an adapter test cannot prove live remote tracing;
 - an estimated cost cannot be represented as provider-reported cost;
 - deterministic fixture execution cannot be represented as live-model evidence.
+
+## Approved Observability Evidence Planning
+
+ADR-006 is additive architecture/evidence planning, not a new source requirement.
+All 26 IDs, requirement meanings, and Planned statuses remain frozen. The rows
+above describe intended implementation and verification, not accepted evidence.
+LangSmith remains the source-required AI tracing tool; operational metrics do not
+replace execution tracing or genuine distributed-processing evidence.

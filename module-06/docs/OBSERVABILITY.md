@@ -9,10 +9,12 @@ making the presentation layer the telemetry source of truth.
 
 | Layer | Primary purpose |
 | --- | --- |
-| Streamlit | User interaction and curated per-run engineering evidence |
+| Streamlit | Unified human-facing console aggregating curated platform and per-run evidence |
 | LangSmith | AI, LLM, and agent execution tracing and debugging |
 | OpenTelemetry | Vendor-neutral operational instrumentation boundary |
-| Grafana | Cross-run operational dashboards and alerting |
+| OpenTelemetry Collector or compatible collection boundary | Receive and route telemetry outside domain logic |
+| Prometheus | Operational metrics/time-series backend |
+| Grafana | Specialist cross-run dashboards, PromQL exploration, and operational alerting |
 
 ## Correlation
 
@@ -60,7 +62,17 @@ Streamlit is the product and reviewer-facing operations console.
 It should expose enough curated evidence to execute, understand, and evaluate a
 run without requiring a reviewer to inspect source code or open another system.
 
-Streamlit consumes normalized telemetry. It does not own instrumentation.
+Streamlit aggregates curated measures, workflow evidence, operational metrics,
+health indicators, orchestration state, reliability, cost, and AI trace references
+where practical. Application services validate and curate these inputs before
+presentation; UI code does not implement domain/orchestration logic.
+
+A reviewer should understand system health, workflow behavior, reliability, and
+cost from one interface, with drill-down links to Grafana and LangSmith where
+appropriate. Streamlit owns neither instrumentation nor telemetry storage and
+does not duplicate every raw Grafana panel or LangSmith trace.
+
+The goal is unified user observation, not unified telemetry storage.
 
 ## LangSmith
 
@@ -75,11 +87,43 @@ offline integration evidence.
 OpenTelemetry is the preferred vendor-neutral operational instrumentation
 boundary where technically appropriate.
 
-Application semantics must not depend on a specific telemetry backend.
+Application semantics must not depend on a specific telemetry backend. Domain
+and orchestration code use vendor-neutral instrumentation rather than
+Prometheus/Grafana-specific contracts.
+
+## Collection Boundary and Prometheus
+
+The approved operational path is application/workflow instrumentation ->
+OpenTelemetry Collector or compatible collection boundary -> Prometheus ->
+Grafana. Collection and routing occur outside domain logic; use the smallest
+practical boundary for local and future hosted deployment. AI/LLM/agent execution
+continues to use LangSmith for specialized tracing and debugging.
+
+Prometheus stores operational metrics/time series. Applicable signals include
+workflow throughput, active workflows, success/failure rates, agent/runtime
+latency, model-call counts, token usage, estimated cost, retries, timeouts, policy
+denials, queue depth, and worker utilization. Queue/worker measures apply only
+when those resources actually exist. Do not invent metrics for absent features.
+
+Run IDs, task IDs, trace IDs, free-form errors, prompts, and sensitive payloads
+must not become metric labels. Correlate individual executions using validated
+workflow evidence and trace references instead. Use allowlisted, bounded label
+sets such as runtime, workflow pattern, and status; bound series count and
+histogram buckets. Apply the controls in [Security](SECURITY.md) and
+[Cost Governance](COST_GOVERNANCE.md).
+
+OpenTelemetry trace/log correlation is instrumentation capability, not a decision
+to store traces or logs in Prometheus or add another telemetry backend.
+
+[ADR-006](adr/006-operational-metrics-and-unified-observation.md) records the
+human-approved amendment to ADR-003 and ADR-005 without rewriting their history.
 
 ## Grafana
 
-Grafana is the cross-run production operations surface.
+Grafana is the specialist cross-run operational analysis surface, providing
+dashboards, PromQL exploration, operational alerting, and deeper drill-down than
+Streamlit. It does not duplicate LangSmith AI tracing. Per-run cost detail remains
+in workflow evidence; Prometheus holds bounded aggregates rather than run-ID labels.
 
 Target operational signals include:
 
@@ -97,7 +141,11 @@ Target operational signals include:
 
 ## Degraded Operation
 
-Workflow correctness must not depend on Grafana or LangSmith availability.
+Workflow correctness must not depend on Collector/collection-boundary,
+Prometheus, Grafana, or LangSmith availability. Bound export queues, retries,
+timeouts, and resource use; surface loss or backpressure without retry storms.
+Streamlit must label unavailable or stale metrics and trace references rather
+than presenting missing telemetry as healthy state.
 
 Observability failure must be surfaced and bounded without corrupting workflow
 semantics or silently converting a failed workflow into a successful one.

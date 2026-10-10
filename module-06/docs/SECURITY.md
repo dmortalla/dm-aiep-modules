@@ -80,6 +80,30 @@ No model-generated field may directly:
 Privileged changes require application-owned policy and, where specified,
 explicit human authorization.
 
+## Operational Telemetry Boundary
+
+OpenTelemetry instrumentation sends only allowlisted, redacted fields to the
+Collector or compatible collection boundary outside domain logic. Prometheus
+metrics must exclude credentials, prompts, sensitive payloads, user identifiers,
+and uncontrolled labels. Bound label values, series count, and histogram buckets;
+run/task/trace IDs and free-form error text belong in appropriately protected
+evidence/reference channels, not metric labels.
+
+Protect collection, scrape, query, and administration endpoints with restricted
+network exposure and least privilege. Use authentication/authorization and
+transport protection appropriate to local or hosted deployment; do not expose
+local/admin endpoints publicly. Keep exporter and query credentials outside
+source, logs, traces, and UI output. Collector configuration is operator-owned
+and must not be modified by model output.
+
+Application services validate remote metric responses and allowlisted Grafana/
+LangSmith reference URLs before Streamlit renders curated information. Enforce
+access to authorized workflows/aggregates; do not put secrets or sensitive
+payloads in links. Telemetry responses never grant capabilities or spending
+authority. Bound export and query work to prevent resource exhaustion, and
+report stale/unavailable evidence explicitly. Redaction, cardinality, access,
+and degraded-operation controls require implementation evidence before release.
+
 ## Security Evidence
 
 A security claim is not complete until supported by evidence appropriate to
