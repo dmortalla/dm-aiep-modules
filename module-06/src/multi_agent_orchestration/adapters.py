@@ -1,10 +1,18 @@
 """Lazy SDK boundaries for deterministic graph execution and construction probes."""
 
+import asyncio
+import json
+import os
+import subprocess
+import sys
 from importlib import import_module
 from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from pydantic import ValidationError
 
+from .collaboration import expected_messages
 from .contracts import (
     RuntimeId,
     RuntimeInfo,
@@ -16,6 +24,7 @@ from .contracts import (
 from .coordinator_worker import advance, validate_state
 from .errors import (
     ExecutionFailureError,
+    InvalidRuntimeOutputError,
     InvalidWorkflowRequestError,
     RuntimeFoundationError,
     RuntimeUnavailableError,
@@ -169,18 +178,159 @@ class LangGraphRuntime(_ConstructionOnlyRuntime):
 
 
 class CrewAIRuntime(_ConstructionOnlyRuntime):
-    """Construct a real task definition without an agent, LLM, crew, or kickoff."""
+    """Execute a real deterministic Crew in an isolated, cancellable local process."""
 
     def __init__(self) -> None:
-        """Construct a static definition; never infer provider choices from keys."""
-        super().__init__(
-            RuntimeId.CREWAI,
-            "crewai",
-            "crewai",
-            "Task",
-            description="Runtime foundation construction probe; do not execute.",
-            expected_output="Construction evidence only.",
+        """Check availability without CrewAI's import-time analytics side effect."""
+        try:
+            if import_module("importlib.util").find_spec("crewai") is None:
+                raise ModuleNotFoundError("CrewAI unavailable")
+            framework_version = version("crewai")
+        except (ImportError, PackageNotFoundError) as exc:
+            raise RuntimeUnavailableError(
+                "crewai is unavailable; synchronize the accepted uv lock."
+            ) from exc
+        self._info = RuntimeInfo(
+            runtime=RuntimeId.CREWAI,
+            execution_available=True,
+            evidence_class="deterministic_collaboration",
+            framework_version=framework_version,
         )
+
+    async def _invoke(self, expected: WorkflowRequest) -> object:
+        """Reap the child before deleting temporary logs, including cancellation."""
+        with TemporaryDirectory(prefix="module06-crewai-") as directory:
+            local_data = Path(directory, "AppData", "Local")
+            roaming_data = Path(directory, "AppData", "Roaming")
+            local_data.mkdir(parents=True)
+            roaming_data.mkdir(parents=True)
+            environment = {
+                key: os.environ[key]
+                for key in ("SYSTEMROOT", "WINDIR")
+                if key in os.environ
+            }
+            environment.update(
+                TEMP=directory,
+                TMP=directory,
+                HOME=directory,
+                USERPROFILE=directory,
+                LOCALAPPDATA=str(local_data),
+                APPDATA=str(roaming_data),
+                CREWAI_STORAGE_DIR=directory,
+                CREWAI_TESTING="true",
+                CREWAI_TRACING_ENABLED="false",
+                CREWAI_DISABLE_TELEMETRY="true",
+                CREWAI_DISABLE_TRACKING="true",
+                OTEL_SDK_DISABLED="true",
+                LITELLM_LOCAL_MODEL_COST_MAP="true",
+                DO_NOT_TRACK="1",
+                LANGSMITH_TRACING="false",
+                LANGCHAIN_TRACING_V2="false",
+            )
+            spawning = asyncio.create_task(
+                asyncio.create_subprocess_exec(
+                    sys.executable,
+                    "-I",
+                    "-m",
+                    "multi_agent_orchestration._crewai_worker",
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=environment,
+                    cwd=directory,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                )
+            )
+            try:
+                process = await asyncio.shield(spawning)
+            except asyncio.CancelledError:
+                # Cancellation during spawn must still acquire/reap the child.
+                process = await spawning
+                if process.returncode is None:
+                    process.kill()
+                await process.communicate()
+                raise
+            try:
+                stdout, stderr = await process.communicate(
+                    expected.model_dump_json().encode()
+                )
+                if process.returncode != 0 or len(stdout) > 16_000:
+                    raise ExecutionFailureError(
+                        "CrewAI worker failed its bounded process contract."
+                    ) from RuntimeError(stderr.decode(errors="replace")[:4096])
+                packet = json.loads(stdout)
+                if not isinstance(packet, dict) or set(packet) != {"output"}:
+                    if (
+                        isinstance(packet, dict)
+                        and packet.get("error_type") == "InvalidRuntimeOutputError"
+                    ):
+                        raise InvalidRuntimeOutputError(
+                            "CrewAI collaborator/state validation failed."
+                        ) from RuntimeError(str(packet)[:4096])
+                    raise ExecutionFailureError(
+                        "CrewAI worker failed; inspect the internal cause."
+                    ) from RuntimeError(str(packet)[:4096])
+                return packet["output"]
+            finally:
+                if process.returncode is None:
+                    process.kill()
+                await process.communicate()
+
+    async def execute(self, request: WorkflowRequest) -> RuntimeOutput:
+        """Run three offline collaborative tasks under application-owned budgets.
+
+        Raises:
+            InvalidWorkflowRequestError: Explicit runtime or request schema fails.
+            StepBudgetExceededError: Fewer than three tasks/messages/steps allowed.
+            RuntimeFoundationError: Process execution or output validation fails.
+        """
+        try:
+            expected = WorkflowRequest.model_validate(request.model_dump())
+        except ValidationError as exc:
+            raise InvalidWorkflowRequestError(
+                "CrewAI request failed contract validation."
+            ) from exc
+        if expected.runtime != RuntimeId.CREWAI:
+            raise InvalidWorkflowRequestError(
+                "CrewAI requires explicit matching runtime selection."
+            )
+        if (
+            min(
+                expected.limits.max_steps,
+                expected.limits.max_tasks,
+                expected.limits.max_messages,
+            )
+            < 3
+        ):
+            raise StepBudgetExceededError(
+                "CrewAI collaboration requires three authorized steps/tasks/messages."
+            )
+        try:
+            output = RuntimeOutput.model_validate(await self._invoke(expected))
+            messages = expected_messages(expected)
+            if (
+                output.workflow_id != expected.workflow_id
+                or output.runtime != RuntimeId.CREWAI
+                or output.result.task_id != expected.task.task_id
+                or output.result.agent_id != "critic"
+                or output.result.output != messages[-1].content
+                or output.transitions
+                or output.collaboration != messages
+            ):
+                raise InvalidRuntimeOutputError(
+                    "CrewAI output contradicts authorized collaboration."
+                )
+            return output
+        except RuntimeFoundationError:
+            raise
+        except ValidationError as exc:
+            raise InvalidRuntimeOutputError(
+                "CrewAI runtime output failed validation."
+            ) from exc
+        except Exception as exc:
+            raise ExecutionFailureError(
+                "CrewAI execution failed; inspect the internal cause."
+            ) from exc
 
 
 class GoogleADKRuntime(_ConstructionOnlyRuntime):

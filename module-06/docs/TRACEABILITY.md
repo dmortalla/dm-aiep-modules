@@ -17,11 +17,11 @@
 | M6-004 | Coordinator-worker systems | Planned | Deterministic coordinator-worker slice | Real graph node ordering/delegation | Partial local evidence below; acceptance pending |
 | M6-005 | Distributed orchestration | Planned | TBD | TBD | TBD |
 | M6-006 | Context passing | Planned | Typed immutable WorkflowState | Context integrity and concurrent isolation | Partial local evidence below; acceptance pending |
-| M6-007 | Inter-agent communication | Planned | TBD | TBD | TBD |
-| M6-008 | Shared memory | Planned | TBD | TBD | TBD |
+| M6-007 | Inter-agent communication | Planned | Validated CrewAI Task.context exchange | Real task/context execution and forgery rejection | Partial local deterministic evidence below |
+| M6-008 | Shared memory | Planned | Bounded immutable workflow-scoped collaboration state | Provenance, bounds, concurrent isolation | No global/persistent/distributed memory; acceptance pending |
 | M6-009 | Task delegation | Planned | Explicit bounded worker assignment | Delegation-before-output and step checks | Partial local evidence below; acceptance pending |
 | M6-010 | Workflow synchronisation | Planned | Finite ordered graph and validated completion | Ordered execution, timeout/cancellation | Partial local evidence below; distributed behavior unverified |
-| M6-011 | CrewAI | Planned | TBD | TBD | TBD |
+| M6-011 | CrewAI | Planned | Real Crew/Task scheduling with deterministic BaseAgent roles | Real kickoff/scheduler/task spies and child execution | Offline orchestration, no AI inference; acceptance pending |
 | M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
 | M6-013 | Google ADK | Planned | TBD | TBD | TBD |
 | M6-014 | LangSmith | Planned | TBD | TBD | TBD |
@@ -32,11 +32,11 @@
 | M6-019 | Cost optimisation | Planned | Bounded usage/cost aggregates; curated console cost view | Estimate labeling, budgets, telemetry/query resource bounds | Estimated versus provider-reported cost; observation window |
 | M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; metrics/health view planned | Real graph cancellation and typed failure tests; telemetry/queue tests pending | Partial local reliability; recovery/operational alerts unverified |
 | M6-021 | Coordinator-worker lab | Planned | Runnable deterministic slice/service example | Workflow and adversarial integration tests | Human-facing lab and acceptance remain pending |
-| M6-022 | Collaborative AI lab | Planned | TBD | TBD | TBD |
+| M6-022 | Collaborative AI lab | Planned | Runnable deterministic collaborative service example | Role/context/state integration and adversarial tests | AI inference and human-facing lab acceptance pending |
 | M6-023 | Distributed orchestration lab | Planned | TBD | TBD | TBD |
 | M6-024 | Multi-agent orchestration platform | Planned | Streamlit unified curated operations console via application services | Curated evidence consistency, safe specialist references | Workflow, health, reliability, cost; Grafana/LangSmith links |
-| M6-025 | Collaborative AI workflow | Planned | TBD | TBD | TBD |
-| M6-026 | Scalable multi-agent orchestration objective | Planned | TBD | TBD | TBD |
+| M6-025 | Collaborative AI workflow | Planned | Researcher -> Analyst -> Critic deterministic workflow | Ordered task ownership, validation, synthesis | Partial local collaboration; full AI deliverable unverified |
+| M6-026 | Scalable multi-agent orchestration objective | Planned | Bounded role orchestration alongside accepted LangGraph slice | Per-run bounds/isolation, no scaling benchmark | Local prerequisite only; scalable AI objective unverified |
 
 ## Verification Rule
 
@@ -65,7 +65,7 @@ requirements have prerequisite implementation evidence, not completion:
 
 | Existing ID | Foundation reference | What remains unproved |
 | --- | --- | --- |
-| M6-011 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | CrewAI task construction only; meaningful collaborative execution remains Planned |
+| M6-011 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | Original construction evidence; now extended by deterministic collaborative execution below |
 | M6-012 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | Original builder construction evidence; now extended by the deterministic slice below |
 | M6-013 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | ADK base-agent construction only; delegation/distributed runtime remains Planned |
 | M6-015 | `../src/multi_agent_orchestration/contracts.py`; `../tests/test_contracts.py` | Typed request/status/identity contracts; transitions now implemented below; persistence unimplemented |
@@ -103,3 +103,30 @@ explicit requested/actual LangGraph, identities, limits, and zero calls/retries;
 it contains no raw instruction, authority, policy, credential, or remote trace.
 CrewAI/ADK execution, collaboration, distribution, LangSmith delivery, operational
 telemetry, and deployment remain unverified.
+
+## Deterministic CrewAI Collaboration Evidence
+
+[CREWAI_COLLABORATION.md](CREWAI_COLLABORATION.md) records the bounded slice and
+quality evidence. `_crewai_adapter.py` exercises real Crew.kickoff, sequential
+scheduling, Task.execute_sync, explicit Task ownership/context, validated callbacks,
+and native completion. Custom BaseAgent implementations replace only local role
+behavior at the SDK's abstract execution interface; there is no LLM or fake Crew.
+`collaboration.py` owns immutable state/contribution validation, independent of
+SDK types. `_crewai_worker.py` guards external access; `adapters.py` isolates each
+run's environment/storage and cancels/reaps it. `execution.py` validates output
+and creates payload-free ordered provenance evidence outside runtime output.
+
+| Existing ID | Partial implementation/test evidence | Still unverified |
+| --- | --- | --- |
+| M6-007 | Real Crew context aggregates validated researcher/analyst contributions; context forgery tests | General inter-agent protocols and full platform acceptance |
+| M6-008 | At most three immutable 256-character messages with owner/source/identity checks; concurrent isolated runs | Persistent/distributed/shared global memory |
+| M6-011 | Real Crew/Task/BaseAgent objects and kickoff/scheduler/task execution observed by tests | Model-backed CrewAI collaboration and source acceptance |
+| M6-022 | Offline role workflow, runnable example, adversarial and resource-bound tests | Human-facing collaborative AI lab acceptance |
+| M6-025 | Research -> analysis -> critic refinement from actual validated upstream context | Full collaborative AI deliverable and product experience |
+| M6-026 | Local bounded orchestration, deterministic repeatability, per-run isolation | Scalability, AI inference, complete objective acceptance |
+
+All 26 IDs/meanings/statuses remain unchanged. This extends deterministic local
+evidence only; it does not establish live AI, Google ADK/distribution, telemetry
+delivery, UI, deployment, or production readiness. No requirement is marked
+Complete or Verified. The accepted LangGraph evidence remains valid; its historical
+CrewAI construction-only limitation is superseded by this slice.

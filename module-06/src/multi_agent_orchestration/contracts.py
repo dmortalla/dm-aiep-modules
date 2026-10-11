@@ -37,6 +37,8 @@ class ExecutionLimits(Contract):
 
     max_steps: Annotated[int, Field(strict=True, ge=1, le=32)] = 1
     timeout_ms: Annotated[int, Field(strict=True, ge=1, le=30_000)] = 1_000
+    max_tasks: Annotated[int, Field(strict=True, ge=1, le=3)] = 3
+    max_messages: Annotated[int, Field(strict=True, ge=1, le=3)] = 3
 
 
 class TaskInput(Contract):
@@ -56,7 +58,7 @@ class TaskInput(Contract):
 
 
 class WorkflowRequest(Contract):
-    """Application request for one bounded fixture or coordinator-worker task."""
+    """Application request for bounded fixture, graph, or collaborative execution."""
 
     workflow_id: UUID = Field(default_factory=uuid4)
     runtime: RuntimeId = RuntimeId.FIXTURE
@@ -70,7 +72,10 @@ class RuntimeInfo(Contract):
     runtime: RuntimeId
     execution_available: bool
     evidence_class: Literal[
-        "deterministic_fixture", "deterministic_graph", "adapter_construction"
+        "deterministic_fixture",
+        "deterministic_graph",
+        "deterministic_collaboration",
+        "adapter_construction",
     ]
     framework_version: Annotated[str, Field(max_length=64)] | None = None
 
@@ -79,7 +84,7 @@ class AgentTaskResult(Contract):
     """Untrusted candidate output until checked against the application request."""
 
     task_id: UUID
-    agent_id: Literal["fixture_agent", "deterministic_worker"]
+    agent_id: Literal["fixture_agent", "deterministic_worker", "critic"]
     status: Literal[ExecutionStatus.COMPLETED]
     output: Annotated[str, Field(strict=True, min_length=1, max_length=4096)] = Field(
         repr=False
@@ -113,6 +118,39 @@ class WorkflowState(Contract):
     transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
 
 
+class CollaboratorRole(StrEnum):
+    """Closed application collaborator ownership and ordering."""
+
+    RESEARCHER = "researcher"
+    ANALYST = "analyst"
+    CRITIC = "critic"
+
+
+class ContributionRecord(Contract):
+    """Payload-free provenance for one validated contribution."""
+
+    workflow_id: UUID
+    task_id: UUID
+    role: CollaboratorRole
+    sequence: Annotated[int, Field(strict=True, ge=1, le=3)]
+    sources: Annotated[tuple[CollaboratorRole, ...], Field(max_length=2)] = ()
+
+
+class CollaborationMessage(ContributionRecord):
+    """Bounded candidate role output; revalidate before shared-state insertion."""
+
+    content: Annotated[str, Field(strict=True, min_length=1, max_length=256)] = Field(
+        repr=False
+    )
+
+
+class CollaborationState(Contract):
+    """Immutable workflow-scoped shared context; no persistent/global memory."""
+
+    request: WorkflowRequest
+    messages: Annotated[tuple[CollaborationMessage, ...], Field(max_length=3)] = ()
+
+
 class RuntimeOutput(Contract):
     """Candidate execution result; deliberately contains no policy or evidence."""
 
@@ -120,6 +158,7 @@ class RuntimeOutput(Contract):
     runtime: RuntimeId
     result: AgentTaskResult
     transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
+    collaboration: Annotated[tuple[CollaborationMessage, ...], Field(max_length=3)] = ()
 
 
 class ExecutionEvidence(Contract):
@@ -137,6 +176,7 @@ class ExecutionEvidence(Contract):
     model_calls: Literal[0] = 0
     external_calls: Literal[0] = 0
     transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
+    collaboration: Annotated[tuple[ContributionRecord, ...], Field(max_length=3)] = ()
 
 
 class ValidatedWorkflowResult(Contract):
@@ -159,6 +199,7 @@ class ValidatedWorkflowResult(Contract):
                 self.result.agent_id != "fixture_agent"
                 or self.evidence.steps_consumed != 1
                 or self.evidence.transitions
+                or self.evidence.collaboration
             ):
                 raise ValueError(
                     "Fixture evidence must describe exactly one fixture step."
@@ -168,9 +209,33 @@ class ValidatedWorkflowResult(Contract):
                 self.result.agent_id != "deterministic_worker"
                 or self.evidence.steps_consumed != 3
                 or self.evidence.transitions != tuple(WorkflowTransition)
+                or self.evidence.collaboration
             ):
                 raise ValueError(
                     "LangGraph evidence must describe the validated three-step flow."
+                )
+        elif self.evidence.actual_runtime == RuntimeId.CREWAI:
+            roles = tuple(CollaboratorRole)
+            expected = tuple(
+                ContributionRecord(
+                    workflow_id=self.evidence.workflow_id,
+                    task_id=self.evidence.task_id,
+                    role=role,
+                    sequence=index + 1,
+                    sources=roles[:index],
+                )
+                for index, role in enumerate(roles)
+            )
+            if (
+                self.result.agent_id != "critic"
+                or self.evidence.steps_consumed != 3
+                or self.evidence.transitions
+                or self.evidence.collaboration != expected
+                or self.evidence.limits.max_tasks < 3
+                or self.evidence.limits.max_messages < 3
+            ):
+                raise ValueError(
+                    "CrewAI evidence must describe three validated role contributions."
                 )
         else:
             raise ValueError("This runtime does not support execution.")

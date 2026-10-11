@@ -5,7 +5,9 @@
 This is the historical foundation record. Current LangGraph execution supersedes
 its construction-only limitation in
 [LANGGRAPH_COORDINATOR_WORKER.md](LANGGRAPH_COORDINATOR_WORKER.md).
-Fixture defaults and CrewAI/Google ADK construction-only behavior remain intact.
+Fixture defaults and Google ADK construction-only behavior remain intact.
+CrewAI now executes the separately documented
+[deterministic collaborative slice](CREWAI_COLLABORATION.md).
 
 This milestone follows AGENTS.md, the engineering SOP, the 26 frozen source
 requirements, Architecture B+, and ADRs 001â€“006. Starting state:

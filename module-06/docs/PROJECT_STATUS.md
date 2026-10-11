@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic LangGraph coordinator-worker slice; full platform not implemented |
+| Phase | Deterministic LangGraph and CrewAI slices; full platform not implemented |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -104,7 +104,35 @@ and scope checks passed. Zero non-loopback attempts occurred in guarded Module 6
 tests. Dependencies, source requirements, Architecture B+, and Modules 1–5 are
 unchanged.
 
+## Deterministic CrewAI Collaborative Slice
+
+[CREWAI_COLLABORATION.md](CREWAI_COLLABORATION.md) records real Crew/Task
+orchestration using deterministic BaseAgent role executors. Researcher -> Analyst
+-> Critic tasks exchange validated bounded context through actual CrewAI task
+aggregation and workflow-scoped immutable shared state. Final output crosses
+adapter and application validation before payload-free contribution evidence is
+created. This is genuine offline scheduling/collaboration without AI inference.
+
+Each execution uses a local child process with credential-free environment,
+forced tracing/analytics disablement, a non-loopback guard, temporary SDK storage,
+and kill/reap cleanup on deadline/cancellation. No global application memory,
+persistent memory, retries, provider calls, telemetry delivery, UI, ADK execution,
+or deployment is added. LangGraph and fixture behavior are preserved. Source
+IDs/meanings and all Planned statuses remain unchanged; evidence is partial for
+the six targeted requirements and does not accept labs/platform completion.
+Final verification is recorded in the implementation document.
+
+CrewAI milestone evidence: **184 Module 6 tests passed**; root **2,305 collected;
+2,299 passed, 6 skipped, 3 existing ChromaDB warnings**. The 56 new CrewAI cases
+replace one obsolete construction-only case. Ruff, compileall, uv lock/sync/pip
+consistency, all six isolated package imports, whitespace and scope checks pass.
+The genuine execution paths made zero guarded non-loopback attempts; the denial
+test separately proves swallowed external attempts cannot produce success.
+
 ## Production-Grade Definition of Done
+
+The checklist below evaluates the complete platform. Bounded slice evidence does
+not establish platform, lab, or deployment acceptance.
 
 ### Source Fidelity
 

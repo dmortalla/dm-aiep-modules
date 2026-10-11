@@ -77,7 +77,6 @@ async def test_keys_do_not_change_runtime_or_authorize_calls(monkeypatch, creden
 @pytest.mark.parametrize(
     "identifier,module,symbol",
     [
-        (RuntimeId.CREWAI, "crewai", "Task"),
         (RuntimeId.GOOGLE_ADK, "google.adk.agents", "BaseAgent"),
     ],
 )

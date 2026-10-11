@@ -5,7 +5,9 @@ from collections.abc import Mapping
 
 from pydantic import ValidationError
 
+from .collaboration import expected_messages
 from .contracts import (
+    ContributionRecord,
     ExecutionEvidence,
     ExecutionStatus,
     RuntimeId,
@@ -62,7 +64,8 @@ async def execute_workflow(
     if selected.info.runtime != validated.runtime:
         raise InvalidWorkflowRequestError("Requested and selected runtimes must match.")
     if (
-        validated.runtime not in (RuntimeId.FIXTURE, RuntimeId.LANGGRAPH)
+        validated.runtime
+        not in (RuntimeId.FIXTURE, RuntimeId.LANGGRAPH, RuntimeId.CREWAI)
         or not selected.info.execution_available
     ):
         raise RuntimeUnavailableError("Selected runtime execution is not implemented.")
@@ -90,21 +93,27 @@ async def execute_workflow(
             "Runtime output failed contract validation."
         ) from exc
     graph = validated.runtime == RuntimeId.LANGGRAPH
+    crew = validated.runtime == RuntimeId.CREWAI
+    messages = expected_messages(validated) if crew else ()
     transitions = tuple(WorkflowTransition) if graph else ()
     if (
         output.workflow_id != validated.workflow_id
         or output.result.task_id != validated.task.task_id
         or output.runtime != validated.runtime
         or output.result.agent_id
-        != ("deterministic_worker" if graph else "fixture_agent")
+        != ("critic" if crew else "deterministic_worker" if graph else "fixture_agent")
         or output.transitions != transitions
+        or output.collaboration != messages
         or output.result.output
         != (
-            worker_output(validated.task)
+            messages[-1].content
+            if crew
+            else worker_output(validated.task)
             if graph
             else "Fixture task completed; no model or external calls were made."
         )
-        or (graph and validated.limits.max_steps < 3)
+        or ((graph or crew) and validated.limits.max_steps < 3)
+        or (crew and min(validated.limits.max_tasks, validated.limits.max_messages) < 3)
     ):
         raise InvalidRuntimeOutputError(
             "Runtime output contradicts the application request/contract."
@@ -119,7 +128,13 @@ async def execute_workflow(
             actual_runtime=output.runtime,
             status=ExecutionStatus.COMPLETED,
             limits=validated.limits,
-            steps_consumed=3 if graph else 1,
+            steps_consumed=3 if graph or crew else 1,
             transitions=transitions,
+            collaboration=tuple(
+                ContributionRecord.model_validate(
+                    message.model_dump(exclude={"content"})
+                )
+                for message in messages
+            ),
         ),
     )

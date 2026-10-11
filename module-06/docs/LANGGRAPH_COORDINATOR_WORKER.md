@@ -2,6 +2,10 @@
 
 ## Scope and Authority
 
+This records the accepted LangGraph milestone. Its CrewAI construction-only
+limitation is superseded by [CREWAI_COLLABORATION.md](CREWAI_COLLABORATION.md).
+LangGraph execution and Google ADK construction-only behavior are preserved.
+
 Starting branch: `feature/module-06-architecture`; HEAD
 `0294a3ef8a9ceb99a463ed2246288fbf03c68c4d`, subject
 `build: integrate module 6 into root quality gate`; worktree clean.
