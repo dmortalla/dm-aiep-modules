@@ -12,7 +12,9 @@ from .contracts import (
     RuntimeOutput,
     ValidatedWorkflowResult,
     WorkflowRequest,
+    WorkflowTransition,
 )
+from .coordinator_worker import worker_output
 from .errors import (
     ExecutionFailureError,
     ExecutionTimeoutError,
@@ -30,7 +32,7 @@ async def execute_workflow(
     *,
     runtime: Runtime | None = None,
 ) -> ValidatedWorkflowResult:
-    """Validate and execute one fixture task; build evidence outside runtime output.
+    """Validate bounded local execution; build evidence outside runtime output.
 
     Args:
         request: Untrusted input, including already-created Pydantic objects.
@@ -41,8 +43,8 @@ async def execute_workflow(
 
     Raises:
         InvalidWorkflowRequestError: Input schema or explicit runtime selection fails.
-        RuntimeUnavailableError: Framework execution is not implemented.
-        InvalidRuntimeOutputError: Output schema, identity, or fixture content fails.
+        RuntimeUnavailableError: Selected runtime execution is not implemented.
+        InvalidRuntimeOutputError: Output schema, identity, content, or history fails.
         ExecutionTimeoutError: Cooperative async execution exceeds the deadline.
         ExecutionFailureError: Adapter execution fails unexpectedly.
     """
@@ -59,11 +61,11 @@ async def execute_workflow(
     selected = runtime if runtime is not None else create_runtime(validated.runtime)
     if selected.info.runtime != validated.runtime:
         raise InvalidWorkflowRequestError("Requested and selected runtimes must match.")
-    if validated.runtime != RuntimeId.FIXTURE or not selected.info.execution_available:
-        raise RuntimeUnavailableError(
-            "Framework execution is not implemented; "
-            "explicitly select fixture for offline use."
-        )
+    if (
+        validated.runtime not in (RuntimeId.FIXTURE, RuntimeId.LANGGRAPH)
+        or not selected.info.execution_available
+    ):
+        raise RuntimeUnavailableError("Selected runtime execution is not implemented.")
     try:
         async with asyncio.timeout(validated.limits.timeout_ms / 1000):
             raw = await selected.execute(validated)
@@ -87,15 +89,25 @@ async def execute_workflow(
         raise InvalidRuntimeOutputError(
             "Runtime output failed contract validation."
         ) from exc
+    graph = validated.runtime == RuntimeId.LANGGRAPH
+    transitions = tuple(WorkflowTransition) if graph else ()
     if (
         output.workflow_id != validated.workflow_id
         or output.result.task_id != validated.task.task_id
         or output.runtime != validated.runtime
+        or output.result.agent_id
+        != ("deterministic_worker" if graph else "fixture_agent")
+        or output.transitions != transitions
         or output.result.output
-        != "Fixture task completed; no model or external calls were made."
+        != (
+            worker_output(validated.task)
+            if graph
+            else "Fixture task completed; no model or external calls were made."
+        )
+        or (graph and validated.limits.max_steps < 3)
     ):
         raise InvalidRuntimeOutputError(
-            "Runtime output contradicts the fixture request/contract."
+            "Runtime output contradicts the application request/contract."
         )
 
     return ValidatedWorkflowResult(
@@ -107,5 +119,7 @@ async def execute_workflow(
             actual_runtime=output.runtime,
             status=ExecutionStatus.COMPLETED,
             limits=validated.limits,
+            steps_consumed=3 if graph else 1,
+            transitions=transitions,
         ),
     )

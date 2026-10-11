@@ -27,3 +27,7 @@ class ExecutionFailureError(RuntimeFoundationError):
 
 class ExecutionTimeoutError(ExecutionFailureError):
     """The application deadline expired and execution was cancelled."""
+
+
+class StepBudgetExceededError(ExecutionFailureError):
+    """The finite workflow cannot advance within its application-owned step budget."""

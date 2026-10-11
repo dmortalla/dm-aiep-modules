@@ -56,7 +56,7 @@ class TaskInput(Contract):
 
 
 class WorkflowRequest(Contract):
-    """Application request for one foundation task, not a multi-agent workflow."""
+    """Application request for one bounded fixture or coordinator-worker task."""
 
     workflow_id: UUID = Field(default_factory=uuid4)
     runtime: RuntimeId = RuntimeId.FIXTURE
@@ -65,11 +65,13 @@ class WorkflowRequest(Contract):
 
 
 class RuntimeInfo(Contract):
-    """Construction capability metadata, independent of framework objects."""
+    """Application capability metadata, independent of framework objects."""
 
     runtime: RuntimeId
     execution_available: bool
-    evidence_class: Literal["deterministic_fixture", "adapter_construction"]
+    evidence_class: Literal[
+        "deterministic_fixture", "deterministic_graph", "adapter_construction"
+    ]
     framework_version: Annotated[str, Field(max_length=64)] | None = None
 
 
@@ -77,11 +79,38 @@ class AgentTaskResult(Contract):
     """Untrusted candidate output until checked against the application request."""
 
     task_id: UUID
-    agent_id: Literal["fixture_agent"]
+    agent_id: Literal["fixture_agent", "deterministic_worker"]
     status: Literal[ExecutionStatus.COMPLETED]
     output: Annotated[str, Field(strict=True, min_length=1, max_length=4096)] = Field(
         repr=False
     )
+
+
+class WorkflowTransition(StrEnum):
+    """Finite application-owned coordinator-worker transition vocabulary."""
+
+    DELEGATED = "coordinator_delegated"
+    WORKED = "worker_completed"
+    VALIDATED = "coordinator_validated"
+
+
+class WorkflowPhase(StrEnum):
+    """Application state phases independent of LangGraph machinery."""
+
+    PENDING = "pending"
+    DELEGATED = "delegated"
+    WORKED = "worked"
+    COMPLETED = "completed"
+
+
+class WorkflowState(Contract):
+    """Bounded context passed between nodes; never trusted without revalidation."""
+
+    request: WorkflowRequest
+    phase: WorkflowPhase = WorkflowPhase.PENDING
+    delegated_to: Literal["deterministic_worker"] | None = None
+    result: AgentTaskResult | None = None
+    transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
 
 
 class RuntimeOutput(Contract):
@@ -90,6 +119,7 @@ class RuntimeOutput(Contract):
     workflow_id: UUID
     runtime: RuntimeId
     result: AgentTaskResult
+    transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
 
 
 class ExecutionEvidence(Contract):
@@ -101,11 +131,12 @@ class ExecutionEvidence(Contract):
     actual_runtime: RuntimeId
     status: Literal[ExecutionStatus.COMPLETED]
     mode: Literal["deterministic_offline"] = "deterministic_offline"
-    steps_consumed: Literal[1] = 1
+    steps_consumed: Annotated[int, Field(strict=True, ge=1, le=32)] = 1
     limits: ExecutionLimits
     retries: Literal[0] = 0
     model_calls: Literal[0] = 0
     external_calls: Literal[0] = 0
+    transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
 
 
 class ValidatedWorkflowResult(Contract):
@@ -121,6 +152,26 @@ class ValidatedWorkflowResult(Contract):
             raise ValueError("Result and evidence task identities must match.")
         if self.evidence.requested_runtime != self.evidence.actual_runtime:
             raise ValueError("Implicit runtime fallback is forbidden.")
-        if self.evidence.actual_runtime != RuntimeId.FIXTURE:
-            raise ValueError("Foundation success requires the fixture runtime.")
+        if self.evidence.steps_consumed > self.evidence.limits.max_steps:
+            raise ValueError("Evidence cannot exceed the application step budget.")
+        if self.evidence.actual_runtime == RuntimeId.FIXTURE:
+            if (
+                self.result.agent_id != "fixture_agent"
+                or self.evidence.steps_consumed != 1
+                or self.evidence.transitions
+            ):
+                raise ValueError(
+                    "Fixture evidence must describe exactly one fixture step."
+                )
+        elif self.evidence.actual_runtime == RuntimeId.LANGGRAPH:
+            if (
+                self.result.agent_id != "deterministic_worker"
+                or self.evidence.steps_consumed != 3
+                or self.evidence.transitions != tuple(WorkflowTransition)
+            ):
+                raise ValueError(
+                    "LangGraph evidence must describe the validated three-step flow."
+                )
+        else:
+            raise ValueError("This runtime does not support execution.")
         return self

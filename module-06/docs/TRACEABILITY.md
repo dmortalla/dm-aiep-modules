@@ -14,24 +14,24 @@
 | M6-001 | Sequential agents | Planned | TBD | TBD | TBD |
 | M6-002 | Parallel agents | Planned | TBD | TBD | TBD |
 | M6-003 | Hierarchical agents | Planned | TBD | TBD | TBD |
-| M6-004 | Coordinator-worker systems | Planned | TBD | TBD | TBD |
+| M6-004 | Coordinator-worker systems | Planned | Deterministic coordinator-worker slice | Real graph node ordering/delegation | Partial local evidence below; acceptance pending |
 | M6-005 | Distributed orchestration | Planned | TBD | TBD | TBD |
-| M6-006 | Context passing | Planned | TBD | TBD | TBD |
+| M6-006 | Context passing | Planned | Typed immutable WorkflowState | Context integrity and concurrent isolation | Partial local evidence below; acceptance pending |
 | M6-007 | Inter-agent communication | Planned | TBD | TBD | TBD |
 | M6-008 | Shared memory | Planned | TBD | TBD | TBD |
-| M6-009 | Task delegation | Planned | TBD | TBD | TBD |
-| M6-010 | Workflow synchronisation | Planned | TBD | TBD | TBD |
+| M6-009 | Task delegation | Planned | Explicit bounded worker assignment | Delegation-before-output and step checks | Partial local evidence below; acceptance pending |
+| M6-010 | Workflow synchronisation | Planned | Finite ordered graph and validated completion | Ordered execution, timeout/cancellation | Partial local evidence below; distributed behavior unverified |
 | M6-011 | CrewAI | Planned | TBD | TBD | TBD |
-| M6-012 | LangGraph | Planned | TBD | TBD | TBD |
+| M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
 | M6-013 | Google ADK | Planned | TBD | TBD | TBD |
 | M6-014 | LangSmith | Planned | TBD | TBD | TBD |
-| M6-015 | Workflow state management | Planned | Application-owned state; curated console transitions | State/evidence consistency | Validated state and orchestration view |
+| M6-015 | Workflow state management | Planned | Typed application phases/history; console remains planned | State/evidence consistency, forged context/output rejection | Partial local transitions; persistence/console unverified |
 | M6-016 | Execution tracing | Planned | LangSmith AI tracing; OpenTelemetry collection boundary; Prometheus metrics | Correlation, redaction, cardinality, bounded export failure | Distinguish offline adapters, local metrics, and live trace delivery |
 | M6-017 | Scaling workflows | Planned | Applicable throughput, active-workflow, queue/worker metrics | Bounded labels and meaningful load measurements | Curated scale view; Grafana drill-down |
 | M6-018 | Distributed processing | Planned | Applicable distributed worker metrics via collection boundary | Worker metrics and simulated/genuine evidence separation | Actual execution mode and resource observations |
 | M6-019 | Cost optimisation | Planned | Bounded usage/cost aggregates; curated console cost view | Estimate labeling, budgets, telemetry/query resource bounds | Estimated versus provider-reported cost; observation window |
-| M6-020 | Reliability patterns | Planned | Retry/timeout/failure metrics; curated health view | Unavailable telemetry, bounded retries/queues, stale views | Reliability evidence; Grafana alerting references |
-| M6-021 | Coordinator-worker lab | Planned | TBD | TBD | TBD |
+| M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; metrics/health view planned | Real graph cancellation and typed failure tests; telemetry/queue tests pending | Partial local reliability; recovery/operational alerts unverified |
+| M6-021 | Coordinator-worker lab | Planned | Runnable deterministic slice/service example | Workflow and adversarial integration tests | Human-facing lab and acceptance remain pending |
 | M6-022 | Collaborative AI lab | Planned | TBD | TBD | TBD |
 | M6-023 | Distributed orchestration lab | Planned | TBD | TBD | TBD |
 | M6-024 | Multi-agent orchestration platform | Planned | Streamlit unified curated operations console via application services | Curated evidence consistency, safe specialist references | Workflow, health, reliability, cost; Grafana/LangSmith links |
@@ -66,9 +66,9 @@ requirements have prerequisite implementation evidence, not completion:
 | Existing ID | Foundation reference | What remains unproved |
 | --- | --- | --- |
 | M6-011 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | CrewAI task construction only; meaningful collaborative execution remains Planned |
-| M6-012 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | LangGraph builder construction only; compiled/executed workflow remains Planned |
+| M6-012 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | Original builder construction evidence; now extended by the deterministic slice below |
 | M6-013 | `../src/multi_agent_orchestration/adapters.py`; `../tests/test_registry.py` | ADK base-agent construction only; delegation/distributed runtime remains Planned |
-| M6-015 | `../src/multi_agent_orchestration/contracts.py`; `../tests/test_contracts.py` | Typed request/status/identity contracts; state transitions/persistence not implemented |
+| M6-015 | `../src/multi_agent_orchestration/contracts.py`; `../tests/test_contracts.py` | Typed request/status/identity contracts; transitions now implemented below; persistence unimplemented |
 | M6-019 | `../src/multi_agent_orchestration/fixture.py`; `../tests/test_execution.py`; `../tests/test_registry.py` | Zero-call offline fixture evidence only; live cost optimization/budgets not implemented |
 | M6-020 | `../src/multi_agent_orchestration/execution.py`; `../tests/test_execution.py` | Boundary rejection/deadline/cancellation only; complete workflow reliability patterns not implemented |
 | M6-024 | `../src/multi_agent_orchestration/runtime.py`; `../src/multi_agent_orchestration/registry.py`; `../tests/test_registry.py` | Runtime foundation only; platform and human-facing console not delivered |
@@ -77,3 +77,29 @@ requirements have prerequisite implementation evidence, not completion:
 Minimal structured fixture evidence is not LangSmith execution tracing or
 operational telemetry and does not complete M6-014 or M6-016. No lab, delivery,
 scaling, collaboration, or distributed-execution requirement is marked complete.
+
+## Deterministic LangGraph Slice Evidence
+
+All 26 source IDs, meanings, and statuses are preserved. Planned means the source
+requirement has not yet been accepted, not that no partial implementation exists.
+This real local graph uses deterministic agent functions without AI inference.
+It does not establish full platform/lab acceptance. The focused implementation
+and final gate record are in [LANGGRAPH_COORDINATOR_WORKER.md](LANGGRAPH_COORDINATOR_WORKER.md).
+
+| Existing ID | Implementation evidence | Tests and remaining limitation |
+| --- | --- | --- |
+| M6-004 | `coordinator_worker.py`, `adapters.py`: coordinator -> worker -> coordinator validation | Real topology/invocation and ordered node execution; broader systems and product acceptance pending |
+| M6-006 | `contracts.py`: typed WorkflowState retains bounded request/task context | Context observed in each real node; forged context rejected; no shared memory implementation |
+| M6-009 | `coordinator_worker.py`: explicit worker assignment before result generation | Worker cannot precede delegation; step budget enforced; only one local worker |
+| M6-010 | `adapters.py`: finite ordered edges and validated terminal state | Validation waits for worker result; async timeout/caller cancellation; no distributed synchronization |
+| M6-012 | `adapters.py`: actual StateGraph.compile and compiled.ainvoke | Spies observe real execution, fixed topology; missing/broken runtime cannot fall back; no live AI |
+| M6-015 | `contracts.py`, `coordinator_worker.py`: immutable phases and bounded transition history | Nested Pydantic bypass, forged IDs/bounds/results rejected; concurrent run isolation; no persistence |
+| M6-020 | `execution.py`, `errors.py`: deadline, cancellation, typed budget/output failures | Real graph worker cancellation and budget rejection; retries zero; no recovery/distributed reliability |
+| M6-021 | `LANGGRAPH_COORDINATOR_WORKER.md`: runnable offline service example | `test_langgraph_workflow.py` exercises workflow and adversarial cases; human-facing lab/acceptance pending |
+
+The existing non-loopback socket/DNS guard remains unchanged. Credential and
+tracing-flag tests make zero external attempts. Evidence records three transitions,
+explicit requested/actual LangGraph, identities, limits, and zero calls/retries;
+it contains no raw instruction, authority, policy, credential, or remote trace.
+CrewAI/ADK execution, collaboration, distribution, LangSmith delivery, operational
+telemetry, and deployment remain unverified.

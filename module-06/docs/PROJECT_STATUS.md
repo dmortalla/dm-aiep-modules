@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Runtime foundation; full orchestration not implemented |
+| Phase | Deterministic LangGraph coordinator-worker slice; full platform not implemented |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -56,7 +56,7 @@ application contracts, an async runtime protocol, closed explicit runtime
 selection, a single-step deterministic fixture, candidate-output validation,
 application-created evidence, bounded deadlines, and typed chained failures.
 LangGraph StateGraph, CrewAI Task, and Google ADK BaseAgent construction use the
-real locked SDKs; execution through those adapters explicitly remains unavailable.
+real locked SDKs; execution was unavailable at that foundation milestone.
 No provider, paid call, remote telemetry, or framework fallback is enabled.
 
 Module 6 is now included in root pytest discovery and the synchronized editable
@@ -78,6 +78,31 @@ passed all **81 tests** using the parent configuration. Installed imports for al
 six application packages, Ruff, compileall, uv consistency, whitespace, and scope
 checks passed. `uv.lock` and dependency constraints remain unchanged.
 
+
+## Deterministic LangGraph Coordinator-Worker Slice
+
+[Implementation and operation](LANGGRAPH_COORDINATOR_WORKER.md) records actual
+StateGraph construction, compilation, and async invocation through three nodes:
+coordinator delegation, deterministic worker processing, and coordinator
+validation. Application-owned typed context, identity/budget checks, immutable
+state transitions, bounded deadlines/cancellation, and final output validation
+precede application-created evidence. Fixture behavior remains unchanged;
+CrewAI and Google ADK remain construction-only. No provider or telemetry service
+is invoked. Ambient tracing flags are explicitly disabled for graph invocation.
+
+The slice supplies deterministic local evidence toward M6-004, M6-006, M6-009,
+M6-010, M6-012, M6-015, M6-020, and M6-021. All 26 statuses remain Planned under
+the acceptance rule: platform/lab acceptance, UI, persistent/distributed state,
+live AI, operational telemetry, and deployment remain unverified. The evidence
+supports this bounded implementation, not completed requirements or production
+readiness. Final validation is recorded in the implementation document.
+
+Final root evidence: **2,250 collected; 2,244 passed, 6 skipped, 3 existing
+ChromaDB warnings**, including all **129 Module 6 tests**. Ruff, compileall,
+uv lock/sync/installed consistency, six isolated installed imports, whitespace,
+and scope checks passed. Zero non-loopback attempts occurred in guarded Module 6
+tests. Dependencies, source requirements, Architecture B+, and Modules 1–5 are
+unchanged.
 
 ## Production-Grade Definition of Done
 
@@ -165,10 +190,11 @@ checks passed. `uv.lock` and dependency constraints remain unchanged.
 
 ## Next Recommended Work
 
-Implement a bounded deterministic LangGraph coordinator-worker vertical slice
-with application-owned workflow state, transitions, validated results, and
-failure evidence. Preserve security/cost policy and separately authorize any
-model/provider integration. See [remaining limits](RUNTIME_FOUNDATION.md).
+Expose the deterministic coordinator-worker slice through a small application
+service/operations console with validated result and typed failure evidence,
+without enabling providers or remote telemetry. Preserve the approved boundaries;
+model/provider integration requires separate authorization. See
+[remaining limits](LANGGRAPH_COORDINATOR_WORKER.md).
 
 ## Compatibility Evidence
 
