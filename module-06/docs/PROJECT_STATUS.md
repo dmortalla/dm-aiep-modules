@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic runtime and local multi-process slices; full platform not implemented |
+| Phase | Deterministic runtime/process slices and offline observation boundaries; full platform pending |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -201,6 +201,26 @@ earlier one-process ADK slice. Evidence is partial for M6-005/006/007/009/010/01
 017/018/020/023/026; all 26 requirements remain Planned. Remote-host, cluster or
 cloud distribution, throughput/load capacity, persistent state, live AI, remote
 observability, UI/lab acceptance and production readiness remain unverified.
+
+## Application-Owned Execution Observation
+
+[Execution Observability](EXECUTION_OBSERVABILITY.md) adds an explicit application
+service around accepted execution, immutable payload-free correlation/accounting
+contracts, bounded local LangSmith RunTree and OpenTelemetry span/metric adapters,
+closed metric dimensions and telemetry failure isolation. Existing runtime
+behavior, trusted evidence, defaults and entry points remain unchanged.
+
+Actual installed SDK APIs execute offline. Tests cover all accepted runtimes and
+topologies, real distributed processes, correlation, minimization, credential
+non-authorization, retention/cardinality, forged telemetry/evidence, exporter
+failure, timeout/cancellation and concurrent observation isolation. Final gates
+are recorded in the implementation document.
+
+Evidence is partial for M6-014/016/019/020/026; all 26 requirements remain Planned.
+Role traces describe validated completion provenance, not native execution timing.
+Token/pricing/provider billing evidence is unavailable. Live LangSmith delivery,
+OTLP transport, Prometheus/Grafana deployment, Streamlit console, deployment and
+production readiness remain unverified.
 
 ## Production-Grade Definition of Done
 

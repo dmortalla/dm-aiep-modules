@@ -24,13 +24,13 @@
 | M6-011 | CrewAI | Planned | Real Crew/Task scheduling with deterministic BaseAgent roles | Real kickoff/scheduler/task spies and child execution | Offline orchestration, no AI inference; acceptance pending |
 | M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
 | M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
-| M6-014 | LangSmith | Planned | TBD | TBD | TBD |
+| M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; live trace delivery unverified |
 | M6-015 | Workflow state management | Planned | Typed application phases/history; console remains planned | State/evidence consistency, forged context/output rejection | Partial local transitions; persistence/console unverified |
-| M6-016 | Execution tracing | Planned | LangSmith AI tracing; OpenTelemetry collection boundary; Prometheus metrics | Correlation, redaction, cardinality, bounded export failure | Distinguish offline adapters, local metrics, and live trace delivery |
+| M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence; live delivery/collection/backend unverified |
 | M6-017 | Scaling workflows | Planned | Applicable throughput, active-workflow, queue/worker metrics | Bounded labels and meaningful load measurements | Curated scale view; Grafana drill-down |
 | M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
-| M6-019 | Cost optimisation | Planned | Bounded usage/cost aggregates; curated console cost view | Estimate labeling, budgets, telemetry/query resource bounds | Estimated versus provider-reported cost; observation window |
-| M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; metrics/health view planned | Real graph cancellation and typed failure tests; telemetry/queue tests pending | Partial local reliability; recovery/operational alerts unverified |
+| M6-019 | Cost optimisation | Planned | Bounded telemetry resources; validated zero-call or unavailable accounting | No invented tokens/prices/billing; credential non-authorization and bounds | Partial offline governance; live optimisation/pricing/console unverified |
+| M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; bounded observation failure isolation | Execution/collection failure, timeout/cancellation and telemetry isolation tests | Partial local reliability; recovery/operational alerts unverified |
 | M6-021 | Coordinator-worker lab | Planned | Runnable deterministic slice/service example | Workflow and adversarial integration tests | Human-facing lab and acceptance remain pending |
 | M6-022 | Collaborative AI lab | Planned | Runnable deterministic collaborative service example | Role/context/state integration and adversarial tests | AI inference and human-facing lab acceptance pending |
 | M6-023 | Distributed orchestration lab | Planned | Runnable local multi-process service example | Genuine worker/IPC, adversarial and cleanup cases | Partial lab prerequisite; human-facing/full lab acceptance pending |
@@ -210,3 +210,24 @@ execution; it does not retroactively label the earlier sandboxed single-process
 workflow distributed. All 26 IDs, meanings and Planned statuses remain intact.
 No live AI, billable operation, remote telemetry, deployment, production horizontal
 scaling or production readiness is claimed.
+
+## Application-Owned Observation Evidence (Partial)
+
+[Execution Observability](EXECUTION_OBSERVABILITY.md) records the new explicit
+observation service, immutable contracts and local SDK adapters. All accepted
+execution services and tests remain unchanged. Workflow start/terminal duration
+is observed; role/worker child traces project validated completion provenance,
+without inventing native task timing or successful accounting on failed runs.
+
+| Existing ID | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-014 | Actual local RunTree/child/end APIs, fixed project and no client/post/patch | Live LangSmith delivery and specialist review |
+| M6-016 | Application-generated trace/span correlation; private OTel SDK providers, local spans/metrics; strict minimization/cardinality | OTLP wire delivery, collection, storage and native agent timing |
+| M6-019 | Validated zero-call successes; explicit unavailable tokens/pricing/billing; bounded telemetry resources | Live cost optimisation, token/pricing policies and console |
+| M6-020 | Collection failure isolation, timeout/cancellation/denial observation, real distributed reaping preservation | Remote delivery recovery, operational alerts and deployment |
+| M6-026 | Bounded observation under concurrent workflows and accepted runtime integration | Production throughput, scaling, platform and full objective |
+
+All 26 IDs, source meanings and Planned statuses remain unchanged. Offline SDK
+integration is distinct from live trace delivery and deployed observability.
+No console, additional stack, paid operation, remote telemetry, deployment or
+production readiness is claimed.

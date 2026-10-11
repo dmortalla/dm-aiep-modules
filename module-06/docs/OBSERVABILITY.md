@@ -149,3 +149,13 @@ than presenting missing telemetry as healthy state.
 
 Observability failure must be surfaced and bounded without corrupting workflow
 semantics or silently converting a failed workflow into a successful one.
+
+## Implemented Local Boundary (Partial Evidence)
+
+[Execution Observability](EXECUTION_OBSERVABILITY.md) documents the explicit
+application observation service, immutable payload-free contracts, bounded local
+LangSmith RunTree and OpenTelemetry span/metric adapters, correlation, accounting
+availability, failure isolation and evidence. Accepted execution entry points
+remain unchanged. This is actual offline SDK integration; live LangSmith delivery,
+OTLP transport/collection, Prometheus/Grafana deployment and the Streamlit console
+remain future work. All 26 requirements remain Planned.
