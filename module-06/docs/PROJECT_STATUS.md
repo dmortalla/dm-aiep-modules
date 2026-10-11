@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Dependency foundation verified; feature implementation not started |
+| Phase | Runtime foundation; full orchestration not implemented |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -48,6 +48,26 @@ attempts. Ruff passed without fixes; the full regression suite returned
 The skips and ChromaDB warnings are existing conditional/deprecation outcomes.
 This verifies the dependency foundation, not Module 6 runtime interoperability
 or production readiness.
+
+## Runtime Foundation
+
+The [runtime foundation](RUNTIME_FOUNDATION.md) adds standalone immutable
+application contracts, an async runtime protocol, closed explicit runtime
+selection, a single-step deterministic fixture, candidate-output validation,
+application-created evidence, bounded deadlines, and typed chained failures.
+LangGraph StateGraph, CrewAI Task, and Google ADK BaseAgent construction use the
+real locked SDKs; execution through those adapters explicitly remains unavailable.
+No provider, paid call, remote telemetry, or framework fallback is enabled.
+
+Module 6 tests use local `pytest.ini`; the root Modules 1–5 discovery and package
+ownership contracts are preserved. No dependency/configuration change is made
+outside Module 6. All 26 source requirements remain Planned/unverified.
+Final evidence: **81 Module 6 tests passed** with zero skips/warnings and zero
+non-loopback network attempts. Existing regression: **2,114 passed, 6 skipped,
+3 existing ChromaDB warnings**; combined **2,195 passed**. Ruff, compileall,
+whitespace, isolation, and unchanged-dependency consistency checks passed.
+Details are recorded in RUNTIME_FOUNDATION.md. This is a
+runtime boundary foundation, not a complete workflow, platform, or readiness claim.
 
 ## Production-Grade Definition of Done
 
@@ -135,9 +155,10 @@ or production readiness.
 
 ## Next Recommended Work
 
-Use the existing security, cost-governance, observability, traceability, ADR, and
-dependency-compatibility artifacts for the next separately authorized implementation
-step. This amendment does not authorize dependencies, configuration, or implementation.
+Implement a bounded deterministic LangGraph coordinator-worker vertical slice
+with application-owned workflow state, transitions, validated results, and
+failure evidence. Preserve security/cost policy and separately authorize any
+model/provider integration. See [remaining limits](RUNTIME_FOUNDATION.md).
 
 ## Compatibility Evidence
 
