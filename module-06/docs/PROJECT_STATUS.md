@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic LangGraph, CrewAI, and local ADK slices; full platform not implemented |
+| Phase | Deterministic runtime and local multi-process slices; full platform not implemented |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -178,6 +178,29 @@ not source acceptance, distributed execution, AI inference, a scaling benchmark,
 or production readiness. All 26 statuses remain Planned. Dependencies, frozen
 architecture/source requirements, historical modules, and existing runtimes are
 preserved. No providers, remote telemetry, persistence, or UI are enabled.
+
+## Deterministic Local Distributed Orchestration Slice
+
+[DISTRIBUTED_ORCHESTRATION.md](DISTRIBUTED_ORCHESTRATION.md) records a bounded
+application coordinator dispatching serialized assignments to two independent
+local ADK worker interpreters. Each executes only its assigned fragment through
+real Workflow/Runner/BaseAgent machinery. Verified PID/parent identities and a
+native-role IPC barrier establish process separation and concurrent execution;
+validated responses aggregate in a fixed order independent of completion order.
+
+The new explicit service preserves existing runtime defaults and implementations.
+It enforces fixed worker/concurrency counts, message/work/payload bounds, fresh
+schema and semantic validation, deadline and cancellation cleanup, credential-free
+worker environments, and external-access denial. **94 focused tests passed**,
+including native SDK, forgery/replay, swallowed-network denial, malformed output,
+worker failure, timeout, cancellation and reaping cases. Complete gate evidence
+is recorded in the implementation document.
+
+This is genuine local multi-process orchestration/processing, distinct from the
+earlier one-process ADK slice. Evidence is partial for M6-005/006/007/009/010/015/
+017/018/020/023/026; all 26 requirements remain Planned. Remote-host, cluster or
+cloud distribution, throughput/load capacity, persistent state, live AI, remote
+observability, UI/lab acceptance and production readiness remain unverified.
 
 ## Production-Grade Definition of Done
 

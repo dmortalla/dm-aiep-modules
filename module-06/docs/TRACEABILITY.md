@@ -15,7 +15,7 @@
 | M6-002 | Parallel agents | Planned | Native two-branch fan-out and waiting-edge fan-in | Barrier-proven overlap, cap two, both completion orders, cleanup | Local deterministic concurrency; scaling/acceptance unverified |
 | M6-003 | Hierarchical agents | Planned | Supervisor -> lead -> specialist delegation and validated return | Native role/phase execution, depth/work limits, authority forgery denial | Fixed local hierarchy; full source acceptance pending |
 | M6-004 | Coordinator-worker systems | Planned | Deterministic coordinator-worker slice | Real graph node ordering/delegation | Partial local evidence below; acceptance pending |
-| M6-005 | Distributed orchestration | Planned | TBD | TBD | TBD |
+| M6-005 | Distributed orchestration | Planned | Coordinator dispatch to two independent local ADK workers | Serialized IPC, distinct PIDs, concurrent native-role barrier | Genuine local multi-process evidence below; remote/acceptance pending |
 | M6-006 | Context passing | Planned | Typed immutable WorkflowState | Context integrity and concurrent isolation | Partial local evidence below; acceptance pending |
 | M6-007 | Inter-agent communication | Planned | Validated CrewAI Task.context exchange | Real task/context execution and forgery rejection | Partial local deterministic evidence below |
 | M6-008 | Shared memory | Planned | Bounded immutable workflow-scoped collaboration state | Provenance, bounds, concurrent isolation | No global/persistent/distributed memory; acceptance pending |
@@ -28,12 +28,12 @@
 | M6-015 | Workflow state management | Planned | Typed application phases/history; console remains planned | State/evidence consistency, forged context/output rejection | Partial local transitions; persistence/console unverified |
 | M6-016 | Execution tracing | Planned | LangSmith AI tracing; OpenTelemetry collection boundary; Prometheus metrics | Correlation, redaction, cardinality, bounded export failure | Distinguish offline adapters, local metrics, and live trace delivery |
 | M6-017 | Scaling workflows | Planned | Applicable throughput, active-workflow, queue/worker metrics | Bounded labels and meaningful load measurements | Curated scale view; Grafana drill-down |
-| M6-018 | Distributed processing | Planned | Applicable distributed worker metrics via collection boundary | Worker metrics and simulated/genuine evidence separation | Actual execution mode and resource observations |
+| M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
 | M6-019 | Cost optimisation | Planned | Bounded usage/cost aggregates; curated console cost view | Estimate labeling, budgets, telemetry/query resource bounds | Estimated versus provider-reported cost; observation window |
 | M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; metrics/health view planned | Real graph cancellation and typed failure tests; telemetry/queue tests pending | Partial local reliability; recovery/operational alerts unverified |
 | M6-021 | Coordinator-worker lab | Planned | Runnable deterministic slice/service example | Workflow and adversarial integration tests | Human-facing lab and acceptance remain pending |
 | M6-022 | Collaborative AI lab | Planned | Runnable deterministic collaborative service example | Role/context/state integration and adversarial tests | AI inference and human-facing lab acceptance pending |
-| M6-023 | Distributed orchestration lab | Planned | TBD | TBD | TBD |
+| M6-023 | Distributed orchestration lab | Planned | Runnable local multi-process service example | Genuine worker/IPC, adversarial and cleanup cases | Partial lab prerequisite; human-facing/full lab acceptance pending |
 | M6-024 | Multi-agent orchestration platform | Planned | Streamlit unified curated operations console via application services | Curated evidence consistency, safe specialist references | Workflow, health, reliability, cost; Grafana/LangSmith links |
 | M6-025 | Collaborative AI workflow | Planned | Researcher -> Analyst -> Critic deterministic workflow | Ordered task ownership, validation, synthesis | Partial local collaboration; full AI deliverable unverified |
 | M6-026 | Scalable multi-agent orchestration objective | Planned | Bounded role orchestration alongside accepted LangGraph slice | Per-run bounds/isolation, no scaling benchmark | Local prerequisite only; scalable AI objective unverified |
@@ -182,3 +182,31 @@ All 26 source meanings and Planned statuses are preserved. Fixture, default
 coordinator-worker, CrewAI, and ADK regressions pass independently. Offline
 deterministic role processing is distinguished from live AI; no observability
 delivery, deployment, lab acceptance, or production readiness is claimed.
+
+## Deterministic Local Distributed Orchestration Evidence
+
+[DISTRIBUTED_ORCHESTRATION.md](DISTRIBUTED_ORCHESTRATION.md) records explicit
+serialized inter-process assignments/results, independent worker execution and
+final gates. `distributed_contracts.py` and `distributed.py` own immutable
+contracts and semantic validation; `distributed_execution.py` owns trusted
+evidence and explicit selection; `_distributed_processes.py` owns pipe transport
+and lifecycle; `_distributed_worker.py` guards the process boundary;
+`_distributed_adk.py` executes one native role per worker. The new focused suite
+contains 94 cases. All existing runtime source/tests remain unchanged.
+
+| Existing IDs | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-005/018 | Two independent local worker PIDs, distinct from coordinator; real disjoint fragment processing through native ADK | Remote-host/cluster/cloud distribution and full acceptance |
+| M6-006/007 | Bounded serialized UTF-8 JSON in both directions, fresh worker/coordinator validation | General inter-agent transport protocols |
+| M6-009 | Coordinator-owned identity/capability/parent/limits, launcher-bound assignment and explicit release | Dynamic or remote delegation |
+| M6-010 | Both native roles active at IPC barrier, deterministic fan-in only after valid terminal responses | Distributed failure recovery and remote synchronization |
+| M6-015 | Immutable per-run assignments/results, fresh single-use IDs, rejection of replay/duplicate/cross-run data | Persistent/shared distributed state and console |
+| M6-017/026 | Fixed two-worker concurrency, four work steps, bounded lifecycle and concurrent-run isolation | Prerequisite only; no capacity, throughput or scaling benchmark |
+| M6-020 | Real process failure/malformed-output/timeout/cancellation/spawn-race cleanup, all children reaped | Recovery, operational alerts and host-failure handling |
+| M6-023 | Documented runnable real local distribution example and adversarial/process evidence | Full lab and human-facing acceptance |
+
+This extends earlier ADK prerequisite evidence with genuine local multi-process
+execution; it does not retroactively label the earlier sandboxed single-process
+workflow distributed. All 26 IDs, meanings and Planned statuses remain intact.
+No live AI, billable operation, remote telemetry, deployment, production horizontal
+scaling or production readiness is claimed.
