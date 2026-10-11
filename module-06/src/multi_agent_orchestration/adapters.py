@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from .collaboration import expected_messages
 from .contracts import (
+    GraphTopology,
     RuntimeId,
     RuntimeInfo,
     RuntimeOutput,
@@ -155,6 +156,10 @@ class LangGraphRuntime(_ConstructionOnlyRuntime):
                 "Coordinator-worker execution requires three authorized steps."
             )
         try:
+            if expected.topology != GraphTopology.COORDINATOR_WORKER:
+                from ._langgraph_topologies import execute_topology
+
+                return await execute_topology(expected, type(self._native))
             compiled = self._compile(expected)
             # LangGraph's transitive tracing dependency honors ambient flags. Disable
             # tracing explicitly so credentials/flags never authorize external calls.

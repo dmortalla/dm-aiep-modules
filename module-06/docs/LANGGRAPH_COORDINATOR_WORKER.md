@@ -4,7 +4,10 @@
 
 This records the accepted LangGraph milestone. Its CrewAI construction-only
 limitation is superseded by [CREWAI_COLLABORATION.md](CREWAI_COLLABORATION.md).
-LangGraph execution and Google ADK construction-only behavior are preserved.
+Its ADK construction-only limitation is superseded by
+[GOOGLE_ADK_ORCHESTRATION.md](GOOGLE_ADK_ORCHESTRATION.md).
+[LANGGRAPH_TOPOLOGIES.md](LANGGRAPH_TOPOLOGIES.md) adds explicit topology
+selection while preserving this default coordinator-worker flow.
 
 Starting branch: `feature/module-06-architecture`; HEAD
 `0294a3ef8a9ceb99a463ed2246288fbf03c68c4d`, subject

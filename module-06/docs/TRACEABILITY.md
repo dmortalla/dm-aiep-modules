@@ -11,9 +11,9 @@
 
 | ID | Requirement | Status | Implementation | Tests | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| M6-001 | Sequential agents | Planned | TBD | TBD | TBD |
-| M6-002 | Parallel agents | Planned | TBD | TBD | TBD |
-| M6-003 | Hierarchical agents | Planned | TBD | TBD | TBD |
+| M6-001 | Sequential agents | Planned | Compiled researcher -> analyst -> critic graph | Real native invocation, ordering and validated handoff | Partial deterministic evidence below; acceptance pending |
+| M6-002 | Parallel agents | Planned | Native two-branch fan-out and waiting-edge fan-in | Barrier-proven overlap, cap two, both completion orders, cleanup | Local deterministic concurrency; scaling/acceptance unverified |
+| M6-003 | Hierarchical agents | Planned | Supervisor -> lead -> specialist delegation and validated return | Native role/phase execution, depth/work limits, authority forgery denial | Fixed local hierarchy; full source acceptance pending |
 | M6-004 | Coordinator-worker systems | Planned | Deterministic coordinator-worker slice | Real graph node ordering/delegation | Partial local evidence below; acceptance pending |
 | M6-005 | Distributed orchestration | Planned | TBD | TBD | TBD |
 | M6-006 | Context passing | Planned | Typed immutable WorkflowState | Context integrity and concurrent isolation | Partial local evidence below; acceptance pending |
@@ -158,3 +158,27 @@ All 26 IDs/meanings/statuses remain unchanged. M6-018 remains Planned/unverified
 three agents inside one process and parent/child isolation do not prove
 distributed processing. No live inference, persistent memory, UI, remote
 observability, deployment, lab completion, or production readiness is claimed.
+
+## Deterministic LangGraph Topology Evidence
+
+[LANGGRAPH_TOPOLOGIES.md](LANGGRAPH_TOPOLOGIES.md) describes the implementation
+and gates. `topologies.py` owns immutable context, closed roles and delegation,
+canonical provenance, budgets, and validation; `_langgraph_topologies.py` uses
+real StateGraph compilation/invocation, native parallel scheduling, reducer, and
+waiting-edge join. `test_langgraph_topologies.py` contains 117 new cases.
+
+| Existing IDs | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-001/002/003 | Actual compiled sequential, parallel and hierarchical execution; overlap and delegation observed | Full source/product acceptance |
+| M6-006/007/008 | Validated immutable context/messages, ordered sources, concurrent isolation | General communication and persistent/distributed memory |
+| M6-009/010 | Fixed authorized delegation, native fan-in after both branches, deterministic ordering | Dynamic/remote delegation and distributed synchronization |
+| M6-012/015 | Native graph invocation, strict node updates before SDK channels, state/evidence rejection | Live AI, persistent state, operations console |
+| M6-017/026 | Per-run concurrency cap two, depth two, finite work, isolation | Prerequisite only; no scaling/load benchmark |
+| M6-019 | Zero inference/external calls and retries; budgets cannot authorize providers | No provider-reported cost or complete cost optimisation |
+| M6-020 | Fail-closed branch error, timeout/cancellation and pending-task cleanup tests | Recovery/distributed reliability and operational alerts |
+| M6-024 | Existing application service exposes explicit topology selection and validated evidence | Platform/UI and deployment remain pending |
+
+All 26 source meanings and Planned statuses are preserved. Fixture, default
+coordinator-worker, CrewAI, and ADK regressions pass independently. Offline
+deterministic role processing is distinguished from live AI; no observability
+delivery, deployment, lab acceptance, or production readiness is claimed.

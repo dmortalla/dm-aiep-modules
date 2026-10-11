@@ -10,6 +10,8 @@ from .contracts import (
     ContributionRecord,
     ExecutionEvidence,
     ExecutionStatus,
+    GraphRecord,
+    GraphTopology,
     OrchestrationRecord,
     RuntimeId,
     RuntimeOutput,
@@ -29,6 +31,7 @@ from .errors import (
 from .orchestration import expected_orchestration
 from .registry import create_runtime
 from .runtime import Runtime
+from .topologies import expected_graph_messages, topology_plan
 
 
 async def execute_workflow(
@@ -100,18 +103,25 @@ async def execute_workflow(
             "Runtime output failed contract validation."
         ) from exc
     graph = validated.runtime == RuntimeId.LANGGRAPH
+    expanded = graph and validated.topology != GraphTopology.COORDINATOR_WORKER
+    contributions = expected_graph_messages(validated) if expanded else ()
+    plan = topology_plan(validated.topology) if expanded else None
     crew = validated.runtime == RuntimeId.CREWAI
     adk = validated.runtime == RuntimeId.GOOGLE_ADK
     orchestration = expected_orchestration(validated) if adk else ()
     messages = expected_messages(validated) if crew else ()
-    transitions = tuple(WorkflowTransition) if graph else ()
+    transitions = tuple(WorkflowTransition) if graph and not expanded else ()
     if (
         output.workflow_id != validated.workflow_id
         or output.result.task_id != validated.task.task_id
         or output.runtime != validated.runtime
+        or output.topology != validated.topology
+        or output.contributions != contributions
         or output.result.agent_id
         != (
-            "adk_validator"
+            plan.roles[-1].value
+            if expanded
+            else "adk_validator"
             if adk
             else "critic"
             if crew
@@ -124,7 +134,9 @@ async def execute_workflow(
         or output.orchestration != orchestration
         or output.result.output
         != (
-            orchestration[-1].content
+            contributions[-1].content
+            if expanded
+            else orchestration[-1].content
             if adk
             else messages[-1].content
             if crew
@@ -136,6 +148,16 @@ async def execute_workflow(
         or (
             (crew or adk)
             and min(validated.limits.max_tasks, validated.limits.max_messages) < 3
+        )
+        or (
+            expanded
+            and (
+                validated.limits.max_steps < plan.steps
+                or validated.limits.max_tasks < 3
+                or validated.limits.max_messages < 3
+                or validated.limits.max_concurrency < plan.concurrency
+                or validated.limits.max_hierarchy_depth < plan.depth
+            )
         )
     ):
         raise InvalidRuntimeOutputError(
@@ -151,7 +173,12 @@ async def execute_workflow(
             actual_runtime=output.runtime,
             status=ExecutionStatus.COMPLETED,
             limits=validated.limits,
-            steps_consumed=3 if graph or crew or adk else 1,
+            steps_consumed=plan.steps if expanded else 3 if graph or crew or adk else 1,
+            topology=validated.topology,
+            contributions=tuple(
+                GraphRecord.model_validate(message.model_dump(exclude={"content"}))
+                for message in contributions
+            ),
             transitions=transitions,
             collaboration=tuple(
                 ContributionRecord.model_validate(

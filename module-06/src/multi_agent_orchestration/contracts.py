@@ -39,6 +39,17 @@ class ExecutionLimits(Contract):
     timeout_ms: Annotated[int, Field(strict=True, ge=1, le=30_000)] = 1_000
     max_tasks: Annotated[int, Field(strict=True, ge=1, le=3)] = 3
     max_messages: Annotated[int, Field(strict=True, ge=1, le=3)] = 3
+    max_concurrency: Annotated[int, Field(strict=True, ge=1, le=2)] = 2
+    max_hierarchy_depth: Annotated[int, Field(strict=True, ge=0, le=2)] = 2
+
+
+class GraphTopology(StrEnum):
+    """Closed explicit LangGraph choices; existing coordinator-worker is default."""
+
+    COORDINATOR_WORKER = "coordinator_worker"
+    SEQUENTIAL = "sequential"
+    PARALLEL = "parallel"
+    HIERARCHICAL = "hierarchical"
 
 
 class TaskInput(Contract):
@@ -64,6 +75,19 @@ class WorkflowRequest(Contract):
     runtime: RuntimeId = RuntimeId.FIXTURE
     task: TaskInput
     limits: ExecutionLimits = Field(default_factory=ExecutionLimits)
+    topology: GraphTopology = GraphTopology.COORDINATOR_WORKER
+
+    @model_validator(mode="after")
+    def topology_matches_runtime(self) -> "WorkflowRequest":
+        """Topology selection cannot silently route to another runtime."""
+        if (
+            self.runtime != RuntimeId.LANGGRAPH
+            and self.topology != GraphTopology.COORDINATOR_WORKER
+        ):
+            raise ValueError(
+                "Expanded topologies require explicit LangGraph selection."
+            )
+        return self
 
 
 class RuntimeInfo(Contract):
@@ -86,7 +110,13 @@ class AgentTaskResult(Contract):
 
     task_id: UUID
     agent_id: Literal[
-        "fixture_agent", "deterministic_worker", "critic", "adk_validator"
+        "fixture_agent",
+        "deterministic_worker",
+        "critic",
+        "adk_validator",
+        "graph_critic",
+        "graph_aggregator",
+        "graph_supervisor",
     ]
     status: Literal[ExecutionStatus.COMPLETED]
     output: Annotated[str, Field(strict=True, min_length=1, max_length=4096)] = Field(
@@ -187,6 +217,56 @@ class OrchestrationState(Contract):
     messages: Annotated[tuple[OrchestrationMessage, ...], Field(max_length=3)] = ()
 
 
+class GraphRole(StrEnum):
+    """Fixed ownership, not a grant of application privilege."""
+
+    RESEARCHER = "graph_researcher"
+    ANALYST = "graph_analyst"
+    CRITIC = "graph_critic"
+    AGGREGATOR = "graph_aggregator"
+    LEFT = "graph_left"
+    RIGHT = "graph_right"
+    SUPERVISOR = "graph_supervisor"
+    LEAD = "graph_lead"
+    SPECIALIST = "graph_specialist"
+
+
+class GraphRecord(Contract):
+    """Payload-free bounded topology contribution provenance."""
+
+    workflow_id: UUID
+    task_id: UUID
+    role: GraphRole
+    sequence: Annotated[int, Field(strict=True, ge=1, le=3)]
+    parent: GraphRole | None = None
+    sources: Annotated[tuple[GraphRole, ...], Field(max_length=2)] = ()
+
+
+class GraphMessage(GraphRecord):
+    """Untrusted bounded role contribution."""
+
+    content: Annotated[str, Field(strict=True, min_length=1, max_length=256)] = Field(
+        repr=False
+    )
+
+
+class GraphDelegation(Contract):
+    """Application-fixed parent/child scope, never supplied authority."""
+
+    parent: GraphRole
+    child: GraphRole
+    depth: Annotated[int, Field(strict=True, ge=1, le=2)]
+
+
+class TopologyState(Contract):
+    """Immutable context with finite phases and bounded shared contributions."""
+
+    request: WorkflowRequest
+    phase: Annotated[int, Field(strict=True, ge=0, le=5)] = 0
+    delegations: Annotated[tuple[GraphDelegation, ...], Field(max_length=2)] = ()
+    contributions: Annotated[tuple[GraphMessage, ...], Field(max_length=3)] = ()
+
+
 class RuntimeOutput(Contract):
     """Candidate execution result; deliberately contains no policy or evidence."""
 
@@ -196,6 +276,8 @@ class RuntimeOutput(Contract):
     transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
     collaboration: Annotated[tuple[CollaborationMessage, ...], Field(max_length=3)] = ()
     orchestration: Annotated[tuple[OrchestrationMessage, ...], Field(max_length=3)] = ()
+    topology: GraphTopology = GraphTopology.COORDINATOR_WORKER
+    contributions: Annotated[tuple[GraphMessage, ...], Field(max_length=3)] = ()
 
 
 class ExecutionEvidence(Contract):
@@ -215,6 +297,8 @@ class ExecutionEvidence(Contract):
     transitions: Annotated[tuple[WorkflowTransition, ...], Field(max_length=3)] = ()
     collaboration: Annotated[tuple[ContributionRecord, ...], Field(max_length=3)] = ()
     orchestration: Annotated[tuple[OrchestrationRecord, ...], Field(max_length=3)] = ()
+    topology: GraphTopology = GraphTopology.COORDINATOR_WORKER
+    contributions: Annotated[tuple[GraphRecord, ...], Field(max_length=3)] = ()
 
 
 class ValidatedWorkflowResult(Contract):
@@ -232,6 +316,43 @@ class ValidatedWorkflowResult(Contract):
             raise ValueError("Implicit runtime fallback is forbidden.")
         if self.evidence.steps_consumed > self.evidence.limits.max_steps:
             raise ValueError("Evidence cannot exceed the application step budget.")
+        expanded = self.evidence.topology != GraphTopology.COORDINATOR_WORKER
+        if expanded:
+            from .topologies import topology_plan
+
+            plan = topology_plan(self.evidence.topology)
+            expected_records = tuple(
+                GraphRecord(
+                    workflow_id=self.evidence.workflow_id,
+                    task_id=self.evidence.task_id,
+                    role=role,
+                    sequence=index + 1,
+                    parent=plan.parents[index],
+                    sources=plan.sources[index],
+                )
+                for index, role in enumerate(plan.roles)
+            )
+            if (
+                self.evidence.actual_runtime != RuntimeId.LANGGRAPH
+                or self.result.agent_id != plan.roles[-1].value
+                or self.evidence.steps_consumed != plan.steps
+                or self.evidence.transitions
+                or self.evidence.collaboration
+                or self.evidence.orchestration
+                or self.evidence.contributions != expected_records
+                or self.evidence.limits.max_tasks < 3
+                or self.evidence.limits.max_messages < 3
+                or self.evidence.limits.max_concurrency < plan.concurrency
+                or self.evidence.limits.max_hierarchy_depth < plan.depth
+            ):
+                raise ValueError(
+                    "Expanded graph evidence contradicts its bounded topology."
+                )
+            return self
+        if self.evidence.contributions:
+            raise ValueError(
+                "Topology contributions require explicit expanded selection."
+            )
         if (
             self.evidence.actual_runtime != RuntimeId.GOOGLE_ADK
             and self.evidence.orchestration

@@ -159,6 +159,26 @@ installed imports, whitespace, scope, and historical-module isolation checks
 pass. Dependencies, root configuration, requirements, and Architecture B+ are
 unchanged.
 
+## Deterministic LangGraph Topology Expansion
+
+[LANGGRAPH_TOPOLOGIES.md](LANGGRAPH_TOPOLOGIES.md) records real compiled
+sequential, parallel, and hierarchical graphs alongside the unchanged default
+coordinator-worker flow. Parallel branches overlap under a two-task per-run cap
+and join through a native waiting edge; hierarchical delegation follows fixed
+supervisor -> lead -> specialist authority with depth two. Application-owned
+immutable state, bounded provenance, strict handoff validation, and native
+cancellation cleanup are exercised by 117 new tests. All **365 Module 6 tests
+passed**. Root evidence: **2486 collected; 2480 passed, 6 skipped, 3 existing
+ChromaDB warnings**. Ruff, compileall, offline uv consistency, six isolated
+installed imports, whitespace and scope checks passed. Detailed evidence is
+recorded in the topology document.
+
+This is partial evidence for M6-001/002/003 and supporting local contracts,
+not source acceptance, distributed execution, AI inference, a scaling benchmark,
+or production readiness. All 26 statuses remain Planned. Dependencies, frozen
+architecture/source requirements, historical modules, and existing runtimes are
+preserved. No providers, remote telemetry, persistence, or UI are enabled.
+
 ## Production-Grade Definition of Done
 
 The checklist below evaluates the complete platform. Bounded slice evidence does
