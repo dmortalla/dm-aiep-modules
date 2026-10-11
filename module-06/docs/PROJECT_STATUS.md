@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Architecture and requirements |
+| Phase | Dependency foundation verified; feature implementation not started |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -29,6 +29,25 @@ Streamlit observation decision. Architecture B+ otherwise remains frozen.
 ADRs 001–005 and all 26 source requirement IDs are unchanged. This is
 documentation only; no integration, live delivery, deployment, or production
 readiness is claimed.
+
+## Dependency Foundation
+
+The separately human-approved dependency milestone integrates the seven direct
+runtime/observability families and the OpenAI `>=3.3.0,<4.0.0` range into
+`pyproject.toml` and `uv.lock`. Python remains `>=3.12`; the verified environment
+is Python 3.12.14. [Dependency Compatibility](DEPENDENCY_COMPATIBILITY.md)
+records the actual locked versions, evidence, and limits. No direct Prometheus
+Python client is required for the approved OTLP collection boundary. No feature
+implementation, telemetry configuration, paid provider enablement, or deployment
+is introduced. All 26 requirements remain unverified.
+
+Foundation evidence: locked install/sync and dependency consistency passed;
+seven Module 6 families and OpenAI imported offline with zero non-loopback
+attempts. Ruff passed without fixes; the full regression suite returned
+**2,114 passed, 6 skipped, 3 warnings**; compileall and whitespace checks passed.
+The skips and ChromaDB warnings are existing conditional/deprecation outcomes.
+This verifies the dependency foundation, not Module 6 runtime interoperability
+or production readiness.
 
 ## Production-Grade Definition of Done
 
@@ -104,8 +123,8 @@ readiness is claimed.
 
 ## Current Risks
 
-1. Python 3.14 compatibility must be verified across required frameworks and
-   transitive dependencies before dependency changes.
+1. Python 3.12.14 is the integrated verification baseline; historical Python
+   3.14 resolution probes do not prove runtime compatibility of the current graph.
 2. Genuine distributed execution must be distinguished from simulation.
 3. Free hosted-model pricing/availability must never be treated as permanent.
 4. Public deployment must not expose local/admin interfaces or credentials.
