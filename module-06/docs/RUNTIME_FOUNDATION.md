@@ -85,27 +85,27 @@ validation boundaries, not authentication or protection from hostile Python code
 
 ## Operation and Tests
 
-Use the existing repository Python 3.12.14 environment. Module 6 has a local
-`pytest.ini` because protected Module 2 tests assert exact root discovery and
-installed distribution ownership for Modules 1â€“5. Root `pyproject.toml`, the
-installed distribution, and `uv.lock` remain unchanged. This source package is
-not yet added to that distribution; no editable-installed import is claimed.
+Use the existing repository Python 3.12.14 environment. Root `pyproject.toml`
+is the authoritative pytest and packaging configuration for Modules 1–6.
+`multi_agent_orchestration` is included in the synchronized editable project
+package. The redundant Module 6 `pytest.ini` was removed; targeted testing from
+Module 6 discovers the parent configuration.
 
 From the repository root, the fail-fast verification sequence is:
 
 ```powershell
-.\.venv\Scripts\ruff.exe check .
-.\.venv\Scripts\python.exe -m pytest -c module-06/pytest.ini module-06/tests --basetemp=build/module06-runtime-final-20261010
-.\.venv\Scripts\python.exe -m pytest --basetemp=build/module06-runtime-regression-20261010
-.\.venv\Scripts\python.exe -m compileall -q module-01 module-02 module-03 module-04/src module-04/tests module-04/examples module-04/app.py module-05/src module-05/tests module-05/app.py module-06/src module-06/tests
+uv run --locked --offline ruff check .
+uv run --locked --offline pytest --basetemp=build/module06-root-integration-20261010
+uv run --locked --offline python -m compileall -q module-01 module-02 module-03 module-04/src module-04/tests module-04/examples module-04/app.py module-05/src module-05/tests module-05/app.py module-06/src module-06/tests
 git diff --check
 ```
 
-Both pytest invocations are required: plain root pytest intentionally does not
-collect Module 6. Module 6 tests disable tracing/telemetry and block/count every
-non-loopback socket/DNS attempt, including caught SDK attempts. Loopback remains
-available for Windows asyncio internals. No keys are required. Dummy credential
-presence tests prove fixture selection and zero-call behavior are unchanged.
+For targeted testing from Module 6, run `uv run --locked --offline pytest tests`.
+The full root suite includes all 81 Module 6 tests. Those tests disable tracing/
+telemetry and block/count every non-loopback socket/DNS attempt, including caught
+SDK attempts. Loopback remains available for Windows asyncio internals. No keys
+are required. Dummy credential tests prove fixture selection and zero-call
+behavior are unchanged.
 
 Tests cover schemas, strict limits, nested immutability, sensitive repr exclusion,
 repeatability, state separation, credential-independent selection, real SDK
@@ -124,8 +124,6 @@ Next: implement the smallest bounded LangGraph coordinator-worker vertical slice
 with application-owned typed state/transitions, deterministic worker behavior,
 validated results, and failure evidence. Keep model/provider integration separate
 until explicitly authorized and governed by existing security/cost policy.
-Packaging/discovery integration must eventually reconcile the protected root
-contracts through an authorized follow-up rather than silently changing them.
 
 ## Definition-of-Done Assessment
 
@@ -139,7 +137,7 @@ Cost: no model/remote telemetry execution; zero external attempts in Module 6 te
 Evidence: only the final quality-gate results justify this bounded milestone.
 Deployment: no deployed runtime/platform or production-ready claim.
 
-## Final Verification — 2026-10-10
+## Original Runtime-Foundation Verification — 2026-10-10
 
 | Gate/evidence | Result |
 | --- | --- |
@@ -159,3 +157,29 @@ opted-in live-provider verification. The three warnings are existing ChromaDB
 legacy embedding-configuration deprecations. No new suite warning remains.
 Ruff passed before both final pytest invocations, then compileall passed.
 No tests, security controls, quality rules, or source requirements were weakened.
+
+## Root Integration Verification — 2026-10-10
+
+Human authorization permits exactly three additions in
+`module-02/tests/test_package_contract.py`: the Module 6 package root and exact
+pytest test/source paths. Exact ownership/list equality and existing isolated
+installed-import parameterization remain strict; the new root adds one import
+case. No Module 2 application behavior or other historical tests changed.
+
+- Root `uv run --locked --offline pytest --collect-only -q`: **2,202 collected**.
+- Root `uv run --locked --offline pytest`: **2,196 passed, 6 skipped, 3 existing
+  ChromaDB warnings**, 129.70 seconds; includes all 81 Module 6 cases.
+- Targeted `uv run --locked --offline pytest tests` from Module 6: **81 passed**,
+  16.25 seconds, using parent `pyproject.toml` without local configuration.
+- Ruff and compileall over all six modules: PASS; no fixes needed.
+- Installed imports for all six packages outside the repository under isolated
+  Python: PASS. Locked sync rebuilt only the editable project; sync check, lock
+  check, and installed dependency check: PASS. `uv.lock` and dependency constraints
+  are unchanged. The cross-drive hardlink fallback only affected copy performance.
+- Whitespace and scope checks: PASS. Changes are limited to root package/test
+  configuration, the authorized Module 2 contract additions, removal of redundant
+  Module 6 pytest configuration, and these two Module 6 documentation records.
+
+Runtime behavior, Architecture B+, ADRs, and all 26 source requirement IDs/statuses
+remain unchanged. Root integration does not establish framework execution,
+workflow completion, live telemetry, or production readiness.

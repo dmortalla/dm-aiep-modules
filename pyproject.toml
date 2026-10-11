@@ -43,8 +43,8 @@ dev = [
 
 [tool.pytest.ini_options]
 # Module 1 queue tests retain their existing direct import from test_service.
-pythonpath = ["module-01/src", "module-02/src", "module-03/src", "module-04/src", "module-05/src", "module-01/tests"]
-testpaths = ["module-01/tests", "module-02/tests", "module-03/tests", "module-04/tests", "module-05/tests"]
+pythonpath = ["module-01/src", "module-02/src", "module-03/src", "module-04/src", "module-05/src", "module-06/src", "module-01/tests"]
+testpaths = ["module-01/tests", "module-02/tests", "module-03/tests", "module-04/tests", "module-05/tests", "module-06/tests"]
 asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
 
@@ -59,9 +59,9 @@ select = ["E", "F", "I", "UP", "B"]
 package = true
 
 [tool.setuptools]
-package-dir = { ai_engineering_foundations = "module-01/src/ai_engineering_foundations", prompt_engineering_systems = "module-02/src/prompt_engineering_systems", rag_engineering_foundations = "module-03/src/rag_engineering_foundations", advanced_rag_evaluation = "module-04/src/advanced_rag_evaluation", ai_agent_engineering = "module-05/src/ai_agent_engineering" }
+package-dir = { ai_engineering_foundations = "module-01/src/ai_engineering_foundations", prompt_engineering_systems = "module-02/src/prompt_engineering_systems", rag_engineering_foundations = "module-03/src/rag_engineering_foundations", advanced_rag_evaluation = "module-04/src/advanced_rag_evaluation", ai_agent_engineering = "module-05/src/ai_agent_engineering", multi_agent_orchestration = "module-06/src/multi_agent_orchestration" }
 
 [tool.setuptools.packages.find]
-where = ["module-01/src", "module-02/src", "module-03/src", "module-04/src", "module-05/src"]
-include = ["ai_engineering_foundations*", "prompt_engineering_systems*", "rag_engineering_foundations*", "advanced_rag_evaluation*", "ai_agent_engineering*"]
+where = ["module-01/src", "module-02/src", "module-03/src", "module-04/src", "module-05/src", "module-06/src"]
+include = ["ai_engineering_foundations*", "prompt_engineering_systems*", "rag_engineering_foundations*", "advanced_rag_evaluation*", "ai_agent_engineering*", "multi_agent_orchestration*"]
 namespaces = false

@@ -59,15 +59,25 @@ LangGraph StateGraph, CrewAI Task, and Google ADK BaseAgent construction use the
 real locked SDKs; execution through those adapters explicitly remains unavailable.
 No provider, paid call, remote telemetry, or framework fallback is enabled.
 
-Module 6 tests use local `pytest.ini`; the root Modules 1–5 discovery and package
-ownership contracts are preserved. No dependency/configuration change is made
-outside Module 6. All 26 source requirements remain Planned/unverified.
-Final evidence: **81 Module 6 tests passed** with zero skips/warnings and zero
+Module 6 is now included in root pytest discovery and the synchronized editable
+project package. The redundant local `pytest.ini` is removed; root configuration
+also supports targeted testing from Module 6. Human authorization extended the
+strict Module 2 repository package/discovery contract to six modules without
+changing application behavior. Dependencies are unchanged. All 26 source
+requirements remain Planned/unverified.
+Original foundation evidence: **81 Module 6 tests passed** with zero skips/warnings and zero
 non-loopback network attempts. Existing regression: **2,114 passed, 6 skipped,
 3 existing ChromaDB warnings**; combined **2,195 passed**. Ruff, compileall,
 whitespace, isolation, and unchanged-dependency consistency checks passed.
 Details are recorded in RUNTIME_FOUNDATION.md. This is a
 runtime boundary foundation, not a complete workflow, platform, or readiness claim.
+
+Root integration evidence: **2,202 collected; 2,196 passed, 6 skipped, 3 existing
+warnings** in one authoritative root run. Targeted testing from Module 6 also
+passed all **81 tests** using the parent configuration. Installed imports for all
+six application packages, Ruff, compileall, uv consistency, whitespace, and scope
+checks passed. `uv.lock` and dependency constraints remain unchanged.
+
 
 ## Production-Grade Definition of Done
 
