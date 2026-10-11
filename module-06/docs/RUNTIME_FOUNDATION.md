@@ -5,7 +5,9 @@
 This is the historical foundation record. Current LangGraph execution supersedes
 its construction-only limitation in
 [LANGGRAPH_COORDINATOR_WORKER.md](LANGGRAPH_COORDINATOR_WORKER.md).
-Fixture defaults and Google ADK construction-only behavior remain intact.
+Fixture defaults remain intact. Google ADK construction-only behavior is now
+superseded by [local deterministic orchestration](GOOGLE_ADK_ORCHESTRATION.md),
+using real Workflow/Runner/BaseAgent execution with application-owned state.
 CrewAI now executes the separately documented
 [deterministic collaborative slice](CREWAI_COLLABORATION.md).
 

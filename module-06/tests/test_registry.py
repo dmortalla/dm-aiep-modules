@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pytest
 from multi_agent_orchestration import adapters
-from multi_agent_orchestration.contracts import RuntimeId, TaskInput, WorkflowRequest
+from multi_agent_orchestration.contracts import (
+    ExecutionLimits,
+    RuntimeId,
+    TaskInput,
+    WorkflowRequest,
+)
 from multi_agent_orchestration.errors import (
     ExecutionFailureError,
     InvalidWorkflowRequestError,
@@ -80,19 +85,32 @@ async def test_keys_do_not_change_runtime_or_authorize_calls(monkeypatch, creden
         (RuntimeId.GOOGLE_ADK, "google.adk.agents", "BaseAgent"),
     ],
 )
-async def test_real_framework_construction_but_no_execution(identifier, module, symbol):
+async def test_real_framework_construction_and_execution(identifier, module, symbol):
     runtime = create_runtime(identifier)
     assert isinstance(runtime, Runtime)
-    assert isinstance(runtime._native, getattr(importlib.import_module(module), symbol))
+    from multi_agent_orchestration._adk_adapter import build_workflow
+
+    req = WorkflowRequest(
+        runtime=identifier,
+        task=TaskInput(instruction="test"),
+        limits=ExecutionLimits(max_steps=3, timeout_ms=30_000),
+    )
+    workflow = build_workflow(req)
+    assert all(
+        isinstance(node, getattr(importlib.import_module(module), symbol))
+        for node in workflow.edges[0][1:]
+    )
     assert runtime.info.runtime == identifier
     assert runtime.info.framework_version
-    assert runtime.info.evidence_class == "adapter_construction"
-    assert runtime.info.execution_available is False
-    req = WorkflowRequest(runtime=identifier, task=TaskInput(instruction="test"))
-    with pytest.raises(RuntimeUnavailableError, match="not implemented"):
-        await runtime.execute(req)
-    with pytest.raises(RuntimeUnavailableError, match="not implemented"):
-        await execute_workflow(req, runtime=runtime)
+    assert runtime.info.evidence_class == "deterministic_multi_agent"
+    assert runtime.info.execution_available is True
+    output = await runtime.execute(req)
+    result = await execute_workflow(req, runtime=runtime)
+    assert result.result == output.result
+    assert result.evidence.actual_runtime == identifier
+    assert result.evidence.steps_consumed == 3
+    assert result.evidence.model_calls == result.evidence.external_calls == 0
+    assert len(result.evidence.orchestration) == 3
     assert set(runtime.info.model_dump()) == {
         "runtime",
         "execution_available",

@@ -10,6 +10,7 @@ from .contracts import (
     ContributionRecord,
     ExecutionEvidence,
     ExecutionStatus,
+    OrchestrationRecord,
     RuntimeId,
     RuntimeOutput,
     ValidatedWorkflowResult,
@@ -25,6 +26,7 @@ from .errors import (
     RuntimeFoundationError,
     RuntimeUnavailableError,
 )
+from .orchestration import expected_orchestration
 from .registry import create_runtime
 from .runtime import Runtime
 
@@ -65,7 +67,12 @@ async def execute_workflow(
         raise InvalidWorkflowRequestError("Requested and selected runtimes must match.")
     if (
         validated.runtime
-        not in (RuntimeId.FIXTURE, RuntimeId.LANGGRAPH, RuntimeId.CREWAI)
+        not in (
+            RuntimeId.FIXTURE,
+            RuntimeId.LANGGRAPH,
+            RuntimeId.CREWAI,
+            RuntimeId.GOOGLE_ADK,
+        )
         or not selected.info.execution_available
     ):
         raise RuntimeUnavailableError("Selected runtime execution is not implemented.")
@@ -94,6 +101,8 @@ async def execute_workflow(
         ) from exc
     graph = validated.runtime == RuntimeId.LANGGRAPH
     crew = validated.runtime == RuntimeId.CREWAI
+    adk = validated.runtime == RuntimeId.GOOGLE_ADK
+    orchestration = expected_orchestration(validated) if adk else ()
     messages = expected_messages(validated) if crew else ()
     transitions = tuple(WorkflowTransition) if graph else ()
     if (
@@ -101,19 +110,33 @@ async def execute_workflow(
         or output.result.task_id != validated.task.task_id
         or output.runtime != validated.runtime
         or output.result.agent_id
-        != ("critic" if crew else "deterministic_worker" if graph else "fixture_agent")
+        != (
+            "adk_validator"
+            if adk
+            else "critic"
+            if crew
+            else "deterministic_worker"
+            if graph
+            else "fixture_agent"
+        )
         or output.transitions != transitions
         or output.collaboration != messages
+        or output.orchestration != orchestration
         or output.result.output
         != (
-            messages[-1].content
+            orchestration[-1].content
+            if adk
+            else messages[-1].content
             if crew
             else worker_output(validated.task)
             if graph
             else "Fixture task completed; no model or external calls were made."
         )
-        or ((graph or crew) and validated.limits.max_steps < 3)
-        or (crew and min(validated.limits.max_tasks, validated.limits.max_messages) < 3)
+        or ((graph or crew or adk) and validated.limits.max_steps < 3)
+        or (
+            (crew or adk)
+            and min(validated.limits.max_tasks, validated.limits.max_messages) < 3
+        )
     ):
         raise InvalidRuntimeOutputError(
             "Runtime output contradicts the application request/contract."
@@ -128,13 +151,19 @@ async def execute_workflow(
             actual_runtime=output.runtime,
             status=ExecutionStatus.COMPLETED,
             limits=validated.limits,
-            steps_consumed=3 if graph or crew else 1,
+            steps_consumed=3 if graph or crew or adk else 1,
             transitions=transitions,
             collaboration=tuple(
                 ContributionRecord.model_validate(
                     message.model_dump(exclude={"content"})
                 )
                 for message in messages
+            ),
+            orchestration=tuple(
+                OrchestrationRecord.model_validate(
+                    message.model_dump(exclude={"content"})
+                )
+                for message in orchestration
             ),
         ),
     )

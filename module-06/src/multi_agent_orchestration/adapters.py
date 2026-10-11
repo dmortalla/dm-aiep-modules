@@ -30,6 +30,7 @@ from .errors import (
     RuntimeUnavailableError,
     StepBudgetExceededError,
 )
+from .orchestration import expected_orchestration
 
 
 class _ConstructionOnlyRuntime:
@@ -334,15 +335,157 @@ class CrewAIRuntime(_ConstructionOnlyRuntime):
 
 
 class GoogleADKRuntime(_ConstructionOnlyRuntime):
-    """Construct a real BaseAgent definition without a runner or model."""
+    """Execute a native ADK Workflow in an isolated, cancellable local process."""
 
     def __init__(self) -> None:
-        """Construct an agent definition; no distributed execution is implied."""
-        super().__init__(
-            RuntimeId.GOOGLE_ADK,
-            "google-adk",
-            "google.adk.agents",
-            "BaseAgent",
-            name="foundation_probe",
-            sub_agents=[],
+        """Check availability while keeping SDK execution inside the isolated child."""
+        try:
+            if import_module("importlib.util").find_spec("google.adk.workflow") is None:
+                raise ModuleNotFoundError("Google ADK unavailable")
+            framework_version = version("google-adk")
+        except (ImportError, PackageNotFoundError) as exc:
+            raise RuntimeUnavailableError(
+                "google-adk is unavailable; synchronize the accepted uv lock."
+            ) from exc
+        self._info = RuntimeInfo(
+            runtime=RuntimeId.GOOGLE_ADK,
+            execution_available=True,
+            evidence_class="deterministic_multi_agent",
+            framework_version=framework_version,
         )
+
+    async def _invoke(self, expected: WorkflowRequest) -> object:
+        """Reap the child before deleting temporary logs, including cancellation."""
+        with TemporaryDirectory(prefix="module06-adk-") as directory:
+            local_data = Path(directory, "AppData", "Local")
+            roaming_data = Path(directory, "AppData", "Roaming")
+            local_data.mkdir(parents=True)
+            roaming_data.mkdir(parents=True)
+            environment = {
+                key: os.environ[key]
+                for key in ("SYSTEMROOT", "WINDIR")
+                if key in os.environ
+            }
+            environment.update(
+                TEMP=directory,
+                TMP=directory,
+                HOME=directory,
+                USERPROFILE=directory,
+                LOCALAPPDATA=str(local_data),
+                APPDATA=str(roaming_data),
+                ADK_TELEMETRY_IGNORE_RUN_CONFIG="false",
+                ADK_EXPERIMENTAL_TELEMETRY="false",
+                OTEL_SDK_DISABLED="true",
+                LITELLM_LOCAL_MODEL_COST_MAP="true",
+                DO_NOT_TRACK="1",
+                LANGSMITH_TRACING="false",
+                LANGCHAIN_TRACING_V2="false",
+            )
+            spawning = asyncio.create_task(
+                asyncio.create_subprocess_exec(
+                    sys.executable,
+                    "-I",
+                    "-m",
+                    "multi_agent_orchestration._adk_worker",
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=environment,
+                    cwd=directory,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                )
+            )
+            try:
+                process = await asyncio.shield(spawning)
+            except asyncio.CancelledError:
+                # Cancellation during spawn must still acquire/reap the child.
+                process = await spawning
+                if process.returncode is None:
+                    process.kill()
+                await process.communicate()
+                raise
+            try:
+                stdout, stderr = await process.communicate(
+                    expected.model_dump_json().encode()
+                )
+                if process.returncode != 0 or len(stdout) > 16_000:
+                    raise ExecutionFailureError(
+                        "Google ADK worker failed its bounded process contract."
+                    ) from RuntimeError(stderr.decode(errors="replace")[:4096])
+                packet = json.loads(stdout)
+                if not isinstance(packet, dict) or set(packet) != {"output"}:
+                    if (
+                        isinstance(packet, dict)
+                        and packet.get("error_type") == "InvalidRuntimeOutputError"
+                    ):
+                        raise InvalidRuntimeOutputError(
+                            "Google ADK collaborator/state validation failed."
+                        ) from RuntimeError(str(packet)[:4096])
+                    raise ExecutionFailureError(
+                        "Google ADK worker failed; inspect the internal cause."
+                    ) from RuntimeError(str(packet)[:4096])
+                return packet["output"]
+            finally:
+                if process.returncode is None:
+                    process.kill()
+                await process.communicate()
+
+    async def execute(self, request: WorkflowRequest) -> RuntimeOutput:
+        """Run three offline ADK roles under application-owned budgets.
+
+        Raises:
+            InvalidWorkflowRequestError: Explicit runtime or request schema fails.
+            StepBudgetExceededError: Fewer than three tasks/messages/steps allowed.
+            RuntimeFoundationError: Process execution or output validation fails.
+        """
+        try:
+            expected = WorkflowRequest.model_validate(request.model_dump())
+        except ValidationError as exc:
+            raise InvalidWorkflowRequestError(
+                "Google ADK request failed contract validation."
+            ) from exc
+        if expected.runtime != RuntimeId.GOOGLE_ADK:
+            raise InvalidWorkflowRequestError(
+                "Google ADK requires explicit matching runtime selection."
+            )
+        if (
+            min(
+                expected.limits.max_steps,
+                expected.limits.max_tasks,
+                expected.limits.max_messages,
+            )
+            < 3
+        ):
+            raise StepBudgetExceededError(
+                "Google ADK requires three authorized steps/tasks/messages."
+            )
+        try:
+            raw = await self._invoke(expected)
+            output = RuntimeOutput.model_validate(
+                raw.model_dump() if isinstance(raw, RuntimeOutput) else raw
+            )
+            messages = expected_orchestration(expected)
+            if (
+                output.workflow_id != expected.workflow_id
+                or output.runtime != RuntimeId.GOOGLE_ADK
+                or output.result.task_id != expected.task.task_id
+                or output.result.agent_id != "adk_validator"
+                or output.result.output != messages[-1].content
+                or output.transitions
+                or output.collaboration
+                or output.orchestration != messages
+            ):
+                raise InvalidRuntimeOutputError(
+                    "Google ADK output contradicts authorized orchestration."
+                )
+            return output
+        except RuntimeFoundationError:
+            raise
+        except ValidationError as exc:
+            raise InvalidRuntimeOutputError(
+                "Google ADK runtime output failed validation."
+            ) from exc
+        except Exception as exc:
+            raise ExecutionFailureError(
+                "Google ADK execution failed; inspect the internal cause."
+            ) from exc

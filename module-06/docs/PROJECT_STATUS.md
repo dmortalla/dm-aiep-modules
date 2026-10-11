@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic LangGraph and CrewAI slices; full platform not implemented |
+| Phase | Deterministic LangGraph, CrewAI, and local ADK slices; full platform not implemented |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -128,6 +128,36 @@ replace one obsolete construction-only case. Ruff, compileall, uv lock/sync/pip
 consistency, all six isolated package imports, whitespace and scope checks pass.
 The genuine execution paths made zero guarded non-loopback attempts; the denial
 test separately proves swallowed external attempts cannot produce success.
+
+## Deterministic Local Google ADK Slice
+
+[GOOGLE_ADK_ORCHESTRATION.md](GOOGLE_ADK_ORCHESTRATION.md) records installed
+ADK 2.11.0 feasibility and real Workflow/Runner/BaseAgent execution:
+Coordinator -> Specialist -> Validator. Typed immutable context is transported
+by native session/event state updates, revalidated at every handoff, and checked
+at adapter/application completion before trusted provenance evidence is created.
+
+Each run uses a credential-free, telemetry-disabled local child process, fresh
+in-memory services, strict steps/tasks/messages, and deadline/cancellation
+kill/reap cleanup. Zero model/external calls and retries are proved for the
+deterministic path. Fixture, LangGraph, and CrewAI remain independently usable.
+The previous ADK construction-only limitations in historical records are
+superseded for this bounded local path.
+
+This provides partial evidence for M6-006/007/009/010/013/015/020 and prerequisites
+only for M6-005/023/026. All 26 statuses remain Planned/unverified. M6-005,
+M6-018, and M6-023 are not completed: three ADK agents in one local process do
+not prove distributed orchestration or processing. UI, live AI, persistent
+memory, remote telemetry, scaling, deployment, and platform/lab acceptance remain
+pending. Final gate results are recorded in the implementation document.
+
+ADK milestone evidence: **248 Module 6 tests passed** without skips/warnings;
+root **2,369 collected; 2,363 passed, 6 skipped, 3 existing ChromaDB warnings**.
+The 64 new ADK cases plus strengthened registry execution coverage preserve
+accepted runtime regressions. Ruff, compileall, uv consistency, six isolated
+installed imports, whitespace, scope, and historical-module isolation checks
+pass. Dependencies, root configuration, requirements, and Architecture B+ are
+unchanged.
 
 ## Production-Grade Definition of Done
 

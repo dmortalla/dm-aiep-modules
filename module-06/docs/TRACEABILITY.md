@@ -23,7 +23,7 @@
 | M6-010 | Workflow synchronisation | Planned | Finite ordered graph and validated completion | Ordered execution, timeout/cancellation | Partial local evidence below; distributed behavior unverified |
 | M6-011 | CrewAI | Planned | Real Crew/Task scheduling with deterministic BaseAgent roles | Real kickoff/scheduler/task spies and child execution | Offline orchestration, no AI inference; acceptance pending |
 | M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
-| M6-013 | Google ADK | Planned | TBD | TBD | TBD |
+| M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
 | M6-014 | LangSmith | Planned | TBD | TBD | TBD |
 | M6-015 | Workflow state management | Planned | Typed application phases/history; console remains planned | State/evidence consistency, forged context/output rejection | Partial local transitions; persistence/console unverified |
 | M6-016 | Execution tracing | Planned | LangSmith AI tracing; OpenTelemetry collection boundary; Prometheus metrics | Correlation, redaction, cardinality, bounded export failure | Distinguish offline adapters, local metrics, and live trace delivery |
@@ -130,3 +130,31 @@ evidence only; it does not establish live AI, Google ADK/distribution, telemetry
 delivery, UI, deployment, or production readiness. No requirement is marked
 Complete or Verified. The accepted LangGraph evidence remains valid; its historical
 CrewAI construction-only limitation is superseded by this slice.
+
+## Deterministic Local Google ADK Evidence
+
+[GOOGLE_ADK_ORCHESTRATION.md](GOOGLE_ADK_ORCHESTRATION.md) records the installed
+2.11.0 APIs, local topology, operation, tests, and gates. `_adk_adapter.py` uses
+real Workflow/Runner/BaseAgent machinery; `orchestration.py` owns immutable
+semantic state and provenance; `_adk_worker.py` and `GoogleADKRuntime` enforce
+credential-free process isolation and external-access denial. No SDK types
+escape into domain contracts, and trusted evidence follows final application
+validation. Earlier ADK construction-only records are historical.
+
+| Existing ID | Partial implementation/test evidence | Still unverified |
+| --- | --- | --- |
+| M6-005 | Local bounded ADK multi-agent workflow prerequisite | Genuine distributed orchestration; remains Planned |
+| M6-006 | Typed context transported through native session/event updates; handoff forgery rejection | Broader platform/distributed context acceptance |
+| M6-007 | Three role events with validated owner/source/sequence and upstream data consumption | General inter-agent protocols and platform acceptance |
+| M6-009 | Coordinator explicitly assigns adk_specialist; native scheduler executes only that role next | Remote/dynamic delegation |
+| M6-010 | Ordered Workflow edges and validation after specialist completion; real scheduler spies | Distributed synchronization |
+| M6-013 | Real Workflow, InMemoryRunner, custom BaseAgents, events, and session execution | Model-backed/distributed ADK and source acceptance |
+| M6-015 | Immutable bounded state, exact provenance/request validation, concurrent isolation | Persistent/distributed state and console |
+| M6-020 | Budget denial before execution, native cancellation, child timeout/cancel/reap, sanitized failures | Recovery, distributed reliability, operational alerts |
+| M6-023 | Runnable local ADK prerequisite only | Genuine distributed orchestration lab acceptance; remains Planned |
+| M6-026 | Three local runtimes with bounded deterministic orchestration evidence | Scaling, AI inference, complete objective acceptance |
+
+All 26 IDs/meanings/statuses remain unchanged. M6-018 remains Planned/unverified;
+three agents inside one process and parent/child isolation do not prove
+distributed processing. No live inference, persistent memory, UI, remote
+observability, deployment, lab completion, or production readiness is claimed.
