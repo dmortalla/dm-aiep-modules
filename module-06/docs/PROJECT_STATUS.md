@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic runtime/process slices, local observability and additive console; full acceptance pending |
+| Phase | Deterministic runtime/process slices, additive console and opt-in local operational telemetry; full acceptance pending |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -219,8 +219,9 @@ are recorded in the implementation document.
 Evidence is partial for M6-014/016/019/020/026; all 26 requirements remain Planned.
 Role traces describe validated completion provenance, not native execution timing.
 Token/pricing/provider billing evidence is unavailable. Live LangSmith delivery,
-OTLP transport, Prometheus/Grafana deployment, Streamlit console, deployment and
-production readiness remain unverified.
+deployment and production readiness remain unverified. The Streamlit console and
+local OTLP/Prometheus/Grafana delivery were pending when this slice was accepted
+and are recorded in the two sections below.
 
 ## Additive Streamlit Operations Console
 
@@ -247,6 +248,31 @@ Evidence is partial for M6-015/016/019/020/021/022/023/024/025/026. All 26 sourc
 meanings/statuses remain frozen and Planned. Independent browser/human acceptance,
 live AI/telemetry, persistent state, hosted authentication/capacity, backend
 deployment, completed labs/platform and production readiness remain unverified.
+
+## Local Operational Telemetry Pipeline
+
+[Operational Telemetry](OPERATIONAL_TELEMETRY.md) records an explicit, opt-in
+OTLP metric delivery adapter (`telemetry_delivery.py`), an operator command
+(`run_telemetry.py`) and a source-controlled Docker Compose stack: OpenTelemetry
+Collector 0.162.0, Prometheus v3.15.0 and Grafana 12.4.12 with a provisioned
+dashboard and three Prometheus alert rules. Delivery is never selected by
+default, by credentials or by workflow data; the destination is validated as
+loopback only; export is bounded and has no queue; labels are allowlisted in
+the application and again in Prometheus. The accepted offline adapters, runtime
+source and the Streamlit console are unchanged, and no dependency was added.
+
+Two evidence classes exist and are kept separate. Deterministic offline tests
+(87) exercise the real OTLP exporter against a loopback receiver under the
+network guard. A manual local Docker run on 2026-10-12 verified application ->
+Collector -> Prometheus -> Grafana with an exact count of 14 workflows, the
+provisioned dashboard, loaded rules, loopback-only ports, safe behaviour with
+the boundary unavailable and one alert driven to firing. Final gates are in the
+implementation document.
+
+Evidence is partial for M6-016/017/019/020/024/026; M6-014 is unchanged. All 26
+requirements remain Planned. Hosted deployment, authentication/TLS, alert
+routing, load behaviour, console presentation of operational metrics, live
+LangSmith delivery, live AI and production readiness remain unverified.
 
 ## Production-Grade Definition of Done
 
@@ -337,11 +363,11 @@ not establish platform, lab, or deployment acceptance.
 
 ## Next Recommended Work
 
-Expose the deterministic coordinator-worker slice through a small application
-service/operations console with validated result and typed failure evidence,
-without enabling providers or remote telemetry. Preserve the approved boundaries;
-model/provider integration requires separate authorization. See
-[remaining limits](LANGGRAPH_COORDINATOR_WORKER.md).
+The operations console and the local operational telemetry pipeline are
+delivered. Candidate next steps, each needing its own authorization: curated
+operational availability in the console through an application service, live
+LangSmith delivery, or model/provider integration. Preserve the approved
+boundaries. See [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitations).
 
 ## Compatibility Evidence
 

@@ -200,6 +200,13 @@ operational alerts, the Streamlit console, deployment and production readiness
 remain unverified. This does not complete M6-014/M6-016 or replace specialist AI
 tracing with operational metrics.
 
+Later status: the paragraphs above record this slice as it was accepted. The
+Streamlit console has since been delivered ([Operations Console](OPERATIONS_CONSOLE.md)),
+and opt-in local OTLP metric delivery, collection, Prometheus storage, Grafana
+provisioning and alert rules have since been implemented and locally verified
+([Operational Telemetry](OPERATIONAL_TELEMETRY.md)). The offline adapters
+described here are unchanged and remain the default.
+
 ## Validation record
 
 - `ruff check .` passes; only safe fixes/formatting were used during development.

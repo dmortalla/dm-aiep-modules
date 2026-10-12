@@ -156,8 +156,12 @@ semantics or silently converting a failed workflow into a successful one.
 application observation service, immutable payload-free contracts, bounded local
 LangSmith RunTree and OpenTelemetry span/metric adapters, correlation, accounting
 availability, failure isolation and evidence. Accepted execution entry points
-remain unchanged. This is actual offline SDK integration; live LangSmith delivery,
-OTLP transport/collection and Prometheus/Grafana deployment remain future work.
+remain unchanged. This is actual offline SDK integration and remains the default.
+[Operational Telemetry](OPERATIONAL_TELEMETRY.md) adds an explicit, opt-in
+loopback OTLP metric delivery adapter and a local Docker Compose stack
+(Collector, Prometheus, Grafana, alert rules), verified on one workstation.
+Live LangSmith delivery and any hosted or production deployment of the
+operational path remain future work.
 [Operations Console](OPERATIONS_CONSOLE.md) now presents bounded session-scoped
 curated local evidence, freshness and unavailable specialist references through
 application services. It does not persist raw telemetry or configure delivery.

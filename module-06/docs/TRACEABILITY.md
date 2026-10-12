@@ -26,11 +26,11 @@
 | M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
 | M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; live trace delivery unverified |
 | M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
-| M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence; live delivery/collection/backend unverified |
-| M6-017 | Scaling workflows | Planned | Applicable throughput, active-workflow, queue/worker metrics | Bounded labels and meaningful load measurements | Curated scale view; Grafana drill-down |
+| M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection; live trace delivery and hosted backend unverified |
+| M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; queue/utilisation metrics not implemented | Bounded labels verified; no load measurements | Partial local metrics and Grafana dashboard; curated scale view and benchmarks pending |
 | M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
 | M6-019 | Cost optimisation | Planned | Bounded telemetry resources; validated zero-call or unavailable accounting | No invented tokens/prices/billing; credential non-authorization and bounds | Partial offline governance; live optimisation/pricing/console unverified |
-| M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; bounded observation failure isolation | Execution/collection failure, timeout/cancellation and telemetry isolation tests | Partial local reliability; recovery/operational alerts unverified |
+| M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; bounded observation failure isolation | Execution/collection failure, timeout/cancellation and telemetry isolation tests | Partial local reliability incl. local alert rules; recovery and alert routing unverified |
 | M6-021 | Coordinator-worker lab | Planned | Accepted workflow exposed through guided local console | Real Streamlit run/evidence and bounded denial tests | Partial human-facing prerequisite; full lab acceptance pending |
 | M6-022 | Collaborative AI lab | Planned | Accepted CrewAI collaboration exposed through guided console | Real native execution and Streamlit result/evidence tests | Offline human-facing prerequisite; live AI/full lab acceptance pending |
 | M6-023 | Distributed orchestration lab | Planned | Accepted local process service exposed through guided console | Real native workers, Streamlit PID/evidence and prior lifecycle tests | Partial human-facing prerequisite; full lab acceptance pending |
@@ -230,7 +230,8 @@ without inventing native task timing or successful accounting on failed runs.
 All 26 IDs, source meanings and Planned statuses remain unchanged. Offline SDK
 integration is distinct from live trace delivery and deployed observability.
 No console, additional stack, paid operation, remote telemetry, deployment or
-production readiness is claimed.
+production readiness is claimed by that slice. The console and the local
+operational stack were added later and are recorded in the sections below.
 
 ## Additive Operations Console Evidence (Partial)
 
@@ -253,3 +254,24 @@ source/tests, frozen architecture, dependencies and Modules 1–5 are unchanged.
 UI integration also exercises M6-001/002/003/004/005/011/012/013 through existing
 accepted paths; it introduces no new runtime/source meanings. All 26 requirement
 statuses remain Planned. UI existence does not complete or verify a requirement.
+
+## Local Operational Telemetry Evidence (Partial)
+
+[Operational Telemetry](OPERATIONAL_TELEMETRY.md) records opt-in loopback OTLP
+metric delivery (`telemetry_delivery.py`, `run_telemetry.py`), the Compose stack
+under `telemetry/` and `tests/test_telemetry_delivery.py`. Offline tests and the
+manual local Docker run are separate evidence classes. Accepted runtime,
+observation and console source/tests, dependencies and Modules 1-5 are unchanged.
+
+| Existing IDs | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-016 | Application-owned workflow metrics exported over OTLP, collected, stored and queried locally; identifiers excluded from metrics | Trace delivery, live LangSmith and hosted backends |
+| M6-017 | Started/active/finished, runtime/topology/path and worker-reaping series with a provisioned Grafana dashboard | Queue/utilisation metrics, load, capacity and scaling benchmarks |
+| M6-019 | Bounded export, retention, scrape, cardinality and container resources; unobserved accounting absent rather than zero; no paid service | Token/pricing evidence and live cost optimisation |
+| M6-020 | Delivery failure isolation with no queue or retry storm; three alert rules, one driven to firing locally | Alert routing, recovery and the two untriggered rules |
+| M6-024 | Operational observability surface for the platform, separate from the console | Console presentation of operational metrics; hosted operation |
+| M6-026 | Cross-run operational visibility across accepted bounded workflows | Production scaling and overall objective acceptance |
+
+M6-014 is unchanged: LangSmith evidence remains offline SDK only. All 26 IDs,
+source meanings and Planned statuses remain unchanged. A local Docker
+verification is not hosted or production evidence.

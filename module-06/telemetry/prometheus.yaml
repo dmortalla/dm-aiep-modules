@@ -1,0 +1,27 @@
+# Operator-owned Prometheus configuration for the Module 6 local stack.
+global:
+  scrape_interval: 10s
+  scrape_timeout: 5s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yaml
+
+scrape_configs:
+  - job_name: module6-collector
+    # Hard series and label bounds: a scrape exceeding them is rejected whole.
+    sample_limit: 1000
+    label_limit: 12
+    label_name_length_limit: 64
+    label_value_length_limit: 64
+    static_configs:
+      - targets: ["otel-collector:8889"]
+    metric_relabel_configs:
+      # Store only the application-owned metric namespace.
+      - source_labels: [__name__]
+        regex: module6_.*
+        action: keep
+      # Allowlist label names. Anything else, including any identifier or
+      # free-form label, is dropped before storage.
+      - regex: __name__|job|instance|le|runtime|topology|distributed|outcome
+        action: labelkeep

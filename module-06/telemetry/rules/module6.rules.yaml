@@ -1,0 +1,48 @@
+# Module 6 operational alert rules, evaluated by Prometheus and visible in
+# Grafana. No Alertmanager or notification channel is configured.
+groups:
+  - name: module6-operations
+    interval: 15s
+    rules:
+      - alert: Module6CollectionBoundaryDown
+        expr: up{job="module6-collector"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Prometheus cannot scrape the Module 6 collection boundary.
+          description: >-
+            Workflow execution is unaffected, but operational metrics are stale
+            until the collector is reachable again.
+
+      - alert: Module6WorkflowFailureRatioHigh
+        expr: |
+          (
+            sum(increase(module6_workflow_finished_total{outcome=~"failed|timed_out"}[5m]))
+            /
+            sum(increase(module6_workflow_finished_total[5m]))
+          ) > 0.2
+          and
+          sum(increase(module6_workflow_finished_total[5m])) >= 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than 20% of recent Module 6 workflows failed or timed out.
+          description: >-
+            Based on at least five finished workflows in five minutes. Denied
+            and cancelled outcomes are excluded because they are policy or
+            caller decisions, not execution faults.
+
+      - alert: Module6ObservationLoss
+        expr: |
+          sum(increase(module6_observation_drops_total[5m])) > 0
+          or
+          sum(increase(module6_observation_adapter_failures_total[5m])) > 0
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: Module 6 observations were dropped or an adapter failed.
+          description: >-
+            Workflow results remain authoritative; dashboards may undercount.

@@ -1,0 +1,45 @@
+# Operator-owned collection boundary. Application, model and agent output cannot
+# modify this file; it is mounted read-only.
+receivers:
+  otlp:
+    protocols:
+      http:
+        # Container-internal bind. Compose publishes it on host loopback only.
+        endpoint: 0.0.0.0:4318
+        max_request_body_size: 1048576
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+    spike_limit_mib: 32
+  # Accept only the application-owned metric namespace.
+  filter/module6:
+    error_mode: ignore
+    metrics:
+      metric:
+        - not IsMatch(name, "^module6\\.")
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+    send_batch_max_size: 512
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    metric_expiration: 2m
+    resource_to_telemetry_conversion:
+      enabled: false
+
+service:
+  telemetry:
+    logs:
+      level: warn
+    metrics:
+      level: none
+  pipelines:
+    # Metrics only. Traces and logs have no pipeline and are not stored.
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/module6, batch]
+      exporters: [prometheus]
