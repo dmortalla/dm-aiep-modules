@@ -27,7 +27,7 @@
 | M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; live trace delivery unverified |
 | M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
 | M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection; live trace delivery and hosted backend unverified |
-| M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; queue/utilisation metrics not implemented | Bounded labels verified; no load measurements | Partial local metrics and Grafana dashboard; curated scale view and benchmarks pending |
+| M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; opt-in bounded local benchmark at caps 1/2/4; queue/utilisation metrics not implemented | Bounded labels verified; cap, integrity and cleanup invariants; no timing assertion | Partial local metrics, Grafana dashboard and one local benchmark run; sustained load, capacity and curated scale view pending |
 | M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
 | M6-019 | Cost optimisation | Planned | Bounded telemetry resources; validated zero-call or unavailable accounting | No invented tokens/prices/billing; credential non-authorization and bounds | Partial offline governance; live optimisation/pricing/console unverified |
 | M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; bounded observation failure isolation | Execution/collection failure, timeout/cancellation and telemetry isolation tests | Partial local reliability incl. local alert rules; recovery and alert routing unverified |
@@ -36,7 +36,7 @@
 | M6-023 | Distributed orchestration lab | Planned | Accepted local process service exposed through guided console | Real native workers, Streamlit PID/evidence and prior lifecycle tests | Partial human-facing prerequisite; full lab acceptance pending |
 | M6-024 | Multi-agent orchestration platform | Planned | Additive guided Streamlit console via validation/curation services | Eight actual paths, isolation, minimization, failure/stale/unavailable views | Partial local platform UI; specialist links/deployment/full acceptance pending |
 | M6-025 | Collaborative AI workflow | Planned | Researcher -> Analyst -> Critic deterministic workflow | Ordered task ownership, validation, synthesis | Partial local collaboration; full AI deliverable unverified |
-| M6-026 | Scalable multi-agent orchestration objective | Planned | Bounded role orchestration alongside accepted LangGraph slice | Per-run bounds/isolation, no scaling benchmark | Local prerequisite only; scalable AI objective unverified |
+| M6-026 | Scalable multi-agent orchestration objective | Planned | Bounded role orchestration alongside accepted LangGraph slice; local benchmark of the distributed path | Per-run bounds/isolation; benchmark invariants without performance thresholds | Local single-host measurement only; scalable AI objective unverified |
 
 ## Verification Rule
 
@@ -275,3 +275,29 @@ observation and console source/tests, dependencies and Modules 1-5 are unchanged
 M6-014 is unchanged: LangSmith evidence remains offline SDK only. All 26 IDs,
 source meanings and Planned statuses remain unchanged. A local Docker
 verification is not hosted or production evidence.
+
+## Local Scaling Benchmark Evidence (Partial)
+
+[Scaling Benchmark](SCALING_BENCHMARK.md) records an opt-in application service
+(`benchmark.py`), operator command (`run_benchmark.py`) and
+`tests/test_benchmark.py`. Identical accepted two-process distributed workflows
+are admitted at caps 1, 2 and 4 by a benchmark-scoped gate. Offline tests and
+the manual local run are separate evidence classes. Acceptance uses
+machine-independent invariants; speedup is descriptive only. Accepted runtime,
+distributed, observation, telemetry and console source/tests, dependencies and
+Modules 1-5 are unchanged.
+
+| Existing IDs | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-005 | Coordinator-side execution of several concurrent distributed workflows under an explicit cap | Remote orchestration and recovery |
+| M6-017 | Observed completed work, wall time, throughput, latency spread, peak in flight and overlap at three bounded caps | Sustained load, saturation, capacity, queue/utilisation metrics, curated scale view |
+| M6-018 | Up to eight local worker processes handling concurrent workflows with every result revalidated | Remote-host, cluster or cloud distribution |
+| M6-019 | Zero model/provider/external calls under concurrent load; local time per workflow measured; unobserved values null rather than zero | Token, pricing, monetary or optimisation evidence |
+| M6-020 | Bounded admission, per-workflow and level deadlines, fail-closed levels, single cancellation and settled cleanup | Recovery, retries, host failure and alert routing |
+| M6-024 | Operator benchmark command as a platform capability | Console presentation and hosted operation |
+| M6-026 | First local measurement of throughput against permitted concurrency | Production scaling, live AI and overall objective acceptance |
+
+M6-002 is unchanged: the benchmark varies concurrency between workflows and
+adds no evidence about parallel agents inside one workflow. All 26 IDs, source
+meanings and Planned statuses remain unchanged. One run on one workstation is
+not hosted, multi-host, cloud or production capacity evidence.

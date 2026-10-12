@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic runtime/process slices, additive console and opt-in local operational telemetry; full acceptance pending |
+| Phase | Deterministic runtime/process slices, additive console, opt-in local operational telemetry and opt-in local scaling benchmark; full acceptance pending |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -274,6 +274,35 @@ requirements remain Planned. Hosted deployment, authentication/TLS, alert
 routing, load behaviour, console presentation of operational metrics, live
 LangSmith delivery, live AI and production readiness remain unverified.
 
+## Deterministic Local Scaling Benchmark
+
+[Scaling Benchmark](SCALING_BENCHMARK.md) records an explicit, opt-in
+application service (`benchmark.py`) and operator command (`run_benchmark.py`)
+that submit 8 identical accepted two-process distributed workflows at admission
+caps 1, 2 and 4 and report only what was observed. The story, benchmark-scoped
+admission control and report-only speedup were human-approved on 2026-10-12.
+Admission is a per-level gate inside the benchmark; it is not a platform worker
+pool, queue or global limiter. Accepted runtime, distributed, observation,
+telemetry and console source/tests, dependencies, ADRs and Modules 1-5 are
+unchanged, and no metric or label was added.
+
+Acceptance rests on machine-independent invariants: every workflow completed
+and revalidated, the cap respected, observation consistent, cleanup settled and
+exact timing bounds. Speedup is descriptive and never a pass criterion. Two
+evidence classes are kept separate. Deterministic offline tests (66) use an
+injected clock, plus one real-process integration case. A manual local run on
+2026-10-12 (Windows, Python 3.12.14, 22 logical CPUs) completed 8 of 8 workflows
+at each cap in 28.09 s, 15.68 s and 9.68 s with observed peaks 1, 2 and 4, 48
+workers reaped and zero model, provider or external calls. Final gates are in
+the implementation document.
+
+Evidence is partial for M6-005/017/018/020/024/026 and marginal for M6-019;
+M6-002 is unchanged. All 26 requirements remain Planned. This is one sample of
+start-up-bound local throughput on one workstation. Hosted, cloud, multi-host or
+production scaling and capacity, saturation, sustained load, queue and
+utilisation measurement, in-process path scaling, live AI and production
+readiness remain unverified.
+
 ## Production-Grade Definition of Done
 
 The checklist below evaluates the complete platform. Bounded slice evidence does
@@ -363,8 +392,9 @@ not establish platform, lab, or deployment acceptance.
 
 ## Next Recommended Work
 
-The operations console and the local operational telemetry pipeline are
-delivered. Candidate next steps, each needing its own authorization: curated
+The operations console, the local operational telemetry pipeline and the local
+scaling benchmark are delivered; the benchmark awaits independent acceptance.
+Candidate next steps, each needing its own authorization: curated
 operational availability in the console through an application service, live
 LangSmith delivery, or model/provider integration. Preserve the approved
 boundaries. See [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitations).
