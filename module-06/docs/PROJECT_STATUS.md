@@ -7,7 +7,7 @@
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic runtime/process slices and offline observation boundaries; full platform pending |
+| Phase | Deterministic runtime/process slices, local observability and additive console; full acceptance pending |
 | Source requirements | 26 frozen |
 | Requirements verified | 0 / 26 |
 | Required labs | 0 / 3 complete |
@@ -221,6 +221,32 @@ Role traces describe validated completion provenance, not native execution timin
 Token/pricing/provider billing evidence is unavailable. Live LangSmith delivery,
 OTLP transport, Prometheus/Grafana deployment, Streamlit console, deployment and
 production readiness remain unverified.
+
+## Additive Streamlit Operations Console
+
+[Operations Console](OPERATIONS_CONSOLE.md) records a runnable guided local UI,
+application-owned command validation/curation, and bounded per-session result
+views. The console exposes all eight accepted deterministic demonstrations and
+shows validated results/evidence, local trace references, role/worker provenance,
+latency, available counters and clearly labeled unavailable specialist delivery.
+UI controls and refreshes never implicitly execute. No runtime semantics are
+implemented in Streamlit; accepted source/tests and historical CrewAI remain intact.
+
+Headless Streamlit tests exercise actual native runtime/process paths, submit and
+rerun behavior, failure selection, isolation, minimization and credential flags.
+Application tests cover forged controls/evidence, bounded views and observation
+failure isolation. Forged over-limit text, step and deadline values submitted
+through the UI reach the application service unmodified and are rejected without
+a run; widgets declare no limits that the framework could silently apply first.
+See [launch instructions](../README.md) and the console validation record: Module
+6 pytest 608 passed, root pytest 2723 passed and 6 skipped. The launcher is
+loopback-only with usage analytics disabled. Codex authored the console; Claude
+performed the bounded forged-input repair and completion recorded there.
+
+Evidence is partial for M6-015/016/019/020/021/022/023/024/025/026. All 26 source
+meanings/statuses remain frozen and Planned. Independent browser/human acceptance,
+live AI/telemetry, persistent state, hosted authentication/capacity, backend
+deployment, completed labs/platform and production readiness remain unverified.
 
 ## Production-Grade Definition of Done
 

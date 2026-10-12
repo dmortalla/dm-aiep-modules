@@ -1,4 +1,4 @@
-﻿# Module 6 Traceability
+# Module 6 Traceability
 
 ## Status Legend
 
@@ -25,16 +25,16 @@
 | M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
 | M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
 | M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; live trace delivery unverified |
-| M6-015 | Workflow state management | Planned | Typed application phases/history; console remains planned | State/evidence consistency, forged context/output rejection | Partial local transitions; persistence/console unverified |
+| M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
 | M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence; live delivery/collection/backend unverified |
 | M6-017 | Scaling workflows | Planned | Applicable throughput, active-workflow, queue/worker metrics | Bounded labels and meaningful load measurements | Curated scale view; Grafana drill-down |
 | M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
 | M6-019 | Cost optimisation | Planned | Bounded telemetry resources; validated zero-call or unavailable accounting | No invented tokens/prices/billing; credential non-authorization and bounds | Partial offline governance; live optimisation/pricing/console unverified |
 | M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; bounded observation failure isolation | Execution/collection failure, timeout/cancellation and telemetry isolation tests | Partial local reliability; recovery/operational alerts unverified |
-| M6-021 | Coordinator-worker lab | Planned | Runnable deterministic slice/service example | Workflow and adversarial integration tests | Human-facing lab and acceptance remain pending |
-| M6-022 | Collaborative AI lab | Planned | Runnable deterministic collaborative service example | Role/context/state integration and adversarial tests | AI inference and human-facing lab acceptance pending |
-| M6-023 | Distributed orchestration lab | Planned | Runnable local multi-process service example | Genuine worker/IPC, adversarial and cleanup cases | Partial lab prerequisite; human-facing/full lab acceptance pending |
-| M6-024 | Multi-agent orchestration platform | Planned | Streamlit unified curated operations console via application services | Curated evidence consistency, safe specialist references | Workflow, health, reliability, cost; Grafana/LangSmith links |
+| M6-021 | Coordinator-worker lab | Planned | Accepted workflow exposed through guided local console | Real Streamlit run/evidence and bounded denial tests | Partial human-facing prerequisite; full lab acceptance pending |
+| M6-022 | Collaborative AI lab | Planned | Accepted CrewAI collaboration exposed through guided console | Real native execution and Streamlit result/evidence tests | Offline human-facing prerequisite; live AI/full lab acceptance pending |
+| M6-023 | Distributed orchestration lab | Planned | Accepted local process service exposed through guided console | Real native workers, Streamlit PID/evidence and prior lifecycle tests | Partial human-facing prerequisite; full lab acceptance pending |
+| M6-024 | Multi-agent orchestration platform | Planned | Additive guided Streamlit console via validation/curation services | Eight actual paths, isolation, minimization, failure/stale/unavailable views | Partial local platform UI; specialist links/deployment/full acceptance pending |
 | M6-025 | Collaborative AI workflow | Planned | Researcher -> Analyst -> Critic deterministic workflow | Ordered task ownership, validation, synthesis | Partial local collaboration; full AI deliverable unverified |
 | M6-026 | Scalable multi-agent orchestration objective | Planned | Bounded role orchestration alongside accepted LangGraph slice | Per-run bounds/isolation, no scaling benchmark | Local prerequisite only; scalable AI objective unverified |
 
@@ -231,3 +231,25 @@ All 26 IDs, source meanings and Planned statuses remain unchanged. Offline SDK
 integration is distinct from live trace delivery and deployed observability.
 No console, additional stack, paid operation, remote telemetry, deployment or
 production readiness is claimed.
+
+## Additive Operations Console Evidence (Partial)
+
+[Operations Console](OPERATIONS_CONSOLE.md) records guided local exposure of all
+eight accepted demonstrations. New `console.py` owns validated commands and
+curated views; Streamlit `app.py` owns presentation, and `run_console.py` fixes
+loopback startup with usage analytics disabled. Existing runtime/observation
+source/tests, frozen architecture, dependencies and Modules 1–5 are unchanged.
+
+| Existing IDs | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-015 | Bounded immutable curated session results, clear and separate browser sessions | Persistent/shared platform state |
+| M6-016 | Correlated evidence/local trace references, role provenance, stale/unavailable observation labels | Live trace delivery and deployed specialist drill-down |
+| M6-019 | Zero-call evidence, unavailable token/pricing/billing labels, bounded result retention | Live optimisation, pricing and full cost governance |
+| M6-020 | Input/evidence denial, sanitized failures, latest-outcome selection, fail-safe observation degradation | Hosted capacity, recovery and operational alerts |
+| M6-021/022/023 | Guided runnable coordinator-worker, CrewAI collaboration and real local distribution | Independent human/full lab and live AI acceptance |
+| M6-024/025 | Runnable additive platform/accepted collaborative workflow surface | Complete deliverables, hosted operation and full acceptance |
+| M6-026 | Guided reviewer experience across accepted bounded workflows | Production scaling, throughput and overall objective acceptance |
+
+UI integration also exercises M6-001/002/003/004/005/011/012/013 through existing
+accepted paths; it introduces no new runtime/source meanings. All 26 requirement
+statuses remain Planned. UI existence does not complete or verify a requirement.

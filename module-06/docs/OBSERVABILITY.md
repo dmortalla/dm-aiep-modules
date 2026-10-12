@@ -157,5 +157,8 @@ application observation service, immutable payload-free contracts, bounded local
 LangSmith RunTree and OpenTelemetry span/metric adapters, correlation, accounting
 availability, failure isolation and evidence. Accepted execution entry points
 remain unchanged. This is actual offline SDK integration; live LangSmith delivery,
-OTLP transport/collection, Prometheus/Grafana deployment and the Streamlit console
-remain future work. All 26 requirements remain Planned.
+OTLP transport/collection and Prometheus/Grafana deployment remain future work.
+[Operations Console](OPERATIONS_CONSOLE.md) now presents bounded session-scoped
+curated local evidence, freshness and unavailable specialist references through
+application services. It does not persist raw telemetry or configure delivery.
+All 26 requirements remain Planned.
