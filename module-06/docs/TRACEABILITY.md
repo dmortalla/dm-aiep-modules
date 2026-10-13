@@ -301,3 +301,23 @@ M6-002 is unchanged: the benchmark varies concurrency between workflows and
 adds no evidence about parallel agents inside one workflow. All 26 IDs, source
 meanings and Planned statuses remain unchanged. One run on one workstation is
 not hosted, multi-host, cloud or production capacity evidence.
+
+## Console Scaling Presentation Evidence (Partial)
+
+[Operations Console](OPERATIONS_CONSOLE.md#console-closeout-reviewer-visible-scaling-evidence)
+records the closeout story that exposes the accepted benchmark in the Streamlit
+console. `console.py` maps a closed two-value profile to a benchmark plan, calls
+the unchanged `run_benchmark` and revalidates its report; `app.py` only presents
+it. The benchmark, runtime, distributed, observation and telemetry source/tests,
+dependencies and Modules 1-5 are unchanged.
+
+| Existing IDs | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-017 | A reviewer can run the accepted benchmark from the console and read the report it just produced, with built-in guidance and limits | Sustained load, saturation, capacity and queue/utilisation metrics |
+| M6-024 | Scaling evidence joins the eight demonstrations in the one reviewer-facing console; stale status and benchmark wording corrected | Human browser review; local loopback operation only |
+| M6-026 | Scalability evidence is reviewer-visible and classified as deterministic, local, single-host and machine-specific | Deterministic agents only; no model or LLM inference; overall objective acceptance |
+
+Reviewer-facing wording now states that agents are deterministic and that no
+model or LLM inference runs, and that no LangSmith trace has been delivered. All
+26 IDs, source meanings and Planned statuses remain unchanged; status transition
+is a separate closeout action.

@@ -206,3 +206,115 @@ performed a bounded repair and completion:
   message limit under a real oversized frame (read from Streamlit source only),
   and a forged demonstration value through the UI (AppTest cannot submit one;
   covered at the service boundary).
+
+## Console closeout: reviewer-visible scaling evidence
+
+Added after the scaling benchmark was independently accepted, on explicit human
+authorization of 2026-10-13. Starting point: clean HEAD
+`faac33c4731ec89b4b83031116434574d7d09283`. The sections above are the record of
+the original console and are kept as written; where they say that measured
+throughput is absent from the console, this section supersedes them.
+
+### What a reviewer sees
+
+The page has a new bordered section, **Local scaling benchmark**, between the
+result views and the review guide. It shows five fixed guidance lines (purpose,
+action, expected result, what it proves, what it does not prove), a profile
+selector with no default, and a **Run scaling benchmark** button that is disabled
+until a profile is chosen. Selecting a profile or refreshing starts nothing.
+
+| Profile | Plan run by the accepted benchmark | Typical duration on the recorded host |
+| --- | --- | --- |
+| Quick check | 2 workflows at caps 1 and 2, after one warm-up | About 20 seconds |
+| Approved plan | 8 workflows at caps 1, 2 and 4, after one warm-up | One to two minutes |
+
+After a run the section shows the report the benchmark just produced: one row per
+cap (completed, wall time, throughput, median, peak in flight, overlap, speedup
+against cap 1, workers reaped, invariants), then the classification, host facts,
+warm-up state and call counts, then a fixed limitation line. Values the benchmark
+did not derive are shown as "Not derived", never as zero. Nothing is copied from
+an earlier run or from documentation.
+
+### Boundary
+
+`app.py` remains presentation only. It imports Streamlit, `console` and
+`observability_contracts` and nothing else; a test asserts that import set and
+that the page references no benchmark, clock, concurrency, process or environment
+name. The page formats values and computes none.
+
+`console.py` owns the boundary. `ScalingProfile` is a closed two-value choice.
+`scaling_plan` maps it to a `BenchmarkPlan`; no number from the page or a caller
+reaches the benchmark, so there is no workload control to forge or widen. Unknown
+profiles and extra fields (workflows, caps, repeats, deadlines, runtime, keys) are
+rejected before the benchmark is called. `ConsoleSession.run_scaling` calls the
+unchanged `run_benchmark`, revalidates the returned report recursively and
+requires it to match the selected plan before keeping it. `benchmark.py`,
+`run_benchmark.py` and their tests are unchanged, and every bound, deadline and
+invariant stays where it was accepted.
+
+The scaling run shares the session's single admission lock with the eight
+demonstrations, so one browser session cannot run a benchmark and a demonstration
+at once. The session keeps only the latest report. Clear removes it.
+
+### Outcomes and failure
+
+- A report whose invariants held is shown with a success line.
+- A report whose invariants did not hold replaces any earlier report and is shown
+  as an error with its counts; an earlier success cannot remain on screen as the
+  current result.
+- A rejected, busy or faulted submission records nothing. On that rerun the page
+  hides the earlier report and says the submission produced none; the earlier
+  report reappears, with its age, on the next interaction.
+- Faults are fixed text. No exception message, cause or SDK output is shown or
+  retained.
+
+### Wording corrected
+
+- The observation-window caption no longer says the console has no throughput
+  benchmark; it points to the scaling section as the only source of scaling
+  evidence.
+- The review guide no longer hard-codes "All 26 requirements remain Planned",
+  which would have become false at status transition. It now says status is
+  recorded in the traceability document.
+- The opening notice and the review guide state that every agent is
+  deterministic and that no model or LLM inference runs.
+- LangSmith is described as offline SDK tracing evidence with no delivered trace
+  and live verification pending. Grafana is described as the separate opt-in
+  local stack with no link from the console.
+
+### Claims
+
+Scaling results are deterministic, local, single-host, machine-specific,
+bounded-concurrency evidence. Speedup is a measurement and never a pass
+criterion; it is not typical or portable performance. The console does not claim
+production capacity, service levels, or cloud, horizontal or remote-cluster
+scaling. No requirement status changed in this story; all 26 remain Planned.
+
+### Security and cost
+
+No external network call, credential, model or provider call, paid service,
+Docker requirement or dependency was added. Tests run under the existing
+non-loopback guard, including the real-process test with provider and LangSmith
+keys present in the environment. The approved plan starts up to eight worker
+interpreters; that is local CPU and memory only.
+
+### Validation record
+
+- `ruff check .` passes; the four changed Python files are already formatted. No
+  Ruff fix, safe or unsafe, was applied.
+- Console suites: **106 passed** (73 accepted plus 33 new: 25 service tests and
+  8 page tests, counted with parameters). No existing test was changed.
+- Complete Module 6 pytest: **794 passed in 215.84 s**, no skips (761 + 33).
+- `compileall` over the established Modules 1 to 6 paths and the Module 6
+  commands passes.
+- Root collection: **2915 tests** (2882 + 33).
+- Complete root pytest: **2909 passed, 6 skipped, 3 warnings in 291.15 s**; the
+  skips and warnings are the existing Module 5 and Module 3 ones.
+- One page test runs ten real worker processes through the page and checks every
+  process handle exited with status zero and every temporary directory is gone.
+- Two new tests failed on first run. Both were test defects, not candidate
+  defects: a stand-in service that never yielded could not show overlapping
+  admission, and a helper did not read the notice element. The tests were
+  corrected; no production code changed for them.
+- Not verified: a live browser session against the launched server. Human
+  browser review remains a separate closeout action.

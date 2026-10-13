@@ -7,9 +7,11 @@ from multi_agent_orchestration.console import (
     ConsoleRequestError,
     ConsoleSession,
     Demonstration,
+    ScalingProfile,
     age_seconds,
     failure_message,
     guidance,
+    scaling_guidance,
 )
 from multi_agent_orchestration.observability_contracts import Outcome
 
@@ -26,8 +28,8 @@ st.caption(
 )
 st.info(
     "Choose a demonstration, use synthetic task text, then select Run demonstration. "
-    "These real runtime paths process text deterministically; "
-    "they do not call AI models. "
+    "These real runtime paths use deterministic agents; "
+    "no model or LLM inference is performed. "
     "No paid inference or external telemetry delivery is enabled."
 )
 mode = st.selectbox(
@@ -121,7 +123,8 @@ with st.container(horizontal=True):
     )
 st.caption(
     "Observation window: the last eight results in this browser session. "
-    "No cross-session telemetry storage, global health claim or throughput benchmark."
+    "No cross-session telemetry storage or global health claim. Scaling evidence "
+    "comes only from the local scaling benchmark below."
 )
 if runs and rejected:
     # A submission that did not run must not appear to own an earlier result.
@@ -213,6 +216,108 @@ else:
         "No runs yet. Selecting controls or refreshing never executes a workflow."
     )
 
+with st.container(border=True):
+    st.subheader("Local scaling benchmark")
+    for label, text in scaling_guidance():
+        st.caption(f"{label}: {text}")
+    profile = st.selectbox(
+        "Benchmark profile",
+        tuple(ScalingProfile),
+        index=None,
+        placeholder="Choose explicitly…",
+        key="scaling_profile",
+    )
+    unrecorded = False
+    if st.button(
+        "Run scaling benchmark",
+        key="run_scaling",
+        disabled=profile is None,
+        icon=":material/speed:",
+    ):
+        with st.spinner("Running bounded local worker processes…"):
+            try:
+                console.run_scaling({"profile": profile})
+            except ConsoleRequestError:
+                unrecorded = True
+                st.error("Nothing ran. Choose one of the two benchmark profiles.")
+            except ConsoleBusyError:
+                unrecorded = True
+                st.warning(
+                    "Nothing ran. Wait for the current run in this session to finish."
+                )
+            except ConsoleFaultError:
+                unrecorded = True
+                st.error(
+                    "The benchmark ended without a recordable result. No automatic "
+                    "fallback or retry ran."
+                )
+    scaling = console.scaling
+    if scaling is not None and unrecorded:
+        # A submission that did not run must not appear to own an earlier report.
+        st.caption(
+            "This submission produced no report. The earlier report is retained "
+            "and reappears on the next interaction."
+        )
+    elif scaling is not None:
+        report = scaling.report
+        age = age_seconds(scaling)
+        st.caption(
+            f"{scaling.profile.value}. Snapshot age: {age} s. "
+            f"{'Stale' if age > 60 else 'Recent'}; refresh does not execute."
+        )
+        if report.passed:
+            st.success(
+                "All benchmark invariants held: every workflow completed and was "
+                "revalidated, and each cap was respected."
+            )
+        else:
+            st.error(
+                "A benchmark invariant did not hold. No throughput or speedup is "
+                "reported for a failed level, and later caps did not run."
+            )
+
+        def shown(value, digits=2):
+            return "Not derived" if value is None else f"{value:.{digits}f}"
+
+        st.table(
+            [
+                {
+                    "Cap": level.cap,
+                    "Completed": f"{level.completed} / {level.requested}",
+                    "Wall s": shown(level.wall_seconds),
+                    "Per second": shown(level.throughput_per_second, 3),
+                    "Median s": shown(level.duration_median_seconds),
+                    "Peak in flight": level.peak_in_flight,
+                    "Overlap": shown(level.overlap_factor),
+                    "Speedup vs cap 1": shown(level.speedup_vs_cap_1),
+                    "Workers reaped": level.workers_reaped,
+                    "Invariants": "Held" if level.passed else "Not held",
+                }
+                for level in report.levels
+            ]
+        )
+        cpus = report.host.logical_cpus
+        calls = "0" if report.model_calls == 0 else "Unavailable: benchmark failed"
+        st.text(
+            f"Classification: {report.classification} ({report.evidence_class})\n"
+            f"Host: {report.host.system}, Python {report.host.python}, "
+            f"logical CPUs: {'unknown' if cpus is None else cpus}\n"
+            f"Warm-up completed: {report.warmup_completed}\n"
+            f"Model, provider and external calls and retries: {calls}"
+        )
+        st.caption(
+            "Deterministic, local, single-host, machine-specific, "
+            "bounded-concurrency evidence measured by this run. Speedup is not a "
+            "pass criterion and is not typical or portable performance. This is "
+            "not production capacity, a service level, or cloud, horizontal or "
+            "remote-cluster scaling."
+        )
+    else:
+        st.caption(
+            "No benchmark report yet. Selecting a profile or refreshing never "
+            "starts worker processes."
+        )
+
 with st.expander("How to review these demonstrations", expanded=True):
     st.markdown(
         "1. Run the fixture to check the zero-key request/result boundary.\n"
@@ -221,7 +326,9 @@ with st.expander("How to review these demonstrations", expanded=True):
         "3. Change synthetic text to compare deterministic results; try "
         "bounded failure controls.\n"
         "4. Run local distribution to inspect two independent worker PIDs "
-        "and managed cleanup."
+        "and managed cleanup.\n"
+        "5. Run the local scaling benchmark to compare admission caps on "
+        "this machine."
     )
     st.table(
         [
@@ -232,16 +339,19 @@ with st.expander("How to review these demonstrations", expanded=True):
     st.caption(
         "The demonstrations prove local runtime scheduling, validated "
         "context and evidence. "
+        "Every agent is deterministic: no model or LLM inference runs anywhere "
+        "in these paths. "
         "They do not prove live AI reasoning, remote-host distribution, "
-        "production scaling "
-        "or production readiness. All 26 requirements remain Planned."
+        "production capacity or hosted deployment. Requirement status is "
+        "recorded in the Module 6 traceability document, not on this page."
     )
 with st.container(border=True):
     st.subheader("Specialist observability")
     st.text(
-        "LangSmith: local tracing adapter evidence only; no delivered "
-        "remote trace or link.\n"
-        "Grafana: specialist operational drill-down; no deployed dashboard or link.\n"
+        "LangSmith: offline SDK tracing evidence only; no trace has been "
+        "delivered and live verification is pending.\n"
+        "Grafana: specialist drill-down through the separate opt-in local stack; "
+        "this console offers no dashboard link.\n"
         "OpenTelemetry → OTLP collection → Prometheus → Grafana remains "
         "the approved path."
     )

@@ -10,6 +10,7 @@ from uuid import UUID
 
 from pydantic import Field, model_validator
 
+from .benchmark import BenchmarkPlan, BenchmarkReport, run_benchmark
 from .contracts import (
     Contract,
     ExecutionEvidence,
@@ -97,6 +98,74 @@ def guidance(mode: Demonstration) -> str:
             "meet a barrier and are reaped before return."
         ),
     }[Demonstration(mode)]
+
+
+class ScalingProfile(StrEnum):
+    """Closed reviewer choices; the accepted benchmark still enforces its bounds."""
+
+    QUICK = "Quick check: 2 workflows at caps 1 and 2"
+    APPROVED = "Approved plan: 8 workflows at caps 1, 2 and 4"
+
+
+def scaling_plan(profile: ScalingProfile) -> BenchmarkPlan:
+    """Application-owned mapping; no caller number ever reaches the benchmark."""
+    if ScalingProfile(profile) == ScalingProfile.QUICK:
+        return BenchmarkPlan(mode="local-distributed-scaling", caps=(1, 2), workflows=2)
+    return BenchmarkPlan(mode="local-distributed-scaling")
+
+
+def scaling_guidance() -> tuple[tuple[str, str], ...]:
+    """Static reviewer guidance; no caller or measured content is interpolated."""
+    return (
+        (
+            "Purpose",
+            "Shows how completed work changes when more identical local "
+            "two-process workflows are admitted at once.",
+        ),
+        (
+            "Action",
+            "Choose a profile and select Run scaling benchmark. The quick check "
+            "takes roughly 20 seconds; the approved plan takes a minute or two.",
+        ),
+        (
+            "Expected result",
+            "Every workflow completes at every cap, the observed peak equals the "
+            "cap, and the invariants are reported as held. Timings differ on "
+            "every run.",
+        ),
+        (
+            "What it proves",
+            "Deterministic, local, single-host, bounded-concurrency evidence: the "
+            "cap was respected, every result was revalidated and every worker "
+            "process was reaped. Agents are deterministic; no model or LLM "
+            "inference runs.",
+        ),
+        (
+            "What it does not prove",
+            "Production capacity or service levels, cloud, horizontal or "
+            "remote-cluster scaling, or a speedup that carries over to another "
+            "machine. Speedup is a machine-specific measurement, not a pass "
+            "criterion.",
+        ),
+    )
+
+
+class ScalingRequest(Contract):
+    profile: ScalingProfile
+
+
+class ScalingRun(Contract):
+    """Temporary curated view of one validated benchmark report; not a store."""
+
+    profile: ScalingProfile
+    finished_ns: Annotated[int, Field(strict=True, ge=1)]
+    report: BenchmarkReport
+
+    @model_validator(mode="after")
+    def correlated(self):
+        if self.report.plan != scaling_plan(self.profile):
+            raise ValueError("Scaling report contradicts the selected profile.")
+        return self
 
 
 class ConsoleRequest(Contract):
@@ -229,10 +298,13 @@ class ConsoleSession:
     Execution uses accepted services only. No keys, requests, SDK objects, raw
     telemetry buffers or exception causes are retained across runs. One run per
     session; SDK providers are created locally and closed before returning.
+    The scaling view holds the latest report of the accepted benchmark, which
+    owns all measurement and bounds.
     """
 
     def __init__(self):
         self._runs = deque(maxlen=8)
+        self._scaling = None
         self._lock = threading.Lock()
 
     @property
@@ -248,8 +320,52 @@ class ConsoleSession:
             raise ConsoleBusyError("A run is already active in this session.")
         try:
             self._runs.clear()
+            self._scaling = None
         finally:
             self._lock.release()
+
+    @property
+    def scaling(self) -> ScalingRun | None:
+        if self._scaling is None:
+            return None
+        try:
+            return fresh(self._scaling, ScalingRun)
+        except (ValueError, TypeError):
+            self._scaling = None
+            return None
+
+    def run_scaling(self, raw: object) -> ScalingRun:
+        """Run the accepted benchmark for a closed profile and keep its report.
+
+        Raises:
+            ConsoleRequestError: The profile is not one of the closed choices.
+            ConsoleBusyError: This session already has an active execution.
+            ConsoleFaultError: No validated report was produced; the earlier
+                view, if any, is kept and no cause is retained.
+        """
+        try:
+            checked = fresh(raw, ScalingRequest)
+            plan = scaling_plan(checked.profile)
+        except (ValueError, TypeError) as exc:
+            raise ConsoleRequestError(
+                "Choose one of the bounded scaling profiles."
+            ) from exc
+        if not self._lock.acquire(blocking=False):
+            raise ConsoleBusyError("A run is already active in this session.")
+        try:
+            # The report is untrusted until revalidated and matched to the plan.
+            report = fresh(asyncio.run(run_benchmark(plan)), BenchmarkReport)
+            view = ScalingRun(
+                profile=checked.profile, finished_ns=time.time_ns(), report=report
+            )
+        except (Exception, asyncio.CancelledError):
+            raise ConsoleFaultError(
+                "The benchmark ended without a recordable result."
+            ) from None
+        finally:
+            self._lock.release()
+        self._scaling = view
+        return view
 
     def run(self, raw: object) -> ConsoleRun:
         try:
@@ -372,5 +488,5 @@ class ConsoleSession:
         return view
 
 
-def age_seconds(run: ConsoleRun) -> int:
+def age_seconds(run: ConsoleRun | ScalingRun) -> int:
     return max(0, int((time.time_ns() - run.finished_ns) / 1_000_000_000))

@@ -284,3 +284,261 @@ def test_launcher_enforces_local_no_analytics_and_no_browser(monkeypatch):
     assert "--server.headless=true" in arguments
     assert "--client.showErrorDetails=none" in arguments
     assert "--server.maxMessageSize=1" in arguments
+
+
+# Scaling benchmark boundary: the console selects a closed profile and curates
+# the validated report of the accepted benchmark; it measures nothing itself.
+
+
+def offline_distribution(monkeypatch, fail_at=None):
+    """Replace only the accepted distributed service behind observed execution."""
+    import os
+
+    from multi_agent_orchestration import observed_execution
+    from multi_agent_orchestration.distributed import validate_request
+    from multi_agent_orchestration.distributed_contracts import (
+        DistributedEvidence,
+        DistributedResult,
+        WorkerId,
+        WorkerRecord,
+        WorkerRole,
+    )
+
+    requests = []
+
+    async def stand_in(request):
+        requests.append(request)
+        if len(requests) - 1 == fail_at:
+            raise RuntimeError(PRIVATE)
+        await asyncio.sleep(0)  # Yield as real IPC does, so admissions can overlap.
+        checked = validate_request(request)
+        count = len(checked.task.instruction)
+        return DistributedResult(
+            workflow_id=checked.workflow_id,
+            task_id=checked.task.task_id,
+            characters=count,
+            output=f"Distributed synthesis accepted {count} characters.",
+            evidence=DistributedEvidence(
+                workflow_id=checked.workflow_id,
+                task_id=checked.task.task_id,
+                coordinator_pid=os.getpid(),
+                limits=checked.limits,
+                workers=tuple(
+                    WorkerRecord(
+                        assignment_id=uuid4(),
+                        worker=worker,
+                        role=tuple(WorkerRole)[index],
+                        sequence=index + 1,
+                        pid=os.getpid() + index + 1,
+                    )
+                    for index, worker in enumerate(WorkerId)
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(observed_execution, "execute_distributed_workflow", stand_in)
+    return requests
+
+
+def test_scaling_profiles_are_closed_and_map_to_accepted_bounded_plans():
+    from multi_agent_orchestration.benchmark import CAPS, BenchmarkPlan
+
+    assert len(service.ScalingProfile) == 2
+    quick = service.scaling_plan(service.ScalingProfile.QUICK)
+    approved = service.scaling_plan(service.ScalingProfile.APPROVED)
+    assert (quick.workflows, quick.caps, quick.repeats) == (2, (1, 2), 1)
+    assert approved == BenchmarkPlan(mode="local-distributed-scaling")
+    assert (approved.workflows, approved.caps) == (8, CAPS)
+    assert quick.warmup and approved.warmup
+    assert quick.timeout_ms == approved.timeout_ms == 30000
+    with pytest.raises(ValueError):
+        service.scaling_plan("16 workflows at cap 8")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        None,
+        "Quick check: 2 workflows at caps 1 and 2",
+        {},
+        {"profile": None},
+        {"profile": "unbounded"},
+        {"profile": "quick"},
+        {"profile": 8},
+        {"profile": service.ScalingProfile.QUICK, "workflows": 1000},
+        {"profile": service.ScalingProfile.QUICK, "caps": (8,)},
+        {"profile": service.ScalingProfile.QUICK, "repeats": 99},
+        {"profile": service.ScalingProfile.QUICK, "timeout_ms": 10**9},
+        {"profile": service.ScalingProfile.QUICK, "api_key": "private-secret"},
+        {"profile": service.ScalingProfile.QUICK, "runtime": "langgraph"},
+        {"mode": "local-distributed-scaling", "workflows": 16, "caps": (4,)},
+    ],
+)
+def test_invalid_scaling_requests_never_reach_the_benchmark(monkeypatch, bad):
+    def forbidden(*args, **kwargs):
+        pytest.fail("Unvalidated scaling controls reached the benchmark")
+
+    monkeypatch.setattr(service, "run_benchmark", forbidden)
+    session = ConsoleSession()
+    with pytest.raises(service.ConsoleRequestError) as error:
+        session.run_scaling(bad)
+    assert "private-secret" not in str(error.value)
+    assert session.scaling is None
+
+
+def test_scaling_view_is_the_validated_report_of_the_accepted_benchmark(monkeypatch):
+    from multi_agent_orchestration import benchmark
+
+    requests = offline_distribution(monkeypatch)
+    plans, original = [], service.run_benchmark
+
+    async def spy(plan, **options):
+        plans.append((plan, options))
+        return await original(plan, **options)
+
+    monkeypatch.setattr(service, "run_benchmark", spy)
+    session = ConsoleSession()
+    view = session.run_scaling({"profile": service.ScalingProfile.QUICK})
+    assert original is benchmark.run_benchmark
+    assert plans == [(service.scaling_plan(service.ScalingProfile.QUICK), {})]
+    assert len(requests) == 1 + 2 * 2  # Warm-up plus two workflows at two caps.
+    report = view.report
+    assert report.passed and report.plan == plans[0][0]
+    assert report.classification == "local_single_host"
+    assert [level.cap for level in report.levels] == [1, 2]
+    assert [level.peak_in_flight for level in report.levels] == [1, 2]
+    assert all(level.completed == level.requested == 2 for level in report.levels)
+    assert report.model_calls == report.external_calls == report.retries == 0
+    assert session.scaling == view and session.runs == ()
+    assert benchmark.INSTRUCTION not in view.model_dump_json()
+    assert "private-secret" not in repr(session.__dict__)
+    session.clear()
+    assert session.scaling is None
+
+
+def test_failed_benchmark_replaces_an_earlier_success(monkeypatch):
+    offline_distribution(monkeypatch)
+    session = ConsoleSession()
+    assert session.run_scaling({"profile": service.ScalingProfile.QUICK}).report.passed
+    offline_distribution(monkeypatch, fail_at=2)
+    view = session.run_scaling({"profile": service.ScalingProfile.QUICK})
+    assert not view.report.passed and session.scaling == view
+    (level,) = view.report.levels
+    assert level.failed == 1 and level.throughput_per_second is None
+    assert level.speedup_vs_cap_1 is None and view.report.model_calls is None
+    assert PRIVATE not in view.model_dump_json()
+
+
+@pytest.mark.parametrize("kind", ["exception", "cancelled", "other_plan", "not_report"])
+def test_unrecordable_benchmark_is_a_sanitized_fault_that_keeps_no_new_view(
+    monkeypatch, kind
+):
+    offline_distribution(monkeypatch)
+    session = ConsoleSession()
+    earlier = session.run_scaling({"profile": service.ScalingProfile.QUICK})
+    original = service.run_benchmark
+
+    async def broken(plan, **options):
+        if kind == "exception":
+            raise RuntimeError(PRIVATE)
+        if kind == "cancelled":
+            raise asyncio.CancelledError(PRIVATE)
+        if kind == "other_plan":
+            return await original(plan.model_copy(update={"workflows": 3}))
+        return {"passed": True, "note": PRIVATE}
+
+    monkeypatch.setattr(service, "run_benchmark", broken)
+    with pytest.raises(service.ConsoleFaultError) as fault:
+        session.run_scaling({"profile": service.ScalingProfile.QUICK})
+    assert fault.value.__cause__ is None and PRIVATE not in str(fault.value)
+    assert session.scaling == earlier
+    assert not session._lock.locked()
+
+
+def test_scaling_shares_the_single_session_admission(monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("A busy session started a benchmark")
+
+    monkeypatch.setattr(service, "run_benchmark", forbidden)
+    session = ConsoleSession()
+    session._lock.acquire()
+    try:
+        with pytest.raises(service.ConsoleBusyError):
+            session.run_scaling({"profile": service.ScalingProfile.APPROVED})
+    finally:
+        session._lock.release()
+    assert session.scaling is None
+
+
+def test_corrupted_or_forged_scaling_views_are_not_renderable(monkeypatch):
+    offline_distribution(monkeypatch)
+    session = ConsoleSession()
+    view = session.run_scaling({"profile": service.ScalingProfile.QUICK})
+    with pytest.raises(ValueError):
+        service.ScalingRun(
+            profile=service.ScalingProfile.APPROVED,
+            finished_ns=view.finished_ns,
+            report=view.report,
+        )
+    with pytest.raises(ValueError):
+        fresh(view.model_copy(update={"api_key": PRIVATE}), service.ScalingRun)
+    forged = view.report.model_copy(update={"classification": "production"})
+    session._scaling = view.model_copy(update={"report": forged})
+    assert session.scaling is None and session._scaling is None
+
+
+def test_scaling_guidance_is_static_and_classifies_the_evidence():
+    labels = [label for label, _ in service.scaling_guidance()]
+    assert labels == [
+        "Purpose",
+        "Action",
+        "Expected result",
+        "What it proves",
+        "What it does not prove",
+    ]
+    text = " ".join(body for _, body in service.scaling_guidance()).lower()
+    for required in (
+        "deterministic",
+        "local",
+        "single-host",
+        "bounded-concurrency",
+        "machine-specific",
+        "no model or llm inference",
+        "not a pass criterion",
+        "production capacity",
+        "cloud",
+    ):
+        assert required in text
+
+
+def test_page_imports_only_presentation_and_console_services():
+    import ast
+
+    path = Path(__file__).parents[1] / "app.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    imported = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            imported.add(node.module)
+        elif isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+    assert imported == {
+        "streamlit",
+        "multi_agent_orchestration.console",
+        "multi_agent_orchestration.observability_contracts",
+    }
+    names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+    names |= {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
+    for owned_elsewhere in (
+        "run_benchmark",
+        "BenchmarkPlan",
+        "Semaphore",
+        "perf_counter",
+        "asyncio",
+        "gather",
+        "time",
+        "subprocess",
+        "environ",
+        "getenv",
+    ):
+        assert owned_elsewhere not in names

@@ -221,3 +221,210 @@ def test_untrusted_session_state_object_is_replaced():
     at.run()
     assert not at.exception and type(at.session_state.console) is ConsoleSession
     assert PRIVATE not in rendered(at)
+
+
+# Scaling benchmark through the page: presentation of the accepted benchmark only.
+
+QUICK = "Quick check: 2 workflows at caps 1 and 2"
+
+
+def offline_distribution(monkeypatch, fail_at=None):
+    """Replace only the accepted distributed service behind observed execution."""
+    import os
+    from uuid import uuid4
+
+    from multi_agent_orchestration import observed_execution
+    from multi_agent_orchestration.distributed import validate_request
+    from multi_agent_orchestration.distributed_contracts import (
+        DistributedEvidence,
+        DistributedResult,
+        WorkerId,
+        WorkerRecord,
+        WorkerRole,
+    )
+
+    requests = []
+
+    async def stand_in(request):
+        requests.append(request)
+        if len(requests) - 1 == fail_at:
+            raise RuntimeError(PRIVATE)
+        checked = validate_request(request)
+        count = len(checked.task.instruction)
+        return DistributedResult(
+            workflow_id=checked.workflow_id,
+            task_id=checked.task.task_id,
+            characters=count,
+            output=f"Distributed synthesis accepted {count} characters.",
+            evidence=DistributedEvidence(
+                workflow_id=checked.workflow_id,
+                task_id=checked.task.task_id,
+                coordinator_pid=os.getpid(),
+                limits=checked.limits,
+                workers=tuple(
+                    WorkerRecord(
+                        assignment_id=uuid4(),
+                        worker=worker,
+                        role=tuple(WorkerRole)[index],
+                        sequence=index + 1,
+                        pid=os.getpid() + index + 1,
+                    )
+                    for index, worker in enumerate(WorkerId)
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(observed_execution, "execute_distributed_workflow", stand_in)
+    return requests
+
+
+def test_idle_scaling_guidance_is_visible_and_controls_do_not_execute(monkeypatch):
+    requests = offline_distribution(monkeypatch)
+    at = app()
+    assert not at.exception
+    assert at.button(key="run_scaling").disabled
+    assert len(at.selectbox(key="scaling_profile").options) == 2
+    text = rendered(at)
+    for label in (
+        "Purpose:",
+        "Action:",
+        "Expected result:",
+        "What it proves:",
+        "What it does not prove:",
+    ):
+        assert label in text
+    lowered = text.lower()
+    assert "no model or llm inference" in lowered
+    assert "machine-specific" in lowered and "single-host" in lowered
+    assert "production capacity" in lowered and "not a pass criterion" in lowered
+    assert "No benchmark report yet" in text
+    at.selectbox(key="scaling_profile").select(QUICK).run()
+    assert not at.exception and not at.button(key="run_scaling").disabled
+    at.run()
+    assert requests == [] and at.session_state.console.scaling is None
+    assert not at.success and not at.error
+
+
+def test_corrected_wording_states_deterministic_agents_and_makes_no_stale_claim():
+    at = app()
+    text = rendered(at) + " ".join(str(item.value) for item in at.info)
+    assert "deterministic agents" in text
+    assert "no model or LLM inference" in text
+    assert "remain Planned" not in text
+    assert "throughput benchmark" not in text
+    assert "no trace has been delivered" in text and "pending" in text
+    assert "no dashboard link" in text
+    for overclaim in ("production-ready", "horizontally", "2.90"):
+        assert overclaim not in text
+
+
+def test_real_accepted_benchmark_runs_through_the_page(monkeypatch):
+    from multi_agent_orchestration import _distributed_processes as transport
+
+    for name in ("OPENAI_API_KEY", "GOOGLE_API_KEY", "LANGSMITH_API_KEY"):
+        monkeypatch.setenv(name, "private-secret")
+    original, children = transport.spawn_worker, []
+
+    async def observed(assignment, directory):
+        process = await original(assignment, directory)
+        children.append((process, directory))
+        return process
+
+    monkeypatch.setattr(transport, "spawn_worker", observed)
+    at = AppTest.from_file(str(APP), default_timeout=240).run()
+    at.selectbox(key="scaling_profile").select(QUICK).run()
+    at.button(key="run_scaling").click().run()
+    assert not at.exception and at.success and not at.error
+    # Warm-up plus two workflows at two caps, two worker processes each.
+    assert len(children) == 10
+    assert all(process.returncode == 0 for process, _ in children)
+    assert all(not Path(directory).exists() for _, directory in children)
+    report = at.session_state.console.scaling.report
+    assert report.passed and report.classification == "local_single_host"
+    assert [level.cap for level in report.levels] == [1, 2]
+    assert [level.peak_in_flight for level in report.levels] == [1, 2]
+    assert all(level.workers_reaped == 4 for level in report.levels)
+    assert report.model_calls == report.provider_calls == report.external_calls == 0
+    table = at.table[0].value
+    assert list(table["Cap"]) == [1, 2]
+    assert list(table["Completed"]) == ["2 / 2", "2 / 2"]
+    assert list(table["Invariants"]) == ["Held", "Held"]
+    text = rendered(at)
+    assert "Classification: local_single_host" in text
+    assert "calls and retries: 0" in text
+    assert "machine-specific" in text and "not a pass criterion" in text
+    assert "private-secret" not in text
+    at.run()  # A refresh shows the same report and starts nothing.
+    assert len(children) == 10 and at.success
+    assert at.session_state.console.runs == ()
+
+
+def test_failed_benchmark_never_shows_an_earlier_success(monkeypatch):
+    offline_distribution(monkeypatch)
+    at = app()
+    at.selectbox(key="scaling_profile").select(QUICK).run()
+    at.button(key="run_scaling").click().run()
+    assert not at.exception and at.success and not at.error
+    offline_distribution(monkeypatch, fail_at=2)
+    at.button(key="run_scaling").click().run()
+    assert not at.exception and at.error and not at.success
+    assert not at.session_state.console.scaling.report.passed
+    table = at.table[0].value
+    assert list(table["Invariants"]) == ["Not held"]
+    assert list(table["Per second"]) == ["Not derived"]
+    assert list(table["Speedup vs cap 1"]) == ["Not derived"]
+    text = rendered(at)
+    assert "Unavailable: benchmark failed" in text
+    assert "private-secret" not in text
+    at.run()
+    assert at.error and not at.success
+
+
+@pytest.mark.parametrize("kind", ["rejected", "busy", "fault"])
+def test_unrecorded_scaling_submission_hides_the_earlier_report(monkeypatch, kind):
+    from multi_agent_orchestration import console as service
+
+    offline_distribution(monkeypatch)
+    at = app()
+    at.selectbox(key="scaling_profile").select(QUICK).run()
+    at.button(key="run_scaling").click().run()
+    assert not at.exception and at.success
+    earlier = at.session_state.console.scaling
+    if kind == "rejected":
+
+        def rejected(self, raw):
+            raise service.ConsoleRequestError("rejected")
+
+        monkeypatch.setattr(ConsoleSession, "run_scaling", rejected)
+    elif kind == "fault":
+
+        async def broken(plan, **options):
+            raise RuntimeError(PRIVATE)
+
+        monkeypatch.setattr(service, "run_benchmark", broken)
+    else:
+        at.session_state.console._lock.acquire()
+    try:
+        at.button(key="run_scaling").click().run()
+    finally:
+        if kind == "busy":
+            at.session_state.console._lock.release()
+    assert not at.exception and not at.success
+    assert bool(at.warning) == (kind == "busy") and bool(at.error) == (kind != "busy")
+    text = rendered(at)
+    assert "produced no report" in text and "private-secret" not in text
+    assert "Classification:" not in text and len(at.table) == 1
+    assert at.session_state.console.scaling == earlier
+    at.run()
+    assert at.success and "Classification:" in rendered(at)
+
+
+def test_clear_removes_the_scaling_report(monkeypatch):
+    offline_distribution(monkeypatch)
+    at = app()
+    at.selectbox(key="scaling_profile").select(QUICK).run()
+    at.button(key="run_scaling").click().run()
+    assert at.session_state.console.scaling is not None
+    at.button(key="clear").click().run()
+    assert not at.exception and at.session_state.console.scaling is None
+    assert not at.success and "No benchmark report yet" in rendered(at)

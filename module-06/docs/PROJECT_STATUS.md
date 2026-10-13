@@ -303,6 +303,31 @@ production scaling and capacity, saturation, sustained load, queue and
 utilisation measurement, in-process path scaling, live AI and production
 readiness remain unverified.
 
+## Console Closeout: Reviewer-Visible Scaling Evidence
+
+The benchmark above was independently accepted. Human decisions of 2026-10-13
+then fixed the closeout scope: deterministic agents are accepted as
+verified-with-limitation evidence for M6-022/025/026 at transition; a bounded
+live LangSmith trace verification is authorized as a later, separate task;
+scaling evidence must be visible in the Streamlit console; and Module 6 is
+released as a local, loopback-only system with hosted deployment out of scope.
+
+This story implements the third decision only. The
+[console record](OPERATIONS_CONSOLE.md#console-closeout-reviewer-visible-scaling-evidence)
+describes a **Local scaling benchmark** section with built-in guidance, a closed
+two-profile choice and the report the accepted benchmark just produced.
+`console.py` owns the boundary and `app.py` presents; `benchmark.py` and its
+tests are unchanged, and no caller number reaches the benchmark. Two console
+statements that were or would become false were corrected, and reviewer-facing
+wording now says that agents are deterministic and that no model or LLM
+inference runs. 33 tests were added and none changed: Module 6 pytest 794
+passed; root 2909 passed and 6 skipped.
+
+Evidence is partial for M6-017/024/026. All 26 requirements remain Planned in
+this story. Remaining closeout actions: the separately authorized live LangSmith
+verification, human browser review of the console, the documentation-only status
+transition, and release.
+
 ## Production-Grade Definition of Done
 
 The checklist below evaluates the complete platform. Bounded slice evidence does
@@ -393,8 +418,10 @@ not establish platform, lab, or deployment acceptance.
 ## Next Recommended Work
 
 The operations console, the local operational telemetry pipeline and the local
-scaling benchmark are delivered; the benchmark awaits independent acceptance.
-Candidate next steps, each needing its own authorization: curated
+scaling benchmark are delivered and the benchmark is independently accepted;
+its console presentation awaits independent acceptance. Closeout actions are
+listed in the section above. Earlier candidate steps, each still needing its own
+authorization and none required for closeout: curated
 operational availability in the console through an application service, live
 LangSmith delivery, or model/provider integration. Preserve the approved
 boundaries. See [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitations).
