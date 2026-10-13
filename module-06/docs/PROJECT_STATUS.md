@@ -328,6 +328,45 @@ this story. Remaining closeout actions: the separately authorized live LangSmith
 verification, human browser review of the console, the documentation-only status
 transition, and release.
 
+## Opt-In LangSmith Trace Delivery (Live Delivery Confirmed, Acceptance Pending)
+
+The console presentation above was independently accepted. On explicit human
+authorization of 2026-10-13, [LangSmith Delivery](LANGSMITH_DELIVERY.md) adds the
+smallest opt-in path that can send one sanitized deterministic trace to
+LangSmith: `langsmith_delivery.py` and the operator command `run_langsmith.py`.
+Delivery is never selected by default, by a present credential or by workflow
+data. It runs after a workflow has finished, through the SDK's documented batch
+method as one `POST /runs/batch`, on a client and session pinned to the fixed
+LangSmith origin and that one write path, with the outgoing batch revalidated at
+the wire and the credential read only from `LANGSMITH_API_KEY`. The accepted offline
+adapter, runtime source, console and dependencies are unchanged.
+
+**Live delivery was confirmed on 2026-10-13 and awaits independent acceptance.**
+On the fifth authorized attempt, run by the human, LangSmith accepted the batch
+(HTTP 202, four runs) and returned the delivered root run. The four earlier
+attempts failed because the credential variable held a single pasted control
+character, not because of the endpoint or payload; the adapter now refuses a
+malformed credential locally before any request. The history of those attempts
+follows. Four authorized live attempts, run by the human on 2026-10-13, all
+failed. The first could not be diagnosed, so a bounded failure classification
+(closed categories, status code, accepted-run count, no remote text) was added
+offline. The second was then classified as HTTP 400 on the first run-creation
+write, with nothing stored. With human approval, delivery was moved offline from
+the SDK's single-run fallback endpoint to its batch method; the session permits
+one write and keeps failures from the SDK so it cannot retry or log reply text.
+The third attempt, on the batch path, also returned HTTP 400, so the batch path
+is not a fix and the cause is unproven. With human approval a bounded,
+diagnostic-only inspection of a failed 4xx write reply was then added offline:
+at most 2048 bytes read once and reduced to a closed classification drawn from
+51 source-controlled names, with no reply text exposed and no effect on
+behaviour. That inspection showed an HTML reply naming no protocol term, which
+led to the credential being checked. Independent acceptance then found the
+receipt counting responses instead of request attempts; it now reads the
+session's attempt counter. 510 offline tests exist: Module 6 pytest
+1304 passed; root 3419 passed and 6 skipped. M6-014 is unchanged and all 26
+requirements remain Planned until independent acceptance and the separate status
+transition. Any further external request needs new human authorization.
+
 ## Production-Grade Definition of Done
 
 The checklist below evaluates the complete platform. Bounded slice evidence does

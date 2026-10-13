@@ -321,3 +321,21 @@ Reviewer-facing wording now states that agents are deterministic and that no
 model or LLM inference runs, and that no LangSmith trace has been delivered. All
 26 IDs, source meanings and Planned statuses remain unchanged; status transition
 is a separate closeout action.
+
+## Opt-In LangSmith Delivery Evidence (Live Delivery Confirmed, Acceptance Pending)
+
+[LangSmith Delivery](LANGSMITH_DELIVERY.md) records `langsmith_delivery.py`,
+`run_langsmith.py` and `tests/test_langsmith_delivery.py`. Offline tests and live
+delivery are separate evidence classes. **One live delivery was confirmed on
+2026-10-13**, run by the human: the batch was accepted with HTTP 202 and the
+root run was read back. Four earlier attempts failed because the credential
+variable held a single pasted control character. That evidence awaits
+independent acceptance. The accepted offline adapter, runtime, observation and console
+source/tests, dependencies and Modules 1-5 are unchanged.
+
+| Existing ID | Partial evidence | Remaining limitation |
+| --- | --- | --- |
+| M6-014 | A real, explicit, bounded delivery path using the installed SDK batch method (one `POST /runs/batch`); pinned destination and write path; wire-validated payload-free batch; single write enforced at the transport; credential confined to its header; bounded failure classification; a bounded, diagnostic-only inspection of a 4xx reply (at most 2048 bytes, closed 51-name vocabulary, no reply text or SDK log text exposed); local credential format validation before any request; a receipt that counts request attempts; 510 offline tests with the network replaced in memory; one human-run live delivery accepted and read back | Independent acceptance of the live delivery; model-backed tracing; status transition |
+
+M6-016 gains one delivered payload-free trace. No model or LLM inference is
+involved. All 26 IDs, source meanings and Planned statuses remain unchanged.
