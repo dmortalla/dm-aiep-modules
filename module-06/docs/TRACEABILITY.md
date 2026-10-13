@@ -339,3 +339,38 @@ source/tests, dependencies and Modules 1-5 are unchanged.
 
 M6-016 gains one delivered payload-free trace. No model or LLM inference is
 involved. All 26 IDs, source meanings and Planned statuses remain unchanged.
+
+## Live-Model Slice Story 1 Evidence (Prerequisite Only)
+
+[Live-Model Slice](LIVE_MODEL_SLICE.md) records `live_errors.py`,
+`live_contracts.py`, `live_validation.py`, `model_gateway.py` and
+`tests/test_live_contracts.py`. The live-model capability is an additive
+portfolio and production Definition-of-Done item; it is not one of the 26
+source requirements and adds no requirement ID.
+
+Story 1 is types and pure validation only. No model, provider or network call
+exists in it, so it supplies no model-backed evidence for any row above. It is
+deterministic offline evidence that a future live run cannot be authorized by
+availability, cannot exceed a stated budget representation, cannot carry
+authority in model-produced content and cannot record credentials or provider
+payloads as evidence. Accepted deterministic source and tests are unchanged.
+
+All 26 IDs, source meanings and Planned statuses remain unchanged.
+
+The second bounded Story 1 repair adds a sanitized live-data validation boundary
+and fixed application-owned validation failure. Raw Pydantic diagnostics,
+including attacker-controlled locations, remain internal and must not be exposed
+or logged. Synthetic key/value/nested-canary tests are offline repair evidence;
+they are not independent acceptance or live-model evidence.
+
+The third bounded Story 1 repair canonicalizes the plan records inside
+`LiveEvidence` so that a supplied `GraphRecord` instance, subclass or
+undeclared state is never retained. It is offline repair evidence only, adds no
+requirement ID and changes no accepted contract. All 26 IDs, source meanings
+and Planned statuses remain unchanged.
+
+The fourth bounded Story 1 repair canonicalizes the five top-level UUID
+identifiers in live evidence/failure objects. Caller UUID subclass identity,
+attributes and custom behavior are not retained. This is offline repair
+verification only; it does not alter the prior plain-data fuzz evidence, add a
+requirement ID, change an accepted deterministic contract or complete a status.

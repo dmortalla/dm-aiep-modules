@@ -1,4 +1,4 @@
-﻿# Module 6 Project Status
+# Module 6 Project Status
 
 ## Current State
 
@@ -366,6 +366,47 @@ session's attempt counter. 510 offline tests exist: Module 6 pytest
 1304 passed; root 3419 passed and 6 skipped. M6-014 is unchanged and all 26
 requirements remain Planned until independent acceptance and the separate status
 transition. Any further external request needs new human authorization.
+
+## Live-Model Slice, Story 1: Typed Safety Envelope (Acceptance Pending)
+
+A human decision of 2026-10-13 requires one real model-backed multi-agent
+workflow before Module 6 closes, as an additive portfolio and production
+Definition-of-Done item, not a course-source requirement. This supersedes the
+statement under Next Recommended Work that model integration is not needed for
+closeout. Architecture B+ is unchanged and needs no amendment.
+
+[Live-Model Slice](LIVE_MODEL_SLICE.md) records Story 1: additive contracts for
+explicit live authorization, application-owned model selection, per-run
+budgets, bounded model-produced content, payload-free live evidence and closed
+failure categories, pure output validation, and a one-method provider-neutral
+gateway protocol. **No model has executed.** No adapter, network client,
+credential lookup, live workflow, live service or console change exists. No
+accepted source or test file was modified and no dependency was added.
+
+After an independent rejection, two defects were repaired within Story 1: the
+authorization boundary now establishes authority by validating plain data and
+never by object identity, and all live contracts share defense-in-depth hidden
+input values and nested revalidation. A second rejection demonstrated that raw
+Pydantic error locations can still disclose attacker-controlled field names.
+The bounded repair adds `validate_live_data` and fixed `LiveValidationError`:
+raw Pydantic errors are internal diagnostics, never public/loggable failures.
+Story 2 must use the sanitized boundaries. A third rejection confirmed that
+boundary and found that `LiveEvidence` trusted nested `GraphRecord` instances.
+The bounded repair canonicalizes each plan record at the evidence boundary from
+plain declared data, refuses record subclasses and compares the plan as
+canonical JSON; the accepted `GraphRecord` contract is unchanged. Retention of
+`UUID` subclass instances in top-level identifier fields was subsequently
+authorized as the same object-trust root cause. Five evidence/failure identifiers
+now rebuild a fresh exact UUID from the validated built-in numeric value, without
+retaining caller identity or subclass behavior. 62 related tests were added;
+the GraphRecord repair and accepted deterministic contract remain intact.
+Independent acceptance remains
+pending; no accepted source/test changed. Current repair gate results are in
+the implementation document.
+Root results are in the implementation document. All 26 requirements remain
+Planned. Ollama compatibility, token accounting, model quality, pricing, live
+LangGraph or Streamlit execution and hosted support are unverified and not
+claimed. The candidate is uncommitted pending independent acceptance.
 
 ## Production-Grade Definition of Done
 
