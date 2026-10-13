@@ -1,4 +1,4 @@
-﻿# Default Engineering SOP — Production Quality by Default
+# Default Engineering SOP — Production Quality by Default
 
 ## Purpose
 
@@ -270,6 +270,10 @@ Security → Cost → Evidence → Deployment**
 - The system has an appropriate usable interface.
 - A new user or reviewer can understand how to operate it.
 - Important functionality can be meaningfully demonstrated.
+- Material functionality is demonstrable to its expected users, reviewers, and
+  evaluators through results the system actually produces, supported by
+  appropriately classified evidence, rather than through description, static
+  output, or pre-canned results alone.
 
 ### Real Functionality
 
@@ -387,6 +391,51 @@ Unsafe fixes must not be automatically applied.
 
 Tests, security controls, requirements, or quality rules must never be weakened
 merely to obtain green status.
+
+## Acceptance and verifier correctness
+
+Acceptance harnesses, verifiers, and review scripts are engineering artifacts.
+They must themselves be validated. A failed verifier assertion is not
+automatically evidence that the implementation is defective.
+
+Before invoking a project CLI, verifier, benchmark, migration, deployment
+helper, or similar executable, derive its invocation contract from authoritative
+local evidence such as:
+
+- `--help` output;
+- source argument parsing;
+- committed usage documentation;
+- maintained tests.
+
+Do not guess required flags, defaults, lifecycle prerequisites, or opt-in
+behavior. An executable that declines to act without its documented explicit
+opt-in is behaving correctly.
+
+Before asserting counts, structure, or status from structured documentation,
+identify the authoritative section, table, or schema. Do not globally count
+textual matches that may legitimately repeat elsewhere.
+
+Classify a failure before attributing it:
+
+- candidate/implementation failure;
+- verifier/harness failure;
+- environment/infrastructure failure;
+- unmet external prerequisite.
+
+Do not attribute the latter three to the candidate without evidence.
+
+When a harness failure is discovered, repair or simplify the harness and rerun
+the relevant acceptance gates against the unchanged candidate whenever safe.
+
+Acceptance automation must not weaken requirements, tests, security controls,
+or evidence standards merely to make a candidate pass. Genuine candidate
+failures remain fail-fast.
+
+Prefer native, project-maintained quality and acceptance mechanisms first. Add
+custom meta-verification only for material risks not already covered.
+
+Keep verification proportional and cost-efficient. Avoid redundant or brittle
+ceremony that adds little assurance.
 
 ## Human authority
 
