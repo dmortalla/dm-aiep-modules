@@ -35,3 +35,8 @@ into result history or telemetry. Use synthetic text rather than secrets.
 [Console design and verification](docs/OPERATIONS_CONSOLE.md) records security,
 scope, acceptance evidence and limitations. The console does not complete the
 module or its requirements; all 26 source requirements remain Planned.
+
+[Local-model provider adapter](docs/LOCAL_MODEL_ADAPTER.md) documents the additive
+offline implementation candidate and synthetic process-runtime verification.
+Actual Ollama compatibility and inference remain unverified; the console still
+offers deterministic demonstrations only.

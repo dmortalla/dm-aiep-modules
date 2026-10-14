@@ -427,6 +427,21 @@ Ollama compatibility, genuine inference, provider usage accuracy, live-model
 observation and deployment remain unverified. All 26 requirements remain Planned.
 The candidate is uncommitted and independent acceptance is pending.
 
+## Local Model Provider Adapter (Offline Implementation, Acceptance Pending)
+
+[Local Model Adapter](LOCAL_MODEL_ADAPTER.md) adds a fixed-loopback Ollama chat
+adapter using the existing HTTPX dependency. Synthetic transport tests verify
+request/response translation, endpoint/redirect refusal, closed sanitized errors,
+bounded usage and execution through the accepted supervised runtime. The
+preceding sections describe historical milestones; this additive candidate does
+not change their accepted contracts or tests.
+
+No actual Ollama service/model compatibility, inference, quality, live Streamlit
+model execution, live-model LangSmith evidence, hosted-provider support or
+production deployment readiness is verified. All 26 source statuses remain
+Planned. Independent acceptance and a separately authorized compatibility probe
+remain outstanding; no probe is performed by this milestone.
+
 ## Production-Grade Definition of Done
 
 The checklist below evaluates the complete platform. Bounded slice evidence does
