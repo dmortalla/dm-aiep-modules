@@ -1,5 +1,11 @@
 # Local Model Provider Adapter — Offline Implementation
 
+The original offline implementation record below is historical. That adapter
+was independently accepted and committed at
+`b7b2d353da7dcb8cd9d60066ba4e358c471df223`. The separately authorized real probe
+and the current offline repair candidate are recorded in the final section;
+earlier no-provider-call statements apply to the original offline milestone.
+
 Implementation candidate, 2026-10-14. Independent acceptance is pending.
 Baseline: `feature/module-06-architecture`,
 `71b08c49d7bd49ced0728658b379bdf3d41f26b5`, clean and nothing staged.
@@ -235,3 +241,141 @@ calling. Record actual results separately from synthetic evidence; any required
 material endpoint/protocol/security architecture change returns to human review.
 Model quality, live UI/observation and deployment remain separate later work.
 This milestone does not authorize or begin that probe.
+
+## Bounded real-compatibility repair — offline candidate
+
+Baseline: `feature/module-06-architecture`,
+`b7b2d353da7dcb8cd9d60066ba4e358c471df223`, commit
+`feat: add offline local model gateway`; starting worktree clean, nothing staged.
+This is implementation/repair verification, not independent acceptance.
+
+### Real provider evidence preceding this repair
+
+A separately authorized probe made exactly one real local inference at
+`http://127.0.0.1:11434/api/chat` using the already-installed exact tag
+`qwen2.5-coder:7b`. HTTP 200, nonstreaming, no retry, repair, redirect or fallback;
+requested and returned identities matched. The response was 343 raw bytes,
+with nonblank string content of 11 UTF-8 bytes, message fields exactly
+`role`/`content`, and `done` exactly true.
+
+Observed top-level fields were `created_at`, `done`, `done_reason`, `eval_count`,
+`eval_duration`, `load_duration`, `message`, `model`, `prompt_eval_cached_count`,
+`prompt_eval_count`, `prompt_eval_duration` and `total_duration`.
+`prompt_eval_cached_count` was an integer; its numeric value was not retained.
+Representable usage fields were `prompt_eval_count = 40` and `eval_count = 6`.
+The accepted pre-repair adapter rejected the extra cached-count field, giving
+verdict **INCOMPATIBLE** with `unexpected_provider_failure`.
+
+This is **REAL LOCAL PROVIDER COMPATIBILITY EVIDENCE** establishing the mismatch.
+It is not evidence that the repaired adapter works against another real response.
+No generated content or raw provider body is retained in this record.
+
+### Narrow repair and offline evidence
+
+Only `prompt_eval_cached_count` is added to the known top-level allowlist.
+When present, it must satisfy the existing `_usage_count` representation:
+exact `int`, not `bool`, in `0..MAX_TOKEN_COUNT` (0..1,000,000). The adapter
+validates it, then removes it from the parsed envelope before reply construction;
+invalid representations fail through the existing sanitized provider boundary.
+Absence remains valid. Even valid values are explicitly discarded, never added
+to `ModelReply`, application evidence, usage, cost or any policy decision.
+No inferred relationship to prompt tokens is introduced: cached values cannot
+replace, add to, subtract from, or fill unavailable `prompt_eval_count`.
+
+All other unknown fields continue to be rejected. Message fields remain exactly
+`role`/`content`; thinking, tool calls, images and attacker-named fields are
+rejected at either level, including arbitrary siblings next to the cached count.
+Exact identity, duplicate-key rejection, endpoint/redirect refusal, bounded
+pre-parse reads, content bounds, sanitized failures and zero retries are unchanged.
+No contract, authorization, budget, repair, evidence-classification or supervised
+runtime implementation changes.
+
+A synthetic fixture reproduces the observed field names/types and known model
+identity/usage. Its content, timestamp, completion reason, durations and cached
+count are explicitly synthetic placeholders, not copied provider output.
+36 added cases cover optional absence; zero, positive and maximum count; negative,
+boolean, float, string, null, oversized, object and list values; duplicate keys;
+strict top/message sibling rejection; model/message invariants; unavailable usage;
+raw/content bounds; and three additional real child-runtime scenarios.
+All original 87 adapter cases and existing runtime assertions are preserved.
+
+The extended synthetic child fixture exercises cached-count success (3 calls),
+role repair (4 calls), and invalid cached metadata (1 call, no repair). Existing
+usage totals remain derived solely from input/output token counts even with a
+synthetic cached value of 100. Existing assertions verify one child, minimal
+environment, no fifth call, zero success-side retry accounting, completed wait
+and closed stdin. The underlying parent runtime remains unchanged.
+
+Focused offline verification: **123 passed in 18.16 s**. Ruff passes after
+correcting a single long fixture line. Full fail-fast results follow execution:
+
+| Gate | Result |
+| --- | --- |
+| `uv run --offline --no-sync ruff check module-06` | PASS |
+| Complete Module 6 pytest | 1,965 passed in 358.05 s |
+| Complete root pytest | 4,080 passed, 6 skipped, 3 existing ChromaDB warnings in 424.15 s |
+| compileall: source/tests/app/four command paths | PASS |
+
+Gates use the existing interpreter/dependencies, an explicit noncredential
+environment with test-owned home/AppData/temp paths and fixed executable PATH,
+disabled dotenv/tracing, guarded real dotenv reads and blocked external/provider
+connections (including port 11434). Only synthetic/test-owned loopback and IPC
+are allowed. Temporary verification infrastructure is removed before delivery.
+No real Ollama, model, provider, LangSmith or external request occurs in this
+repair task; no credential or real credential-variable presence/.env inspection,
+dependency change, staging, commit or push is authorized or performed.
+
+The first full Module 6 gate stopped at 206 passed in 95.98 s: the unchanged
+CrewAI console demonstration returned its existing timeout outcome. Causality
+checks found no repaired gateway reference in the console/CrewAI execution path;
+those source/test files were unchanged. The exact case passed unchanged in
+isolation (17.85 s), then the full fail-fast sequence restarted at Ruff against
+the unchanged candidate. This timing/environment observation is recorded, not
+silently attributed to noise or repaired by changing accepted limits/assertions.
+During final source review the full rerun was deliberately interrupted to make
+the validation/discard order literal: validate the cached value first, then
+remove the field. This preserves the already-tested representation and public
+behavior; gates restarted from Ruff against the final candidate.
+The first root gate stopped at 3,765 passed, 6 skipped and the three existing
+ChromaDB warnings in 481.15 s. The unchanged cleanup `happy` case exhausted its
+50 ms per-call bound after one call instead of reaching the expected three;
+it also failed in isolation (4.74 s). Its unchanged child fixture directly
+returns ModelReply and does not import or call the repaired adapter. This was
+not automatically dismissed as suite-load noise. Moving test-owned fixture
+storage from the OneDrive workspace to a uniquely named OS-temp directory made
+that exact case pass unchanged (3.20 s), supporting a filesystem/timing
+contribution. The complete root gate was rerun with that launcher-only location
+change against the unchanged candidate. No test, deadline, runtime or security
+guard was weakened; no real provider request was used to diagnose the failure.
+The next root run passed that cleanup case and the adapter tests, then stopped
+at 3,901 passed, 6 skipped and the same three warnings in 411.04 s: an unchanged
+CrewAI observability comparison timed out in `execution.py`/`adapters.py` while
+awaiting its separate CrewAI subprocess. That path does not use the repaired
+Ollama adapter; its source/tests are unchanged and it passed in the complete
+Module 6 gate. The exact case passed unchanged in isolation (39.54 s). The
+complete root suite was rerun again against the unchanged candidate and guards,
+without skipping, extending, deleting or weakening any test or deadline.
+
+Self-review checks the narrow allowlist change, strict integer representation,
+duplicate keys, discarded metadata/unchanged usage and authority, identity,
+sanitization, endpoint/redirect/read bounds, retries and process-runtime invariants.
+The SOP assessment remains scoped: requirements fidelity is preserved; the
+documented adapter API remains the product surface; real-provider evidence is
+historical and the repair is synthetic; reliability/security/cost controls are
+unchanged; evidence is implementer verification pending independent acceptance;
+deployment readiness is not established. All 26 source statuses remain Planned.
+
+**NOT YET VERIFIED:** repaired adapter against a second real Ollama response,
+full live multi-agent workflow, model quality, live Streamlit inference,
+live-model LangSmith evidence, hosted-provider compatibility or production
+deployment readiness. Required next steps are fresh independent acceptance of
+this repair and separate explicit authorization for a bounded post-repair real
+compatibility probe. No such probe is performed or independently authorized here.
+
+Final repair provenance: exactly four modified Module 6 files (the adapter,
+its test file, child fixture and this document); branch/HEAD unchanged; nothing
+staged, committed or pushed. Temporary launcher and both task-owned fixture
+directories are removed. Accepted contracts/runtime code and dependency files
+are unchanged. `git diff --check` passes; the authoritative source-to-evidence
+matrix still has exactly 26 rows, all Planned. Final self-review found no
+remaining defect within this repair scope; independent acceptance remains pending.

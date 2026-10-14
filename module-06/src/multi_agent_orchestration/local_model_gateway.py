@@ -28,6 +28,7 @@ _RESPONSE_FIELDS = frozenset(
         "total_duration",
         "load_duration",
         "prompt_eval_count",
+        "prompt_eval_cached_count",
         "prompt_eval_duration",
         "eval_count",
         "eval_duration",
@@ -78,6 +79,12 @@ def _translate(request: ModelRequest, body: bytes) -> ModelReply:
         or type(raw.get("message")) is not dict
     ):
         raise ValueError("Invalid provider envelope.")
+    # Optional observed Ollama metadata, not usage or application authority.
+    # Reuse the exact count representation; discard even valid values.
+    if "prompt_eval_cached_count" in raw:
+        if _usage_count(raw["prompt_eval_cached_count"]) is None:
+            raise ValueError("Invalid provider cached count.")
+        raw.pop("prompt_eval_cached_count")
     message = raw["message"]
     if (
         set(message) != {"role", "content"}

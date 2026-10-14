@@ -17,6 +17,7 @@ def factory():
     def respond(request):
         nonlocal calls
         calls += 1
+        scenario = SCENARIO.removeprefix("cached_")
         payload = json.loads(request.content)
         # Fail rather than consult ambient model configuration/credentials.
         assert set(os.environ) <= {
@@ -37,12 +38,12 @@ def factory():
             {"advisory_verdict": "sound", "rationale": "Synthetic critique."},
         ]
         index = calls - 1
-        if SCENARIO == "repair":
+        if scenario == "repair":
             index -= 1
         text = json.dumps(content[max(0, min(index, 2))])
-        if SCENARIO == "bad_always" or (SCENARIO == "repair" and calls == 1):
+        if scenario == "bad_always" or (scenario == "repair" and calls == 1):
             text = "{SYNTHETIC_ADAPTER_SECRET_7431"
-        if SCENARIO == "connection":
+        if scenario == "connection":
             raise httpx.ConnectError("SYNTHETIC_ADAPTER_SECRET_7431")
         body = json.dumps(
             {
@@ -51,6 +52,15 @@ def factory():
                 "message": {"role": "assistant", "content": text},
                 "prompt_eval_count": 2,
                 "eval_count": 3,
+                **(
+                    {
+                        "prompt_eval_cached_count": (
+                            False if scenario == "invalid" else 100
+                        )
+                    }
+                    if SCENARIO.startswith("cached_")
+                    else {}
+                ),
             }
         ).encode()
         return httpx.Response(

@@ -361,6 +361,9 @@ async def test_total_timeout_and_cancellation_not_retried():
         ("repair", 4, 1, None),
         ("bad_always", 2, 1, "malformed_output"),
         ("connection", 1, 0, "connection_failed"),
+        ("cached_happy", 3, 0, None),
+        ("cached_repair", 4, 1, None),
+        ("cached_invalid", 1, 0, "unexpected_provider_failure"),
     ],
 )
 async def test_adapter_in_accepted_process_runtime(
@@ -509,3 +512,138 @@ def test_invalid_endpoint_caller_exception_context_cannot_disclose():
         with pytest.raises(LiveExecutionError) as caught:
             LocalModelGateway(endpoint="http://example.com/" + CANARY)
         sanitized(caught.value)
+
+
+@pytest.fixture
+def observed_structure():
+    """Real-observed field structure; cached value/timing/content are synthetic."""
+    return {
+        "model": "qwen2.5-coder:7b",
+        "created_at": "2000-01-01T00:00:00Z",
+        "message": {"role": "assistant", "content": '{"fixture":true}'},
+        "done": True,
+        "done_reason": "synthetic_completion",
+        "total_duration": 0,
+        "load_duration": 0,
+        "prompt_eval_count": 40,
+        "prompt_eval_cached_count": 7,
+        "prompt_eval_duration": 0,
+        "eval_count": 6,
+        "eval_duration": 0,
+    }
+
+
+def observed_request():
+    return request(
+        selection=ModelSelection(
+            execution_class="local_model_inference",
+            provider="ollama",
+            model="qwen2.5-coder:7b",
+        )
+    )
+
+
+@pytest.mark.parametrize("cached", [0, 7, MAX_TOKEN_COUNT, "absent"])
+async def test_observed_structure_cached_count_validated_discarded(
+    observed_structure,
+    cached,
+):
+    if cached == "absent":
+        observed_structure.pop("prompt_eval_cached_count")
+    else:
+        observed_structure["prompt_eval_cached_count"] = cached
+    reply, _ = await complete(response(observed_structure), observed_request())
+    assert set(reply.model_dump()) == {"selection", "text", "usage"}
+    assert reply.selection == observed_request().selection
+    assert reply.text == observed_structure["message"]["content"]
+    assert reply.usage.input_tokens == 40
+    assert reply.usage.output_tokens == 6
+    assert "prompt_eval_cached_count" not in reply.model_dump_json()
+
+
+@pytest.mark.parametrize(
+    "cached",
+    [
+        -1,
+        True,
+        False,
+        1.0,
+        "1",
+        None,
+        MAX_TOKEN_COUNT + 1,
+        {CANARY: CANARY},
+        [CANARY],
+    ],
+)
+async def test_invalid_cached_count_closed_sanitized(observed_structure, cached):
+    observed_structure["prompt_eval_cached_count"] = cached
+    with pytest.raises(LiveExecutionError) as caught:
+        await complete(response(observed_structure), observed_request())
+    assert caught.value.category == "unexpected_provider_failure"
+
+
+@pytest.mark.parametrize("duplicate", [0, -1, True, CANARY])
+async def test_duplicate_cached_count_closed(observed_structure, duplicate):
+    body = (
+        json.dumps(observed_structure)[:-1]
+        + ',"prompt_eval_cached_count":'
+        + json.dumps(duplicate)
+        + "}"
+    ).encode()
+    with pytest.raises(LiveExecutionError) as caught:
+        await complete(response(body=body), observed_request())
+    assert caught.value.category == "unexpected_provider_failure"
+
+
+@pytest.mark.parametrize("field", ["thinking", "tool_calls", "images", CANARY])
+@pytest.mark.parametrize("level", ["top", "message"])
+async def test_cached_count_is_not_unknown_field_extension(
+    observed_structure,
+    field,
+    level,
+):
+    target = observed_structure if level == "top" else observed_structure["message"]
+    target[field] = CANARY
+    with pytest.raises(LiveExecutionError) as caught:
+        await complete(response(observed_structure), observed_request())
+    assert caught.value.category == "unexpected_provider_failure"
+
+
+@pytest.mark.parametrize(
+    "change", ["model", "role", "missing_content", "empty_content"]
+)
+async def test_cached_count_does_not_weaken_identity_or_message(
+    observed_structure, change
+):
+    if change == "model":
+        observed_structure["model"] = "qwen2.5-coder:other"
+    elif change == "role":
+        observed_structure["message"]["role"] = "user"
+    elif change == "missing_content":
+        observed_structure["message"].pop("content")
+    else:
+        observed_structure["message"]["content"] = ""
+    with pytest.raises(LiveExecutionError) as caught:
+        await complete(response(observed_structure), observed_request())
+    assert caught.value.category == "unexpected_provider_failure"
+
+
+@pytest.mark.parametrize("which", ["input", "both"])
+async def test_cached_count_never_replaces_unavailable_usage(observed_structure, which):
+    observed_structure.pop("prompt_eval_count")
+    if which == "both":
+        observed_structure.pop("eval_count")
+    reply, _ = await complete(response(observed_structure), observed_request())
+    assert reply.usage.input_tokens is None
+    assert reply.usage.output_tokens == (None if which == "both" else 6)
+
+
+@pytest.mark.parametrize("which", ["content", "wire"])
+async def test_cached_count_does_not_weaken_response_bounds(observed_structure, which):
+    if which == "content":
+        observed_structure["message"]["content"] = "x" * 1025
+    else:
+        observed_structure["created_at"] = "x" * 10241
+    with pytest.raises(LiveExecutionError) as caught:
+        await complete(response(observed_structure), observed_request())
+    assert caught.value.category == "output_too_large"
