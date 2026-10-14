@@ -1,5 +1,10 @@
 # Live-Model Vertical Slice
 
+Current follow-on work is documented in
+[Live Runtime Enforcement](LIVE_RUNTIME_ENFORCEMENT.md). The Story 1 sections
+below record the historical contract milestone; they do not claim that the
+follow-on runtime has executed a real model.
+
 ## Purpose and Standing
 
 Before Module 6 closes, one real model-backed multi-agent workflow must run end
@@ -320,16 +325,17 @@ Evidence class: deterministic offline repair verification only, independent
 acceptance pending. The gateways in the tests are
 in-memory doubles. No accepted source or test file was changed.
 
-### Limitations
+### Story 1 Limitations at Acceptance
 
-- No model, adapter, live workflow, budget ledger, live observation, command
-  or console exists yet; those are later stories.
+- At Story 1, no model, adapter, live workflow, budget ledger, live observation,
+  command or console exists yet; those are later stories.
 - Ollama compatibility, token-usage reporting, structured-output support,
   model quality, pricing and hosted support are unverified and not claimed.
 - The 300,000 ms deadline ceiling and the content length bounds are provisional
   engineering limits, to be confirmed against an authorized measurement.
-- The contracts state what a gateway must not do; enforcement of call counts
-  and deadlines at run time belongs to the live service in Story 2.
+- The contracts state what a gateway must not do. The follow-on
+  [runtime candidate](LIVE_RUNTIME_ENFORCEMENT.md) implements call/deadline
+  enforcement with synthetic gateways; actual inference remains future work.
 
 ## Provenance Note: Architecture Reconnaissance Deviation
 

@@ -408,6 +408,25 @@ Planned. Ollama compatibility, token accounting, model quality, pricing, live
 LangGraph or Streamlit execution and hosted support are unverified and not
 claimed. The candidate is uncommitted pending independent acceptance.
 
+## Live Runtime Enforcement (Offline Candidate, Acceptance Pending)
+
+The next milestone builds on the independently accepted Story 1 contracts at
+`a5ca8c8817c7d5742939acd25d2ea6919ff3c1e3`. The preceding Story 1 section
+records its historical implementation/repair state.
+
+[Live Runtime Enforcement](LIVE_RUNTIME_ENFORCEMENT.md) adds a fixed native
+LangGraph researcher -> analyst -> critic path, supervised gateway child,
+application-owned call/repair counters, per-call and overall monotonic deadlines,
+forced cleanup, sanitized failures and validated evidence. Process isolation
+was explicitly selected by the human. Accepted contracts, deterministic
+implementation/tests and dependencies are unchanged.
+
+Verification uses synthetic gateways only. **No real model has executed through
+this path.** No provider adapter, hosted support or live Streamlit mode is added.
+Ollama compatibility, genuine inference, provider usage accuracy, live-model
+observation and deployment remain unverified. All 26 requirements remain Planned.
+The candidate is uncommitted and independent acceptance is pending.
+
 ## Production-Grade Definition of Done
 
 The checklist below evaluates the complete platform. Bounded slice evidence does

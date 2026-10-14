@@ -7,6 +7,10 @@
 The human-approved additive observability amendment is recorded in
 [ADR-006](adr/006-operational-metrics-and-unified-observation.md). All other
 B+ decisions remain unchanged; historical ADRs retain the original decisions.
+The human-approved live gateway supervision boundary is recorded in
+[ADR-007](adr/007-supervised-model-gateway-execution.md). It preserves application
+runtime ownership and does not establish actual model execution or production
+readiness.
 
 Material changes to trust boundaries, source coverage, runtime ownership,
 security posture, or cost exposure require explicit human review and an ADR.

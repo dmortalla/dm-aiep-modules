@@ -374,3 +374,17 @@ identifiers in live evidence/failure objects. Caller UUID subclass identity,
 attributes and custom behavior are not retained. This is offline repair
 verification only; it does not alter the prior plain-data fuzz evidence, add a
 requirement ID, change an accepted deterministic contract or complete a status.
+
+## Live Runtime Enforcement Evidence (Offline Candidate)
+
+[Live Runtime Enforcement](LIVE_RUNTIME_ENFORCEMENT.md) records the additive
+application service and supervised gateway worker. Native LangGraph and actual
+child processes execute against synthetic model replies. This verifies bounded
+runtime control and sanitized failure behavior; it is not genuine model or
+provider evidence. Synthetic `LiveEvidence` instances do not prove inference.
+
+The accepted Story 1 contracts and their 479 tests remain unchanged. No provider,
+hosted inference, live Streamlit path, dependency or other module is added or
+modified. All 26 source IDs, meanings and Planned statuses remain unchanged;
+independent runtime acceptance and actual model compatibility/inference remain
+future work.
