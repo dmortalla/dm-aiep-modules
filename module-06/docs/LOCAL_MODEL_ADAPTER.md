@@ -379,3 +379,19 @@ directories are removed. Accepted contracts/runtime code and dependency files
 are unchanged. `git diff --check` passes; the authoritative source-to-evidence
 matrix still has exactly 26 rows, all Planned. Final self-review found no
 remaining defect within this repair scope; independent acceptance remains pending.
+
+## Item 46 adapter changes — offline candidate
+
+The request body adds one application-owned field: top-level `format` equal to
+`role_schema(request.role).model_json_schema()`. The schema comes from the
+authoritative closed role contract selected by the application-chosen request
+role; `ModelRequest` gains no field, so no caller or model can supply a schema,
+format or provider option. `options` remains exactly `num_predict`.
+
+`done_reason` stays optional. When present it must be exactly `"stop"` or
+`"length"`; `"length"` (a provider-confirmed `num_predict` stop) maps to
+`output_too_large`, which never consumes the malformed-output repair. Any other
+value or type fails as `unexpected_provider_failure`. The real-observed field
+structure remains compatible. These changes are synthetic-only verified; see
+[CANONICAL_LIVE_WORKFLOW.md](CANONICAL_LIVE_WORKFLOW.md). No second live run has
+occurred.

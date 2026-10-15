@@ -6,6 +6,7 @@ No function in this module calls a model, a provider or the network.
 """
 
 import json
+from enum import StrEnum
 
 from pydantic import ValidationError
 
@@ -74,11 +75,129 @@ def validate_live_data[LiveData: LiveContract](
     raise LiveValidationError() from None
 
 
+class _MalformedReason(StrEnum):
+    """Internal-only closed reason a reply was malformed; never public output.
+
+    Each value names one actual parser/validator boundary. It selects fixed
+    application-authored repair wording and supports offline diagnosis; it is
+    never attached to an exception, failure, receipt, event or UI value.
+    """
+
+    NOT_JSON = "not_json"
+    NOT_OBJECT = "not_object"
+    DUPLICATE_KEY = "duplicate_key"
+    EXTRA_FIELD = "extra_field"
+    MISSING_FIELD = "missing_field"
+    WRONG_TYPE = "wrong_type"
+    BOUNDS = "bounds"
+    INVALID_VALUE = "invalid_value"
+    SEMANTIC = "semantic"
+
+
+# Pydantic error types grouped by boundary; anything unlisted is INVALID_VALUE.
+# Ordered by precedence when one reply has several schema errors.
+_SCHEMA_REASONS = (
+    (_MalformedReason.EXTRA_FIELD, frozenset({"extra_forbidden"})),
+    (_MalformedReason.MISSING_FIELD, frozenset({"missing"})),
+    (
+        _MalformedReason.WRONG_TYPE,
+        frozenset(
+            {
+                "string_type",
+                "int_type",
+                "tuple_type",
+                "list_type",
+                "dict_type",
+                "model_type",
+                "literal_error",
+                "enum",
+            }
+        ),
+    ),
+    # Item-level validator failures precede bounds: Pydantic also reports the
+    # resulting shortened tuple as ``too_short``, which is only a consequence.
+    (_MalformedReason.INVALID_VALUE, frozenset({"value_error"})),
+    (
+        _MalformedReason.BOUNDS,
+        frozenset(
+            {
+                "string_too_short",
+                "string_too_long",
+                "too_short",
+                "too_long",
+                "less_than",
+                "less_than_equal",
+                "greater_than",
+                "greater_than_equal",
+            }
+        ),
+    ),
+)
+
+
+class _DuplicateKeyError(ValueError):
+    """Internal marker for an ambiguous repeated JSON field name."""
+
+
 def _single_object(pairs: list[tuple[str, object]]) -> dict:
     keys = [key for key, _ in pairs]
     if len(set(keys)) != len(keys):
-        raise ValueError("Duplicate keys are ambiguous and refused.")
+        raise _DuplicateKeyError("Duplicate keys are ambiguous and refused.")
     return dict(pairs)
+
+
+def _schema_reason(error: ValidationError) -> _MalformedReason:
+    """Classify by Pydantic error type only; inputs and locations are ignored."""
+    kinds = set()
+    try:
+        kinds = {item["type"] for item in error.errors(include_input=False)}
+    except (ValueError, TypeError, KeyError):
+        pass
+    if "json_invalid" in kinds:
+        return _MalformedReason.NOT_JSON
+    for reason, members in _SCHEMA_REASONS:
+        if kinds & members:
+            return reason
+    return _MalformedReason.INVALID_VALUE
+
+
+def _role_output(
+    role: GraphRole, text: object, *, max_reply_bytes: int
+) -> ModelProduced | _MalformedReason:
+    """Strictly parse one reply, returning content or an internal reason.
+
+    Same checks and order as ``parse_role_output``; only the outcome differs.
+
+    Raises:
+        LiveExecutionError: ``output_too_large`` when the reply exceeds its bound.
+        ValueError: The role or bound is not an application-valid value.
+    """
+    schema = role_schema(role)
+    if type(max_reply_bytes) is not int or not 1 <= max_reply_bytes <= MAX_REPLY_BYTES:
+        raise ValueError("Reply bound is outside the hard application ceiling.")
+    if type(text) is not str:
+        return _MalformedReason.NOT_JSON
+    try:
+        size = len(text.encode("utf-8"))
+    except UnicodeEncodeError:
+        size = -1
+    if size < 0:
+        return _MalformedReason.NOT_JSON
+    if size > max_reply_bytes:
+        raise LiveExecutionError(LiveFailureCategory.OUTPUT_TOO_LARGE)
+    reason = _MalformedReason.NOT_JSON
+    try:
+        if type(json.loads(text, object_pairs_hook=_single_object)) is not dict:
+            reason = _MalformedReason.NOT_OBJECT
+            raise ValueError("A role reply must be one JSON object.")
+        return schema.model_validate_json(text)
+    except _DuplicateKeyError:
+        reason = _MalformedReason.DUPLICATE_KEY
+    except ValidationError as error:
+        reason = _schema_reason(error)
+    except (ValueError, RecursionError):
+        pass
+    return reason
 
 
 def parse_role_output(
@@ -101,29 +220,14 @@ def parse_role_output(
 
     Raises:
         LiveExecutionError: ``output_too_large`` when the reply exceeds its
-            bound, otherwise ``malformed_output``. Neither carries reply text.
+            bound, otherwise ``malformed_output``. Neither carries reply text
+            or the internal malformed reason.
         ValueError: The role or bound is not an application-valid value.
     """
-    schema = role_schema(role)
-    if type(max_reply_bytes) is not int or not 1 <= max_reply_bytes <= MAX_REPLY_BYTES:
-        raise ValueError("Reply bound is outside the hard application ceiling.")
-    if type(text) is not str:
-        raise LiveExecutionError(LiveFailureCategory.MALFORMED_OUTPUT)
-    try:
-        size = len(text.encode("utf-8"))
-    except UnicodeEncodeError:
-        size = -1
-    if size < 0:
+    content = _role_output(role, text, max_reply_bytes=max_reply_bytes)
+    if isinstance(content, _MalformedReason):
         raise LiveExecutionError(LiveFailureCategory.MALFORMED_OUTPUT) from None
-    if size > max_reply_bytes:
-        raise LiveExecutionError(LiveFailureCategory.OUTPUT_TOO_LARGE)
-    try:
-        if type(json.loads(text, object_pairs_hook=_single_object)) is not dict:
-            raise ValueError("A role reply must be one JSON object.")
-        return schema.model_validate_json(text)
-    except (ValueError, ValidationError, RecursionError):
-        pass
-    raise LiveExecutionError(LiveFailureCategory.MALFORMED_OUTPUT) from None
+    return content
 
 
 def check_analysis(research: ResearchOutput, analysis: AnalysisOutput) -> None:
@@ -145,3 +249,15 @@ def check_analysis(research: ResearchOutput, analysis: AnalysisOutput) -> None:
     else:
         return
     raise LiveExecutionError(LiveFailureCategory.MALFORMED_OUTPUT) from None
+
+
+def _citation_reason(
+    research: ResearchOutput, analysis: AnalysisOutput
+) -> _MalformedReason | None:
+    """Internal form of ``check_analysis``: ``SEMANTIC`` instead of raising."""
+    valid = True
+    try:
+        check_analysis(research, analysis)
+    except LiveExecutionError:
+        valid = False
+    return None if valid else _MalformedReason.SEMANTIC

@@ -11,7 +11,8 @@ from typing import NoReturn
 
 import httpx
 
-from .live_contracts import MAX_TOKEN_COUNT, ModelUsage
+from .contracts import GraphRole
+from .live_contracts import MAX_TOKEN_COUNT, ModelUsage, role_schema
 from .live_errors import LiveExecutionError, LiveFailureCategory
 from .model_gateway import ModelReply, ModelRequest, checked_reply
 
@@ -64,6 +65,16 @@ def _usage_count(value: object) -> int | None:
     return value if type(value) is int and 0 <= value <= MAX_TOKEN_COUNT else None
 
 
+def _output_format(role: GraphRole) -> dict:
+    """Ollama ``format`` constraint derived from the authoritative role schema.
+
+    The application-chosen request role selects the closed Pydantic contract;
+    no request, caller or model field supplies or alters the schema. This only
+    constrains generation: every reply is still strictly parsed and validated.
+    """
+    return role_schema(role).model_json_schema()
+
+
 def _translate(request: ModelRequest, body: bytes) -> ModelReply:
     """Validate the untrusted envelope; never interpret the role-output text."""
     raw = json.loads(
@@ -79,6 +90,15 @@ def _translate(request: ModelRequest, body: bytes) -> ModelReply:
         or type(raw.get("message")) is not dict
     ):
         raise ValueError("Invalid provider envelope.")
+    # Optional completion reason. Only "stop" (normal completion) and "length"
+    # (the num_predict output limit was reached) are accepted. A provider-
+    # confirmed length stop is too-large output: closed, never a repair.
+    if "done_reason" in raw:
+        reason = raw.pop("done_reason")
+        if type(reason) is str and reason == "length":
+            raise LiveExecutionError(LiveFailureCategory.OUTPUT_TOO_LARGE)
+        if type(reason) is not str or reason != "stop":
+            raise ValueError("Invalid provider completion reason.")
     # Optional observed Ollama metadata, not usage or application authority.
     # Reuse the exact count representation; discard even valid values.
     if "prompt_eval_cached_count" in raw:
@@ -173,6 +193,7 @@ class LocalModelGateway:
                             "model": request.selection.model,
                             "messages": [{"role": "user", "content": request.prompt}],
                             "stream": False,
+                            "format": _output_format(request.role),
                             "options": {"num_predict": request.max_output_tokens},
                         },
                     ) as response:

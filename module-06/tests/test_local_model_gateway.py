@@ -14,6 +14,7 @@ from multi_agent_orchestration.live_contracts import (
     LiveAuthorization,
     LiveBudget,
     ModelSelection,
+    ResearchOutput,
 )
 from multi_agent_orchestration.live_errors import LiveExecutionError
 from multi_agent_orchestration.live_execution import (
@@ -104,6 +105,7 @@ async def test_request_identity_content_bounds_and_no_authority():
         "model": req.selection.model,
         "messages": [{"role": "user", "content": req.prompt}],
         "stream": False,
+        "format": ResearchOutput.model_json_schema(),
         "options": {"num_predict": req.max_output_tokens},
     }
     assert set(sent.headers) == {
@@ -522,7 +524,7 @@ def observed_structure():
         "created_at": "2000-01-01T00:00:00Z",
         "message": {"role": "assistant", "content": '{"fixture":true}'},
         "done": True,
-        "done_reason": "synthetic_completion",
+        "done_reason": "stop",
         "total_duration": 0,
         "load_duration": 0,
         "prompt_eval_count": 40,

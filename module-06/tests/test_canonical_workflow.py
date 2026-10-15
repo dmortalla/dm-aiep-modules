@@ -184,11 +184,9 @@ async def test_one_repair_same_role_context_selection_four_calls(tmp_path, role)
         "messages": [
             {
                 "role": "user",
+                # The fixture's malformed reply is "{" + canary: not JSON.
                 "content": first["messages"][0]["content"]
-                + (
-                    "\nRepair: previous output was invalid. "
-                    "Return only schema-valid JSON."
-                ),
+                + runtime._repair_suffix(runtime._MalformedReason.NOT_JSON),
             }
         ],
     }
@@ -469,6 +467,99 @@ async def test_invalid_task_has_no_worker_and_sanitized_error(tmp_path, text, re
         await run(factory, text=text)
     assert not events(log) and not reaped
     sanitized(caught.value)
+
+
+REASON_VALUES = {reason.value for reason in runtime._MalformedReason}
+
+
+@pytest.mark.parametrize(
+    "scenario,reason",
+    [
+        ("malform_fenced", "not_json"),
+        ("malform_prose", "not_json"),
+        ("malform_array", "not_object"),
+        ("malform_duplicate", "duplicate_key"),
+        ("malform_extra", "extra_field"),
+        ("malform_missing", "missing_field"),
+        ("malform_type", "wrong_type"),
+        ("malform_bounds", "bounds"),
+        ("malform_invalid", "invalid_value"),
+        ("malform_semantic", "semantic"),
+    ],
+)
+async def test_internal_reason_selects_fixed_repair_feedback_only(
+    tmp_path, scenario, reason
+):
+    factory, log = gateway(tmp_path, scenario)
+    observer = Observability()
+    receipt = await run(factory, observer=observer)
+    accounting = receipt.result.evidence.accounting
+    assert (accounting.model_calls, accounting.repair_attempts) == (4, 1)
+    snapshot = calls(log)
+    role = "ANALYST" if scenario == "malform_semantic" else "RESEARCHER"
+    assert [c["role"] for c in snapshot] == (
+        ["RESEARCHER", "ANALYST", "ANALYST", "CRITIC"]
+        if role == "ANALYST"
+        else ["RESEARCHER", "RESEARCHER", "ANALYST", "CRITIC"]
+    )
+    first, repair = [c["payload"] for c in snapshot if c["role"] == role]
+    suffix = runtime._repair_suffix(runtime._MalformedReason(reason))
+    # Same role, selection, format, options and context; only fixed wording added.
+    assert repair == {
+        **first,
+        "messages": [
+            {"role": "user", "content": first["messages"][0]["content"] + suffix}
+        ],
+    }
+    for call in snapshot:
+        assert CANARY not in json.dumps(call["payload"])
+    public = (
+        repr(receipt),
+        receipt.model_dump_json(),
+        repr(observer.live_records),
+        json.dumps([e.model_dump(mode="json") for e in observer.live_records]),
+    )
+    for text in public:
+        assert not any(value in text for value in REASON_VALUES)
+        assert CANARY not in text
+    assert receipt.evidence_source == EvidenceSource.SYNTHETIC_OFFLINE
+
+
+async def test_failed_repair_public_failure_hides_internal_reason(tmp_path):
+    factory, log = gateway(tmp_path, "failed_repair")
+    observer = Observability()
+    with pytest.raises(CanonicalWorkflowError) as caught:
+        await run(factory, observer=observer)
+    error = caught.value
+    sanitized(error)
+    assert error.category == "malformed_output"
+    assert (error.failure.model_calls, error.failure.repair_attempts) == (2, 1)
+    for text in (
+        str(error),
+        repr(error),
+        repr(error.args),
+        repr(vars(error)),
+        error.failure.model_dump_json(),
+        repr(observer.live_records),
+    ):
+        assert not any(value in text for value in REASON_VALUES)
+
+
+async def test_length_stop_fails_closed_without_repair_retry_or_next_role(
+    tmp_path, reaped
+):
+    factory, log = gateway(tmp_path, "length_stop")
+    observer = Observability()
+    with pytest.raises(CanonicalWorkflowError) as caught:
+        await run(factory, observer=observer)
+    sanitized(caught.value)
+    assert caught.value.category == "output_too_large"
+    assert caught.value.failure.model_calls == 1
+    assert caught.value.failure.repair_attempts == 0
+    assert [c["role"] for c in calls(log)] == ["RESEARCHER"]
+    assert len(reaped) == 1 and reaped[0].returncode is not None
+    assert observer.live_records[-1].phase == "failed"
+    assert not any(e.phase == "role_validated" for e in observer.live_records)
 
 
 async def test_caller_exception_context_does_not_escape(tmp_path):

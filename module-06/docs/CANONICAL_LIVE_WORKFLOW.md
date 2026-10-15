@@ -55,7 +55,8 @@ capabilities. No CLI or console control enabling live inference is added.
 
 ## Content and authority
 
-Each prompt explicitly declares its role, the strict role JSON schema, no tools,
+Each prompt explicitly declares its role, a concise natural-language role
+contract with one schema-valid example (see the Item 46 section below), no tools,
 no environment/file/network access, and no authority. Researcher derives up to
 three bounded findings from the task and existing knowledge, with no external
 research. Analyst assesses validated findings and cites their one-based indices.
@@ -230,3 +231,70 @@ service, role-prompt/observation-hook changes in the accepted runtime, the addit
 local observer channel, synthetic fixture/tests, and the extended contract
 security inventory. Branch and HEAD remain the specified baseline; nothing is
 staged, committed, pushed, or deployed. Independent acceptance is still pending.
+
+## First authorized live run and Item 46 remediation candidate
+
+### First live run (2026-10-14): failed closed
+
+One human-authorized canonical run used the committed path at
+`e0dcb54f50060a264c240a3c1fdbc09468ce49b2`, local Ollama and the exact
+`qwen2.5-coder:7b`. The Researcher's first reply failed `ResearchOutput`
+validation; the single authorized repair also failed. The workflow failed closed
+with `malformed_output`: 2 real calls, 1 repair, 0 retries, no Analyst or Critic
+call, worker reaped, no completed evidence, repository unchanged. Raw output is
+intentionally not retained, so **the exact historical malformed cause is
+unknown**. Offline diagnosis identified several plausible modes (Markdown fences
+or prose around JSON, extra comparison/critique fields from the broader task,
+bound violations, length truncation) without proving any one of them.
+
+### Approved remediation (offline candidate, not live-verified)
+
+Human decision: "Approved. Implement Item 46 with reason codes internal only."
+
+1. **Prompt contracts.** Each role prompt now requires exactly one bare JSON
+   object, prohibits Markdown fences and prose before or after it, forbids
+   unlisted fields, states the role's fields, types and bounds in plain language,
+   and carries one schema-valid application-authored example. The full machine
+   schema is no longer duplicated in the prompt. The Researcher is told that
+   comparison, critique and other deliverables in the task belong to later
+   roles, resolving the conflict with the findings-only `ResearchOutput`.
+   Worst-case prompts (maximum task, maximum prior content, longest repair
+   wording) remain within the accepted 8,192-character bound.
+2. **Application-owned structured output.** `LocalModelGateway` sends Ollama's
+   top-level `format` equal to `role_schema(request.role).model_json_schema()`,
+   derived from the authoritative closed Pydantic contract for the
+   application-chosen request role. `ModelRequest` and the `ModelGateway`
+   protocol are unchanged: no format, schema or provider-option field exists for
+   a caller or model to supply. This only constrains generation. Strict JSON
+   parsing, duplicate-key refusal, closed-schema Pydantic validation and the
+   Analyst citation check remain authoritative; nothing is stripped, extracted,
+   relaxed or coerced.
+3. **Provider length stop.** `done_reason` remains optional (absence preserves
+   the previously accepted envelope), but when present it must be exactly
+   `"stop"` (normal) or `"length"` (the `num_predict` limit was reached). A length
+   stop maps to the existing `output_too_large` category: closed, no repair, no
+   retry, no next role, no limit increase. Any other value or type is an
+   `unexpected_provider_failure`. Synthetic fixtures previously used placeholder
+   `done_reason` strings; they now use `"stop"`, matching the stricter contract.
+
+**Internal reason codes.** `live_validation` classifies malformed replies into a
+closed internal set derived from actual parser/validator boundaries: `not_json`,
+`not_object`, `duplicate_key`, `extra_field`, `missing_field`, `wrong_type`,
+`bounds`, `invalid_value` and `semantic` (Analyst citation). The reason only
+selects one fixed application-authored repair sentence. It never appears in
+exception text or args, `LiveFailure`, the canonical receipt, live events or any
+UI value; `parse_role_output` and `check_analysis` keep their coarse public
+behavior. Repair feedback never includes model output, exception text or provider
+data, and the repair keeps the same role, selection, task, prior context,
+provider schema and single-repair ceiling.
+
+Unchanged: Architecture B+, `LiveAuthorization`, explicit selection, fixed
+Researcher → Analyst → Critic topology, process isolation, bounded IPC, minimal
+child environment, concurrency 1, zero retries, three normal calls, at most one
+repair, never a fifth call, application budgets/deadlines, advisory Critic,
+sanitized public failures and evidence classification. Synthetic runs remain
+`synthetic_offline`; prior real provider evidence remains separately classified.
+
+**No second live run has occurred. Live canonical success remains NOT YET
+VERIFIED.** All M6-001 through M6-026 statuses remain Planned. A second bounded
+live run requires independent offline acceptance of this candidate and fresh HITL.

@@ -45,4 +45,7 @@ console still offers deterministic demonstrations only.
 [Canonical live workflow candidate](docs/CANONICAL_LIVE_WORKFLOW.md) documents the
 application API for Researcher → Analyst → Critic and its synthetic offline
 verification. Real canonical execution requires independent offline acceptance
-and fresh human HITL; no live console control is added.
+and fresh human HITL; no live console control is added. The first authorized
+live run failed closed at the Researcher (malformed output after one repair);
+an offline structured-output remediation candidate follows, and live canonical
+success remains **not yet verified**.
