@@ -1437,6 +1437,13 @@ def test_independent_reproduction_of_the_raw_response_echo_is_closed():
 
 
 def test_every_live_contract_shares_the_non_disclosing_configuration():
+    # The additive application receipt/events share every accepted live security
+    # invariant. Import here so this inventory is complete in isolated runs too.
+    from multi_agent_orchestration.canonical_contracts import (
+        CanonicalWorkflowReceipt,
+        LiveWorkflowEvent,
+    )
+
     def subclasses(schema):
         for child in schema.__subclasses__():
             yield child
@@ -1449,12 +1456,14 @@ def test_every_live_contract_shares_the_non_disclosing_configuration():
     }
     assert set(owned) == {
         "AnalysisOutput",
+        "CanonicalWorkflowReceipt",
         "CritiqueOutput",
         "LiveAccounting",
         "LiveAuthorization",
         "LiveBudget",
         "LiveEvidence",
         "LiveFailure",
+        "LiveWorkflowEvent",
         "LiveWorkflowResult",
         "ModelProduced",
         "ModelReply",
@@ -1463,6 +1472,8 @@ def test_every_live_contract_shares_the_non_disclosing_configuration():
         "ModelUsage",
         "ResearchOutput",
     }
+    assert owned["CanonicalWorkflowReceipt"] is CanonicalWorkflowReceipt
+    assert owned["LiveWorkflowEvent"] is LiveWorkflowEvent
     for schema in owned.values():
         config = schema.model_config
         assert config["hide_input_in_errors"] is True

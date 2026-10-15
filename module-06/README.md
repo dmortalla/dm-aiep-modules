@@ -38,5 +38,11 @@ module or its requirements; all 26 source requirements remain Planned.
 
 [Local-model provider adapter](docs/LOCAL_MODEL_ADAPTER.md) documents the additive
 offline implementation candidate and synthetic process-runtime verification.
-Actual Ollama compatibility and inference remain unverified; the console still
-offers deterministic demonstrations only.
+One separately authorized post-repair real Ollama response was verified at the
+accepted adapter baseline; this does not verify the three-role workflow. The
+console still offers deterministic demonstrations only.
+
+[Canonical live workflow candidate](docs/CANONICAL_LIVE_WORKFLOW.md) documents the
+application API for Researcher → Analyst → Critic and its synthetic offline
+verification. Real canonical execution requires independent offline acceptance
+and fresh human HITL; no live console control is added.
