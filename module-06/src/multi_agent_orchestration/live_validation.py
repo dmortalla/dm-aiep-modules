@@ -91,6 +91,7 @@ class _MalformedReason(StrEnum):
     WRONG_TYPE = "wrong_type"
     BOUNDS = "bounds"
     INVALID_VALUE = "invalid_value"
+    INCOMPLETE_PROSE = "incomplete_prose"
     SEMANTIC = "semantic"
 
 
@@ -117,6 +118,8 @@ _SCHEMA_REASONS = (
     # Item-level validator failures precede bounds: Pydantic also reports the
     # resulting shortened tuple as ``too_short``, which is only a consequence.
     (_MalformedReason.INVALID_VALUE, frozenset({"value_error"})),
+    # Prose terminal-punctuation completeness, checked only after visibility.
+    (_MalformedReason.INCOMPLETE_PROSE, frozenset({"incomplete_prose"})),
     (
         _MalformedReason.BOUNDS,
         frozenset(
@@ -206,8 +209,9 @@ def parse_role_output(
     """Validate one model reply as the content schema of an authorized role.
 
     The reply must be exactly one JSON object with the role's fields and
-    nothing else. Extra keys, duplicate keys, wrong types, out-of-bound values
-    and non-visible characters all fail closed; nothing is stripped or repaired.
+    nothing else. Extra keys, duplicate keys, wrong types, out-of-bound values,
+    non-visible characters and prose without terminal punctuation all fail
+    closed; nothing is stripped or repaired.
 
     Args:
         role: Application-chosen role from the accepted sequential plan. The

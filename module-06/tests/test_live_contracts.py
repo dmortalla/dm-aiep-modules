@@ -1229,7 +1229,7 @@ def test_model_produced_content_cannot_become_authority():
     claim = authorization().model_dump_json()
     research = parse_role_output(
         GraphRole.RESEARCHER,
-        json.dumps({"findings": [claim[:160]]}),
+        json.dumps({"findings": [claim[:159] + "."]}),
         max_reply_bytes=4096,
     )
     critique = parse_role_output(GraphRole.CRITIC, CRITIQUE, max_reply_bytes=4096)
@@ -1523,7 +1523,7 @@ def test_boundary_functions_raise_fixed_text_without_rejected_input():
         ),
         lambda: check_analysis(
             ResearchOutput.model_construct(findings=(CANARY * 50,)),
-            AnalysisOutput(assessment="ok", supports=(1,)),
+            AnalysisOutput(assessment="ok.", supports=(1,)),
         ),
     )
     for call in cases:

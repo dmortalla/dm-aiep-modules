@@ -62,32 +62,41 @@ class _State(TypedDict):
 # each role produces only its own closed schema. Examples are schema-valid
 # illustrative data, not task content or authority. The provider receives
 # the machine schema separately as an application-owned output constraint.
+# Each "about N characters" is 75% headroom guidance only; the schema maximum
+# stays authoritative and no validator enforces the guidance.
 _ROLE_CONTRACTS = (
     (
         "Researcher: state up to three findings relevant to TASK_DATA using only "
         "existing knowledge; do not perform external research. TASK_DATA may "
         "also ask for comparison, critique or other deliverables; later roles "
-        "own those, so return findings only.",
+        "own those, so return findings only. Write each finding as one concise, "
+        "complete sentence of about 120 characters, finishing well before the "
+        "160-character maximum.",
         '{"findings": array of 1 to 3 strings}. Each finding is 1 to 160 '
-        "characters of single-line visible text with no control characters. "
-        "Only field: findings.",
+        "characters of single-line visible text with no control characters, "
+        "ending with terminal punctuation. Only field: findings.",
         {"findings": ["Example finding stated in one short sentence."]},
     ),
     (
         "Analyst: assess and compare the validated findings in PRIOR_CONTENT "
         "and cite the findings you rely on by one-based index. Do not critique; "
-        "a later role does that.",
+        "a later role does that. Write the assessment as one concise, complete "
+        "one-line conclusion in complete sentences of about 300 characters, "
+        "finishing well before the 400-character maximum.",
         '{"assessment": string of 1 to 400 characters of single-line visible '
-        'text; "supports": array of 1 to 3 distinct integers, each from 1 to '
-        "the number of findings}. Only fields: assessment, supports.",
+        'text ending with terminal punctuation; "supports": array of 1 to 3 '
+        "distinct integers, each from 1 to the number of findings}. Only "
+        "fields: assessment, supports.",
         {"assessment": "Example assessment comparing the findings.", "supports": [1]},
     ),
     (
         "Critic: critique the validated research and analysis in PRIOR_CONTENT; "
-        "give only an advisory verdict and rationale.",
+        "give only an advisory verdict and rationale. Write the rationale as "
+        "concise, complete prose sentences of about 180 characters, finishing "
+        "well before the 240-character maximum.",
         '{"advisory_verdict": exactly "sound" or "needs_revision"; "rationale": '
-        "string of 1 to 240 characters of single-line visible text}. Only "
-        "fields: advisory_verdict, rationale.",
+        "string of 1 to 240 characters of single-line visible text ending with "
+        "terminal punctuation}. Only fields: advisory_verdict, rationale.",
         {"advisory_verdict": "sound", "rationale": "Example rationale in brief."},
     ),
 )
@@ -106,6 +115,10 @@ _REPAIR_FEEDBACK = {
     ),
     _MalformedReason.INVALID_VALUE: (
         "The previous response had a blank, non-visible or repeated value."
+    ),
+    _MalformedReason.INCOMPLETE_PROSE: (
+        "The previous response ended prose without terminal punctuation; write "
+        "complete sentences."
     ),
     _MalformedReason.SEMANTIC: (
         "The previous response cited a finding number that does not exist."

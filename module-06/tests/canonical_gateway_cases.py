@@ -31,8 +31,28 @@ MALFORMED = {
     "malform_type": json.dumps({"findings": CANARY}),
     "malform_bounds": json.dumps({"findings": [CANARY * 10]}),
     "malform_invalid": json.dumps({"findings": [CANARY + "​"]}),
-    "malform_semantic": json.dumps({"assessment": CANARY, "supports": [2]}),
+    "malform_semantic": json.dumps({"assessment": CANARY + ".", "supports": [2]}),
+    "malform_incomplete": json.dumps({"findings": [CANARY + " ended without"]}),
+    # Run-2 shape: an assessment at exactly its 400-character maximum that
+    # ends mid-sentence. Synthetic text; no live output is reproduced.
+    "malform_incomplete_analyst": json.dumps(
+        {
+            "assessment": ((CANARY + " compares findings ") * 8)[:399] + "x",
+            "supports": [1],
+        }
+    ),
+    "malform_incomplete_critic": json.dumps(
+        {"advisory_verdict": "sound", "rationale": CANARY + ","}
+    ),
 }
+# Malformed first replies that target a role other than the Researcher.
+TARGETS = {
+    "malform_semantic": "ANALYST",
+    "malform_incomplete_analyst": "ANALYST",
+    "malform_incomplete_critic": "CRITIC",
+}
+INCOMPLETE = json.dumps({"findings": [CANARY + " still incomplete"]})
+INCOMPLETE_ANALYSIS = json.dumps({"assessment": CANARY + " and", "supports": [1]})
 
 
 def record(**fields):
@@ -106,13 +126,24 @@ def factory():
                 and per_role[role] == 1
             )
             or (SCENARIO == "critic_failed_repair" and role == "CRITIC")
+            or (
+                SCENARIO.endswith("incomplete_after_repair")
+                and role == "RESEARCHER"
+                and per_role[role] == 1
+            )
         )
         if SCENARIO == "authority" and role == "CRITIC":
             content[FIELD] = CANARY
         text = "{" + CANARY if malformed else json.dumps(content)
-        target = "ANALYST" if SCENARIO == "malform_semantic" else "RESEARCHER"
+        target = TARGETS.get(SCENARIO, "RESEARCHER")
         if SCENARIO in MALFORMED and role == target and per_role[role] == 1:
             text = MALFORMED[SCENARIO]
+        if (SCENARIO == "incomplete_twice" and role == "RESEARCHER") or (
+            SCENARIO == "incomplete_after_repair" and role == "ANALYST"
+        ):
+            text = INCOMPLETE if role == "RESEARCHER" else INCOMPLETE_ANALYSIS
+        if SCENARIO == "critic_incomplete_after_repair" and role == "CRITIC":
+            text = MALFORMED["malform_incomplete_critic"]
         envelope = {
             "created_at": "2000-01-01T00:00:00Z",
             "done": True,

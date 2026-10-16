@@ -22,8 +22,12 @@ application entry point, actual LangGraph StateGraph, supervised child, bounded
 IPC, and reviewed provider parser with `httpx.MockTransport`. These are offline
 integration and adversarial regression tests, not real inference.
 
-**Not yet verified:** actual live Researcher → Analyst → Critic execution,
-actual model quality, live LangSmith tracing, live Streamlit execution,
+**Verified later:** one bounded real local Researcher → Analyst → Critic
+execution (Run 2, below). One run is not general reliability evidence.
+
+**Not yet verified:** repeated or general live Researcher → Analyst → Critic
+reliability, live verification of the prose-completeness candidate, actual
+model quality, live LangSmith tracing, live Streamlit execution,
 hosted-provider compatibility, or production deployment readiness.
 
 ## Application path
@@ -73,8 +77,9 @@ it is not a claim that model-level prompt
 injection is universally solved. Routing and authority never consult these texts.
 
 The existing closed `ResearchOutput`, `AnalysisOutput`, and `CritiqueOutput`
-schemas enforce types and field bounds. Analyst citations must refer to actual
-research findings. Unknown authority/tool/routing fields fail validation. The
+schemas enforce types and field bounds, and their prose fields require terminal
+punctuation (see the completeness section below). Analyst citations must refer
+to actual research findings. Unknown authority/tool/routing fields fail validation. The
 application determines completion from all three validated outputs and accepted
 runtime invariants, not a model's claim of acceptance.
 
@@ -280,7 +285,8 @@ Human decision: "Approved. Implement Item 46 with reason codes internal only."
 **Internal reason codes.** `live_validation` classifies malformed replies into a
 closed internal set derived from actual parser/validator boundaries: `not_json`,
 `not_object`, `duplicate_key`, `extra_field`, `missing_field`, `wrong_type`,
-`bounds`, `invalid_value` and `semantic` (Analyst citation). The reason only
+`bounds`, `invalid_value`, `incomplete_prose` (added by the completeness
+candidate below) and `semantic` (Analyst citation). The reason only
 selects one fixed application-authored repair sentence. It never appears in
 exception text or args, `LiveFailure`, the canonical receipt, live events or any
 UI value; `parse_role_output` and `check_analysis` keep their coarse public
@@ -295,6 +301,62 @@ repair, never a fifth call, application budgets/deadlines, advisory Critic,
 sanitized public failures and evidence classification. Synthetic runs remain
 `synthetic_offline`; prior real provider evidence remains separately classified.
 
-**No second live run has occurred. Live canonical success remains NOT YET
-VERIFIED.** All M6-001 through M6-026 statuses remain Planned. A second bounded
-live run requires independent offline acceptance of this candidate and fresh HITL.
+## Second authorized live run and prose-completeness candidate
+
+### Run 2: LIVE SUCCESS
+
+Classification: **real local canonical multi-agent execution, post-Item-46,
+live success.** One bounded run on the default committed canonical application
+path used Ollama 0.40.4 and the exact `qwen2.5-coder:7b`. Researcher, Analyst
+and Critic each validated on the first call: 3 real calls, 0 repairs, 0 retries,
+49.8 seconds, 1,026 input and 150 output tokens. The worker was reaped and the
+repository was unchanged. This is one real Researcher → Analyst → Critic
+execution, not evidence of general reliability or model quality.
+
+**Analyst caveat.** The Analyst assessment was exactly 400 characters, its
+schema maximum, and visibly ended mid-sentence. The cause is **not proven**; no
+provider truncation is claimed, and the text is intentionally not retained here.
+Run 2 remains a live success: every authoritative check that existed then passed.
+Offline diagnosis showed that validation represented structure and bounds but
+not this narrow completeness invariant.
+
+### Approved completeness hardening (offline candidate, not live-verified)
+
+Human decision: a prose role output that ends without accepted terminal
+punctuation is repairable through the existing single global repair.
+
+1. **Covered fields.** Each `ResearchOutput.findings` item,
+   `AnalysisOutput.assessment` and `CritiqueOutput.rationale`: the prose fields
+   the prompts ask to be sentences. Excluded: `AnalysisOutput.supports`
+   (integer citations), `CritiqueOutput.advisory_verdict` (closed label) and all
+   application-owned identifiers, selections, budgets and evidence.
+2. **Check.** `live_contracts._complete_prose` runs after the existing
+   visibility check. After skipping any trailing closing quotes/brackets
+   (`" ' ) ]` and their common Unicode forms), the last character must be a
+   terminal mark: `. ? !` or a small subset of Unicode Sentence_Terminal
+   (`‼ ‽ ⁇ ⁈ ⁉`, ideographic/fullwidth `。 ！ ． ？ ｡`). Nothing is stripped:
+   trailing whitespace, commas, colons, semicolons, ellipsis characters and
+   dangling openers all fail. Reaching exactly the schema maximum is not itself
+   a failure; a value below the maximum without a terminal mark still fails. It
+   is a deterministic, bounded, provider-neutral invariant with no inference,
+   grammar checking or scoring, and it is **not** proof of semantic correctness,
+   factual or grammatical quality, or overall answer completeness.
+3. **Classification and repair.** The failure is a Pydantic custom error type
+   mapped to the internal-only reason `incomplete_prose`, which selects one fixed
+   repair sentence: "The previous response ended prose without terminal
+   punctuation; write complete sentences." It competes for the same single
+   global repair as every other malformed reply. A failed repair, or an
+   incomplete later role after the repair was used, fails closed. Publicly it
+   remains `malformed_output`; no category, retry, repair, call or fallback is
+   added, and three normal calls, at most four calls and no fifth call remain.
+4. **Prompt headroom.** Each prose role now asks for concise, complete
+   sentences (the Analyst for one concise, complete one-line conclusion) of
+   about 75% of the field maximum: about 120 of 160, 300 of 400 and 180 of 240
+   characters, finishing well before the maximum. This is guidance only; no
+   validator enforces it, and the schema maxima and provider `format` schema are
+   unchanged.
+
+**This candidate is offline only and has not been live-verified. No third live
+run has occurred.** All M6-001 through M6-026 statuses remain Planned. Any
+further live run requires independent offline acceptance of this candidate and
+fresh HITL.

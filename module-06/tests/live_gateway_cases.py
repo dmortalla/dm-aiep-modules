@@ -86,11 +86,12 @@ class Gateway:
                 }
             if SCENARIO == "max_content":
                 if request.role.value == "graph_researcher":
-                    content = {"findings": ['"' * 160] * 3}
+                    content = {"findings": ['.' + '"' * 159] * 3}
                 elif request.role.value == "graph_analyst":
-                    content = {"assessment": '"' * 400, "supports": [1, 2, 3]}
+                    content = {"assessment": '.' + '"' * 399, "supports": [1, 2, 3]}
                 else:
-                    content = {"advisory_verdict": "sound", "rationale": '"' * 240}
+                    rationale = "." + '"' * 239
+                    content = {"advisory_verdict": "sound", "rationale": rationale}
             if SCENARIO == "bad_always" or (
                 SCENARIO in ("repair", "repair_usage", "two_bad_roles", "max_content")
                 and self.calls == 1
@@ -99,7 +100,7 @@ class Gateway:
             elif SCENARIO == "two_bad_roles" and self.calls == 3:
                 text = "{" + CANARY
             elif SCENARIO == "analysis_repair" and self.calls == 2:
-                text = json.dumps({"assessment": CANARY, "supports": [3]})
+                text = json.dumps({"assessment": CANARY + ".", "supports": [3]})
             elif SCENARIO == "critic_bad" and request.role.value == "graph_critic":
                 text = "{" + CANARY
             elif SCENARIO == "critic_repair" and self.calls == 3:

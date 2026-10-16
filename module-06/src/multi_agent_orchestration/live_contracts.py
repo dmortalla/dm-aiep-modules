@@ -22,6 +22,7 @@ from pydantic import (
     WrapValidator,
     model_validator,
 )
+from pydantic_core import PydanticCustomError
 
 from .contracts import (
     Contract,
@@ -66,6 +67,36 @@ def _visible(value: str) -> str:
     return value
 
 
+# A deliberately small subset of Unicode Sentence_Terminal: ASCII . ? ! plus
+# doubled/interrobang forms and common fullwidth/ideographic stops. Extending
+# it is a human-approved contract change, never a model or task choice.
+SENTENCE_TERMINALS = frozenset(
+    ".?!\u203c\u203d\u2047\u2048\u2049\u3002\uff01\uff0e\uff1f\uff61"
+)
+# Closing quotes/brackets that may follow the terminal mark, in any nesting.
+SENTENCE_CLOSERS = frozenset(
+    "\"')]\u2019\u201d\u00bb\u203a\u3009\u300b\u300d\u300f\u3011\uff09\uff3d"
+)
+
+
+def _complete_prose(value: str) -> str:
+    """Require prose to end with terminal punctuation plus optional closers.
+
+    A narrow deterministic completeness invariant only: it is not evidence of
+    grammar, correctness, factual quality or overall answer completeness.
+    Nothing is stripped (trailing whitespace fails), and reaching a field's
+    maximum length is not itself a failure. Runs after ``_visible``.
+    """
+    end = len(value)
+    while end and value[end - 1] in SENTENCE_CLOSERS:
+        end -= 1
+    if not end or value[end - 1] not in SENTENCE_TERMINALS:
+        raise PydanticCustomError(
+            "incomplete_prose", "Model prose must end with terminal punctuation."
+        )
+    return value
+
+
 class LiveContract(Contract):
     """Internal typed primitive: closed, frozen, with nested revalidation.
 
@@ -96,7 +127,10 @@ class ModelProduced(LiveContract):
 
 
 class ResearchOutput(ModelProduced):
-    """Researcher content: one to three short findings for the analyst."""
+    """Researcher content: one to three short findings for the analyst.
+
+    Each finding is prose and must satisfy ``_complete_prose``.
+    """
 
     findings: Annotated[
         tuple[
@@ -104,6 +138,7 @@ class ResearchOutput(ModelProduced):
                 str,
                 Field(strict=True, min_length=1, max_length=160),
                 AfterValidator(_visible),
+                AfterValidator(_complete_prose),
             ],
             ...,
         ],
@@ -112,10 +147,17 @@ class ResearchOutput(ModelProduced):
 
 
 class AnalysisOutput(ModelProduced):
-    """Analyst content; ``supports`` cites validated findings by one-based index."""
+    """Analyst content; ``supports`` cites validated findings by one-based index.
+
+    ``assessment`` is prose and must satisfy ``_complete_prose``; the integer
+    citations are structured data and are not.
+    """
 
     assessment: Annotated[
-        str, Field(strict=True, min_length=1, max_length=400), AfterValidator(_visible)
+        str,
+        Field(strict=True, min_length=1, max_length=400),
+        AfterValidator(_visible),
+        AfterValidator(_complete_prose),
     ] = Field(repr=False)
     supports: Annotated[
         tuple[Annotated[int, Field(strict=True, ge=1, le=3)], ...],
@@ -131,11 +173,18 @@ class AnalysisOutput(ModelProduced):
 
 
 class CritiqueOutput(ModelProduced):
-    """Critic content. The verdict is advisory: it is reported, never acted on."""
+    """Critic content. The verdict is advisory: it is reported, never acted on.
+
+    ``rationale`` is prose and must satisfy ``_complete_prose``; the verdict
+    is a closed label and is not.
+    """
 
     advisory_verdict: Literal["sound", "needs_revision"]
     rationale: Annotated[
-        str, Field(strict=True, min_length=1, max_length=240), AfterValidator(_visible)
+        str,
+        Field(strict=True, min_length=1, max_length=240),
+        AfterValidator(_visible),
+        AfterValidator(_complete_prose),
     ] = Field(repr=False)
 
 

@@ -198,6 +198,10 @@ async def test_one_repair_same_role_context_selection_four_calls(tmp_path, role)
         ("failed_repair", 2, 1, "malformed_output"),
         ("second_bad", 3, 1, "malformed_output"),
         ("critic_failed_repair", 4, 1, "malformed_output"),
+        # Completeness competes for the same single global repair.
+        ("incomplete_twice", 2, 1, "malformed_output"),
+        ("incomplete_after_repair", 3, 1, "malformed_output"),
+        ("critic_incomplete_after_repair", 4, 1, "malformed_output"),
         ("connection", 1, 0, "connection_failed"),
         ("provider", 1, 0, "provider_service_failed"),
         ("model_mismatch", 1, 0, "unexpected_provider_failure"),
@@ -485,6 +489,9 @@ REASON_VALUES = {reason.value for reason in runtime._MalformedReason}
         ("malform_bounds", "bounds"),
         ("malform_invalid", "invalid_value"),
         ("malform_semantic", "semantic"),
+        ("malform_incomplete", "incomplete_prose"),
+        ("malform_incomplete_analyst", "incomplete_prose"),
+        ("malform_incomplete_critic", "incomplete_prose"),
     ],
 )
 async def test_internal_reason_selects_fixed_repair_feedback_only(
@@ -496,12 +503,14 @@ async def test_internal_reason_selects_fixed_repair_feedback_only(
     accounting = receipt.result.evidence.accounting
     assert (accounting.model_calls, accounting.repair_attempts) == (4, 1)
     snapshot = calls(log)
-    role = "ANALYST" if scenario == "malform_semantic" else "RESEARCHER"
-    assert [c["role"] for c in snapshot] == (
-        ["RESEARCHER", "ANALYST", "ANALYST", "CRITIC"]
-        if role == "ANALYST"
-        else ["RESEARCHER", "RESEARCHER", "ANALYST", "CRITIC"]
-    )
+    plan = ["RESEARCHER", "ANALYST", "CRITIC"]
+    role = {
+        "malform_semantic": "ANALYST",
+        "malform_incomplete_analyst": "ANALYST",
+        "malform_incomplete_critic": "CRITIC",
+    }.get(scenario, "RESEARCHER")
+    expected = plan[: plan.index(role) + 1] + plan[plan.index(role) :]
+    assert [c["role"] for c in snapshot] == expected
     first, repair = [c["payload"] for c in snapshot if c["role"] == role]
     suffix = runtime._repair_suffix(runtime._MalformedReason(reason))
     # Same role, selection, format, options and context; only fixed wording added.

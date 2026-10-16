@@ -190,8 +190,9 @@ def test_untrusted_task_cannot_alter_role_or_contract(index, task):
 
 
 def test_maximum_prompt_with_longest_repair_fits_accepted_bound():
-    research = ResearchOutput(findings=('"' * 160,) * 3)
-    analysis = AnalysisOutput(assessment='"' * 400, supports=(1, 2, 3))
+    # Closing quotes after one terminal mark keep the escaping worst case.
+    research = ResearchOutput(findings=('.' + '"' * 159,) * 3)
+    analysis = AnalysisOutput(assessment='.' + '"' * 399, supports=(1, 2, 3))
     longest = max(len(runtime._repair_suffix(reason)) for reason in _MalformedReason)
     for index, outputs in enumerate(([], [research], [research, analysis])):
         size = len(prompt(index, '"' * 4096, outputs)) + longest
@@ -366,6 +367,7 @@ def test_internal_reasons_closed_and_each_has_fixed_feedback():
         "wrong_type",
         "bounds",
         "invalid_value",
+        "incomplete_prose",
         "semantic",
     }
     assert set(runtime._REPAIR_FEEDBACK) == set(_MalformedReason)
@@ -396,7 +398,7 @@ RESEARCH_CASES = [
     ('{"findings":"a"}', _MalformedReason.WRONG_TYPE),
     ('{"findings":[1]}', _MalformedReason.WRONG_TYPE),
     ('{"findings":[]}', _MalformedReason.BOUNDS),
-    ('{"findings":["a","b","c","d"]}', _MalformedReason.BOUNDS),
+    ('{"findings":["a.","b.","c.","d."]}', _MalformedReason.BOUNDS),
     (json.dumps({"findings": ["x" * 161]}), _MalformedReason.BOUNDS),
     ('{"findings":["   "]}', _MalformedReason.INVALID_VALUE),
     ('{"findings":["a\\u200bb"]}', _MalformedReason.INVALID_VALUE),
@@ -419,8 +421,8 @@ def test_reason_matches_actual_boundary_and_public_error_is_coarse(text, expecte
 @pytest.mark.parametrize(
     "role,text,expected",
     [
-        (GraphRole.ANALYST, '{"assessment":"a","supports":[1,1]}', "invalid_value"),
-        (GraphRole.ANALYST, '{"assessment":"a","supports":[0]}', "bounds"),
+        (GraphRole.ANALYST, '{"assessment":"a.","supports":[1,1]}', "invalid_value"),
+        (GraphRole.ANALYST, '{"assessment":"a.","supports":[0]}', "bounds"),
         (GraphRole.ANALYST, '{"assessment":"a","supports":["1"]}', "wrong_type"),
         (
             GraphRole.CRITIC,
@@ -436,7 +438,7 @@ def test_other_role_reasons(role, text, expected):
 
 def test_valid_reply_returns_content_and_oversize_still_raises():
     content = _role_output(
-        GraphRole.RESEARCHER, '{"findings":["a"]}', max_reply_bytes=4096
+        GraphRole.RESEARCHER, '{"findings":["a."]}', max_reply_bytes=4096
     )
     assert type(content) is ResearchOutput
     with pytest.raises(LiveExecutionError) as caught:

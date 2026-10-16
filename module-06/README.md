@@ -46,6 +46,9 @@ console still offers deterministic demonstrations only.
 application API for Researcher → Analyst → Critic and its synthetic offline
 verification. Real canonical execution requires independent offline acceptance
 and fresh human HITL; no live console control is added. The first authorized
-live run failed closed at the Researcher (malformed output after one repair);
-an offline structured-output remediation candidate follows, and live canonical
-success remains **not yet verified**.
+live run failed closed at the Researcher (malformed output after one repair).
+After the structured-output remediation, a second authorized run completed one
+bounded real Researcher → Analyst → Critic execution (3 calls, 0 repairs,
+0 retries). Its Analyst assessment reached the 400-character maximum and
+appeared incomplete (cause unproven), so an offline prose-completeness candidate
+follows; that candidate is **not yet live-verified**.
