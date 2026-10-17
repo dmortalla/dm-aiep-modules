@@ -30,6 +30,7 @@ from .live_contracts import (
     require_live_authorization,
 )
 from .live_errors import LiveExecutionError, LiveFailureCategory, LiveValidationError
+from .live_observation import CleanupState, LiveRuntimeFacts
 from .live_validation import (
     _citation_reason,
     _MalformedReason,
@@ -359,6 +360,7 @@ async def execute_live_workflow(
     workflow_id: UUID | str | None = None,
     task_id: UUID | str | None = None,
     role_validated: Callable[[GraphRole, int, int], None] | None = None,
+    supervisor_observed: Callable[[LiveRuntimeFacts], None] | None = None,
 ) -> LiveWorkflowResult:
     """Run the fixed LangGraph plan with bounded, process-isolated gateway calls.
 
@@ -370,6 +372,8 @@ async def execute_live_workflow(
             not spawn independent descendants. No factory or provider is defaulted.
         workflow_id: Optional application correlation identifier.
         task_id: Optional application task identifier.
+        supervisor_observed: Trusted local hook for post-cleanup supervisor facts.
+            Never called with content; failure cannot change execution.
         role_validated: Trusted bounded synchronous local observation hook.
             Receives only the role and application counters, never content.
 
@@ -398,6 +402,7 @@ async def execute_live_workflow(
             workflow_id=workflow_id,
             task_id=task_id,
             role_validated=role_validated,
+            supervisor_observed=supervisor_observed,
         )
     except (LiveExecutionError, LiveValidationError, asyncio.CancelledError) as error:
         # An active caller/async-cleanup exception can otherwise become implicit
@@ -417,6 +422,7 @@ async def _execute_live_workflow(
     workflow_id: UUID | str | None,
     task_id: UUID | str | None,
     role_validated: Callable[[GraphRole, int, int], None] | None,
+    supervisor_observed: Callable[[LiveRuntimeFacts], None] | None,
 ) -> LiveWorkflowResult:
     began = time.monotonic()
     identity = validate_live_data(
@@ -463,6 +469,7 @@ async def _execute_live_workflow(
             run.failure(LiveFailureCategory.BUDGET_REFUSED)
         ) from None
     outputs: list[ModelProduced] = []
+    cleanup_state = CleanupState.UNKNOWN
     result = None
     cancelled = False
     try:
@@ -598,8 +605,43 @@ async def _execute_live_workflow(
                 break  # Inspect and sanitize the completed cleanup task below.
         try:
             cleanup.result()
+            cleanup_state = (
+                CleanupState.NOT_STARTED
+                if run.process is None
+                else CleanupState.REAPED
+                if run.process.returncode is not None
+                else CleanupState.FAILED
+            )
+            if cleanup_state == CleanupState.FAILED:
+                category = LiveFailureCategory.UNEXPECTED_PROVIDER_FAILURE
         except Exception:
+            cleanup_state = CleanupState.FAILED
             category = LiveFailureCategory.UNEXPECTED_PROVIDER_FAILURE
+        if supervisor_observed is not None:
+            try:
+                # Partial usage never masquerades as an aggregate for every call.
+                known = len(run.usage) == run.calls and run.calls > 0
+                totals = {}
+                for field in ("input_tokens", "output_tokens"):
+                    values = [item[field] for item in run.usage]
+                    total = (
+                        sum(values)
+                        if known and all(value is not None for value in values)
+                        else None
+                    )
+                    totals[field] = (
+                        total if total is None or total <= MAX_TOKEN_COUNT else None
+                    )
+                supervisor_observed(
+                    LiveRuntimeFacts(
+                        model_calls=run.calls,
+                        repair_attempts=run.repairs,
+                        usage=totals,
+                        cleanup=cleanup_state,
+                    )
+                )
+            except (Exception, asyncio.CancelledError):
+                pass  # Local observation cannot change execution or retry it.
     if cancelled:
         raise asyncio.CancelledError() from None
     if time.monotonic() >= run.deadline:

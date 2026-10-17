@@ -78,6 +78,8 @@ class Observability:
         self._adapters = tuple(adapters)
         self._live_adapters = tuple(live_adapters)
         self._live_records = deque(maxlen=32)
+        self._live_terminal = deque(maxlen=32)
+        self._live_active = {}
         self._records = deque(maxlen=32)
         self._active = {}
         self._counts = dict.fromkeys(
@@ -94,6 +96,76 @@ class Observability:
             0,
         )
         self._lock = threading.RLock()
+
+    def begin_live(self, identity):
+        """Own an opaque invocation handle; a valid UUID is not ownership."""
+        from .live_observation import LiveObservationIdentity, checked_observation
+
+        checked = checked_observation(LiveObservationIdentity, identity)
+        with self._lock:
+            if (
+                len(self._live_active) >= 16
+                or any(
+                    LiveObservationIdentity.model_validate_json(record).trace_id
+                    == checked.trace_id
+                    for record in self._live_active.values()
+                )
+                or any(
+                    record.trace_id == checked.trace_id
+                    for record in self.live_terminal_records
+                )
+            ):
+                self._increment("observation_drops")
+                return None
+            handle = object()
+            self._live_active[handle] = checked.model_dump_json()
+            return handle
+
+    def finish_live(self, handle, observation):
+        """Validate linkage and finalize once; no adapter or SDK is called."""
+        from .live_errors import LiveValidationError
+        from .live_observation import LiveTerminalObservation, checked_observation
+
+        with self._lock:
+            # Identity lookup, never equality supplied by an untrusted handle.
+            owned = next((key for key in self._live_active if key is handle), None)
+            if owned is None:
+                raise LiveValidationError() from None
+            checked = checked_observation(LiveTerminalObservation, observation)
+            identity = self._live_active[owned]
+            from .live_observation import LiveObservationIdentity
+
+            expected = LiveObservationIdentity.model_validate_json(identity)
+            if any(
+                getattr(checked, field) != getattr(expected, field)
+                for field in LiveObservationIdentity.model_fields
+            ):
+                raise LiveValidationError() from None
+            packet = checked.model_dump_json()
+            del self._live_active[owned]
+            if len(self._live_terminal) == self._live_terminal.maxlen:
+                self._increment("observation_drops")
+            self._live_terminal.append(packet)
+            return LiveTerminalObservation.model_validate_json(packet)
+
+    def abandon_live(self, handle):
+        """Release local bookkeeping without changing execution authority."""
+        with self._lock:
+            owned = next((key for key in self._live_active if key is handle), None)
+            if owned is not None:
+                del self._live_active[owned]
+            self._increment("observation_drops")
+
+    @property
+    def live_terminal_records(self):
+        """Fresh immutable snapshots; independent of deterministic traces."""
+        from .live_observation import LiveTerminalObservation
+
+        with self._lock:
+            return tuple(
+                LiveTerminalObservation.model_validate_json(packet)
+                for packet in self._live_terminal
+            )
 
     def emit_live(self, event: LiveWorkflowEvent) -> None:
         """Retain bounded local events separately from legacy zero-call traces.

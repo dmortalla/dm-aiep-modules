@@ -360,3 +360,133 @@ punctuation is repairable through the existing single global repair.
 run has occurred.** All M6-001 through M6-026 statuses remain Planned. Any
 further live run requires independent offline acceptance of this candidate and
 fresh HITL.
+
+## Slice 1: application-owned live observation foundation
+
+The uncommitted Slice 1 candidate adds `live_observation.py`, a sibling contract
+family separate from deterministic `RunTrace` and its zero-call `Accounting`.
+It adds no SDK construction, exporter, transport, metric projection or UI mode.
+Independent acceptance remains pending. Verification is offline only; gate
+results are recorded below when complete.
+
+The canonical service generates a fresh nonzero trace UUID and root span ID for
+each invocation with validated workflow/task linkage. No public trace-ID argument
+exists. The ID is bound to lifecycle events and successful `LiveEvidence.trace_id`.
+The service rejects runtime results with substituted workflow/task/selection/budget
+or a preexisting trace identity. Workflow/task identifiers never authorize work.
+Uncorrelatable invalid identifiers remain sanitized input errors, without invented
+observations.
+
+`LiveTerminalObservation` contains only fixed runtime/topology, application
+identity/provenance, timestamps, monotonic duration, closed outcome/public category,
+validated canonical selection, ordered role-completion instants, supervisor
+accounting/nullable usage and closed cleanup state. Completion instants are not
+role latency. Dispatch counts are not proof of provider completion. Cumulative
+role snapshots are never summed. Incomplete usage aggregates remain unavailable;
+known per-component totals include repair calls. No-call runs have unavailable
+provider usage, not fabricated zeros.
+
+The owning runtime reports supervisor facts only after its existing bounded
+cleanup. `reaped` requires a settled process; `not_started` requires no acquired
+worker, `failed` represents cleanup failure, and `unknown` preserves unavailable
+supervisor evidence. Completion observations require all three validated roles
+and confirmed reaping. Cancellation and the existing cleanup/deadline precedence
+are preserved. Successful evidence retains the existing runtime duration;
+observation duration measures the canonical service boundary, including local
+observation overhead. Failure observation has a 302-second representational
+ceiling (300-second work ceiling plus 2-second independent supervisor allowance);
+values outside it are dropped, never clamped into evidence of bounded success.
+OS scheduling remains outside hard real-time guarantees.
+
+The existing observer owns opaque live handles, separate from deterministic
+handles. It admits at most 16 active live observations, retains the last 32
+terminal observations and the existing last 32 lifecycle events, and returns
+fresh revalidated snapshots. Identity linkage is checked before finalization;
+forged, cross-observer, substituted and already finalized/abandoned handles are
+rejected. Retained/active trace replay is refused. Historical trace tombstones
+are not stored without bound: canonical invocation identities are always fresh,
+and a stale opaque handle remains unusable after retention eviction.
+
+Local observation construction/serialization/retention failures cannot authorize
+execution, alter selection/budgets/validation, create a repair or retry, or replace
+execution outcome. Missing or inconsistent observation evidence is dropped with
+bounded loss bookkeeping rather than invented success. Missing supervisor facts
+on a failure retain established sanitized failure counters but unknown cleanup
+and usage. No content-bearing canonical receipt is sent to a sink.
+
+Contracts and explicit projection exclude tasks, prompts, responses, citations,
+credentials, environment, endpoints, paths, process details, raw exceptions,
+Pydantic diagnostics, internal malformed reasons and arbitrary tags/metadata.
+`incomplete_prose` remains internal-only; public classification remains
+`malformed_output`. `output_too_large` remains non-repairable. The global repair
+limit is one, the absolute model-call ceiling four, transport retries zero.
+Injected gateways remain `synthetic_offline`, regardless of selection strings.
+
+This foundation does **not** provide LangSmith live RunTree construction/delivery,
+OTel live projection or Streamlit live mode. Those are later integration slices.
+There was no third live run. Run 2 remains **LIVE SUCCESS**. The committed
+prose-completeness hardening remains **not live verified**. All M6-001 through
+M6-026 remain **Planned**. Architecture B+ and dependency files are unchanged.
+No end-to-end observability, independent acceptance, release or deployment
+readiness is claimed.
+
+### Slice 1 candidate verification (2026-10-16)
+
+Independent acceptance remains pending. Required final offline gates passed:
+
+| Gate | Result |
+| --- | --- |
+| `uv run --offline --no-sync ruff check module-06` | PASS |
+| Complete Module 6 pytest | 2,402 passed, no skips/warnings, 430.08 s |
+| Complete root pytest | 4,517 passed, 6 existing skips, 3 existing ChromaDB legacy-embedding-config deprecation warnings, 609.81 s |
+| compileall | PASS: Module 6 source/tests, app and all four command paths |
+
+The maintained `test_live_observation.py` contributes 99 new cases over the
+accepted 2,303 / 4,418-pass baselines. Tests exercise actual native graph/child
+execution with synthetic gateways, strict/frozen contracts, partial role facts,
+owned correlation, replay/substitution rejection, bounded retention, call/repair
+ceilings, nullable usage, cleanup, cancellation, safe failures, payload exclusion,
+and observation isolation. Existing deterministic LangSmith/OTel and semantic
+completeness coverage remains in the complete gates. No live evidence is created.
+
+Self-review additionally required completed counters to match the final role
+snapshot, rejected fabricated zero provider usage on no-call records, and bound
+canonical results to the invocation's workflow/task/selection/budget before
+assigning its trusted trace identity. The binding-only runtime stub previously
+replayed seeded IDs; it was corrected to return the requested workflow/task IDs
+and an uncorrelated runtime result. Its assertions were retained, and dedicated
+substitution rejection tests were added. The security-contract inventory now
+includes all four sibling contracts with the same mandatory security assertions.
+
+Gate/harness history is retained rather than attributing every failure to the
+candidate. The sandbox prevented uv cache persistence and even a minimal asyncio
+socketpair from completing; test-owned IPC worked outside it. The initial 81-case
+focused run passed there. The expanded focused run stopped at the stale-ID stub
+(1 failed, 151 passed), repaired as above. A first complete run stopped at an
+unchanged deterministic CrewAI UI timeout (1 failed, 282 passed); the exact test
+passed unchanged in 10.98 s under its original 30-second deadline. This supports
+an intermittent timing failure, without proving its precise cause. The next run
+stopped when the temporary launcher's hard guard intercepted a transitive SDK
+`dotenv_values` read before content access (1 failed, 342 passed). The launcher
+was corrected to suppress real-path `dotenv_values` as well as `load_dotenv`,
+while retaining its read guard. A targeted follow-up exposed missing Windows
+AppData folders in the isolated home; creating those test-owned folders resolved
+it (the unchanged CrewAI context test passed in 6.98 s). No timeout, assertion,
+security control, dependency or source requirement was weakened. The final
+complete gates above passed against the unchanged implementation.
+
+The temporary launcher supplied only allowlisted OS variables plus test-owned
+home/temp paths and fixed offline flags. It blocked real dotenv reads, external
+DNS/connections and known real model/observability ports. Test-owned fixtures,
+in-memory transports and ephemeral loopback IPC remained permitted. No real
+credential-variable presence was inspected and no real model, Ollama, LangSmith,
+Collector, Prometheus, Grafana or hosted-provider request was performed.
+
+SOP assessment, in required order: Requirements—Slice 1 contract implemented,
+all source statuses still Planned; Product Experience—typed application API and
+retrievable curated records, UI deferred; Real Functionality—actual supervised
+native execution with synthetic gateways only; Reliability—bounded execution,
+cleanup and local observation isolation tested; Security—closed payload-free
+projection and authority/correlation controls tested; Cost—zero added inference,
+no billable verification; Evidence—offline gates passed, independent/live
+acceptance pending; Deployment—unchanged and unverified by this slice.

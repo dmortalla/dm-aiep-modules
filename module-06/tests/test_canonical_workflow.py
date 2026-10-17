@@ -303,8 +303,7 @@ async def test_complete_input_envelope_survives_data_framing(tmp_path, character
     receipt = await run(factory, text=character * 4095 + "x")
     assert receipt.result.evidence.accounting.model_calls == len(calls(log)) == 3
     assert all(
-        len(call["payload"]["messages"][0]["content"]) <= 8192
-        for call in calls(log)
+        len(call["payload"]["messages"][0]["content"]) <= 8192 for call in calls(log)
     )
 
 
@@ -412,7 +411,31 @@ async def test_default_provider_binding_only_after_authority_no_real_execution(
 
     async def offline_runtime(*args, **kwargs):
         seen.append(kwargs)
-        return seeded.result
+        # The supervised runtime returns an uncorrelated result. The canonical
+        # service owns the fresh trace identity; never replay a canonical receipt.
+        from multi_agent_orchestration.live_contracts import LiveWorkflowResult
+        from multi_agent_orchestration.live_validation import validate_live_data
+
+        return validate_live_data(
+            LiveWorkflowResult,
+            {
+                **seeded.result.model_dump(),
+                "evidence": {
+                    **seeded.result.evidence.model_dump(),
+                    "trace_id": None,
+                    "workflow_id": kwargs["workflow_id"],
+                    "task_id": kwargs["task_id"],
+                    "contributions": tuple(
+                        {
+                            **record.model_dump(),
+                            "workflow_id": kwargs["workflow_id"],
+                            "task_id": kwargs["task_id"],
+                        }
+                        for record in seeded.result.evidence.contributions
+                    ),
+                },
+            },
+        )
 
     monkeypatch.setattr(service, "execute_live_workflow", offline_runtime)
     with pytest.raises(CanonicalWorkflowError):

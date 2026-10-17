@@ -45,6 +45,7 @@ class LiveWorkflowEvent(LiveContract):
 
     workflow_id: CanonicalUUID
     task_id: CanonicalUUID
+    trace_id: CanonicalUUID | None = None
     evidence_source: EvidenceSource
     phase: Literal[
         "started", "role_validated", "completed", "failed", "cancelled", "invalid_input"
@@ -63,6 +64,8 @@ class LiveWorkflowEvent(LiveContract):
     @model_validator(mode="after")
     def consistent(self) -> "LiveWorkflowEvent":
         """Do not present provisional roles or failures as completed workflows."""
+        if self.trace_id is not None and self.trace_id.int == 0:
+            raise ValueError("Trace identity must be nonzero.")
         if (
             (self.phase == "role_validated") != (self.role is not None)
             or (self.phase == "failed") != (self.category is not None)

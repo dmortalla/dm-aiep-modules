@@ -7,6 +7,7 @@ No UI, credential lookup, provider discovery or network call happens here.
 """
 
 import asyncio
+import time
 from collections.abc import Callable
 from uuid import UUID, uuid4
 
@@ -16,13 +17,22 @@ from .canonical_contracts import (
     LiveWorkflowEvent,
 )
 from .contracts import GraphRole
-from .live_contracts import LiveFailure, require_live_authorization
+from .live_contracts import LiveFailure, LiveWorkflowResult, require_live_authorization
 from .live_errors import LiveExecutionError, LiveFailureCategory, LiveValidationError
 from .live_execution import LiveRuntimeError, execute_live_workflow
+from .live_observation import (
+    CleanupState,
+    LiveObservationIdentity,
+    LiveRoleCompletion,
+    LiveRuntimeFacts,
+    LiveTerminalObservation,
+    checked_observation,
+)
 from .live_validation import validate_live_data
 from .local_model_gateway import LocalModelGateway
 from .model_gateway import ModelGateway
-from .observability import Observability
+from .observability import Observability, span_id
+from .observability_contracts import Outcome
 
 CANONICAL_PROVIDER = "ollama"
 CANONICAL_MODEL = "qwen2.5-coder:7b"
@@ -87,6 +97,78 @@ async def _execute_canonical_workflow(
         },
     )
 
+    clock = time.monotonic()
+    observation_identity = LiveObservationIdentity(
+        workflow_id=identity.workflow_id,
+        task_id=identity.task_id,
+        trace_id=uuid4(),
+        span_id=span_id(),
+        evidence_source=source,
+        started_ns=time.time_ns(),
+    )
+    # Retain serialized application identity independently of observer objects.
+    identity_packet = observation_identity.model_dump_json()
+    handle = None
+    if observer is not None:
+        try:
+            handle = observer.begin_live(
+                LiveObservationIdentity.model_validate_json(identity_packet)
+            )
+        except (Exception, asyncio.CancelledError):
+            pass
+    roles = []
+    selection = None
+    facts = LiveRuntimeFacts(
+        model_calls=0,
+        repair_attempts=0,
+        cleanup=CleanupState.NOT_STARTED,
+    )
+
+    def supervised(observed):
+        nonlocal facts
+        facts = checked_observation(LiveRuntimeFacts, observed)
+
+    def terminal(outcome, category=None, evidence=None):
+        # Observation failure does not replace authoritative execution results.
+        if observer is None or handle is None:
+            return
+        try:
+            if evidence is not None and (
+                evidence.workflow_id != observation_identity.workflow_id
+                or evidence.task_id != observation_identity.task_id
+                or evidence.trace_id != observation_identity.trace_id
+                or evidence.selection != selection
+                or evidence.accounting.model_calls != facts.model_calls
+                or evidence.accounting.repair_attempts != facts.repair_attempts
+                or evidence.accounting.usage != facts.usage
+            ):
+                raise LiveValidationError()
+            record = checked_observation(
+                LiveTerminalObservation,
+                {
+                    **LiveObservationIdentity.model_validate_json(
+                        identity_packet
+                    ).model_dump(),
+                    "outcome": outcome,
+                    "category": category,
+                    "selection": selection,
+                    "roles": tuple(roles),
+                    "facts": facts,
+                    "ended_ns": max(
+                        time.time_ns(),
+                        observation_identity.started_ns,
+                        *(r.completed_ns for r in roles),
+                    ),
+                    "duration_ms": max(0.0, (time.monotonic() - clock) * 1000),
+                },
+            )
+            observer.finish_live(handle, record)
+        except (Exception, asyncio.CancelledError):
+            try:
+                observer.abandon_live(handle)
+            except (Exception, asyncio.CancelledError):
+                pass
+
     def emit(
         phase: str,
         *,
@@ -102,6 +184,7 @@ async def _execute_canonical_workflow(
                 LiveWorkflowEvent(
                     workflow_id=identity.workflow_id,
                     task_id=identity.task_id,
+                    trace_id=observation_identity.trace_id,
                     evidence_source=source,
                     phase=phase,
                     role=role,
@@ -115,9 +198,30 @@ async def _execute_canonical_workflow(
             pass
 
     def validated(role: GraphRole, calls: int, repairs: int) -> None:
+        try:
+            roles.append(
+                checked_observation(
+                    LiveRoleCompletion,
+                    {
+                        "role": role,
+                        "sequence": len(roles) + 1,
+                        "span_id": span_id(),
+                        "completed_ns": max(
+                            time.time_ns(),
+                            observation_identity.started_ns,
+                            *(r.completed_ns for r in roles),
+                        ),
+                        "model_calls": calls,
+                        "repair_attempts": repairs,
+                    },
+                )
+            )
+        except (Exception, asyncio.CancelledError):
+            pass
         emit("role_validated", role=role, calls=calls, repairs=repairs)
 
     error = None
+    runtime_returned = False
     try:
         auth = require_live_authorization(authorization)
         if (
@@ -125,7 +229,13 @@ async def _execute_canonical_workflow(
             or auth.selection.model != CANONICAL_MODEL
         ):
             raise LiveRuntimeError(identity)
+        selection = auth.selection
         emit("started")
+        facts = LiveRuntimeFacts(
+            model_calls=None,
+            repair_attempts=None,
+            cleanup=CleanupState.UNKNOWN,
+        )
         result = await execute_live_workflow(
             instruction,
             authorization=auth,
@@ -135,6 +245,28 @@ async def _execute_canonical_workflow(
             workflow_id=identity.workflow_id,
             task_id=identity.task_id,
             role_validated=validated,
+            supervisor_observed=supervised,
+        )
+        runtime_returned = True
+        result = validate_live_data(LiveWorkflowResult, result)
+        if (
+            result.evidence.workflow_id != identity.workflow_id
+            or result.evidence.task_id != identity.task_id
+            or result.evidence.selection != auth.selection
+            or result.evidence.budget != auth.budget
+            or result.evidence.trace_id is not None
+        ):
+            raise LiveValidationError() from None
+        # Runtime content cannot supply the canonical invocation trace identity.
+        result = validate_live_data(
+            type(result),
+            {
+                **result.model_dump(),
+                "evidence": {
+                    **result.evidence.model_dump(),
+                    "trace_id": observation_identity.trace_id,
+                },
+            },
         )
         receipt = None
         try:
@@ -145,6 +277,7 @@ async def _execute_canonical_workflow(
             raise LiveValidationError() from None
     except asyncio.CancelledError:
         emit("cancelled", calls=None, repairs=None)
+        terminal(Outcome.CANCELLED)
         raise asyncio.CancelledError() from None
     except LiveRuntimeError as failure:
         error = CanonicalWorkflowError(failure.failure, source)
@@ -158,9 +291,49 @@ async def _execute_canonical_workflow(
         )
         error = CanonicalWorkflowError(refused, source)
     except LiveValidationError:
+        # Accepted runtime input validation happens before worker creation.
+        if not runtime_returned:
+            facts = LiveRuntimeFacts(
+                model_calls=0,
+                repair_attempts=0,
+                cleanup=CleanupState.NOT_STARTED,
+            )
         emit("invalid_input")
+        terminal(
+            Outcome.FAILED if runtime_returned else Outcome.DENIED,
+            LiveFailureCategory.UNEXPECTED_PROVIDER_FAILURE
+            if runtime_returned
+            else None,
+        )
         raise
     if error is not None:
+        if facts.model_calls is None:
+            facts = LiveRuntimeFacts(
+                model_calls=error.failure.model_calls,
+                repair_attempts=error.failure.repair_attempts,
+                cleanup=CleanupState.UNKNOWN,
+            )
+        if error.category in (
+            LiveFailureCategory.AUTHORIZATION_REFUSED,
+            LiveFailureCategory.BUDGET_REFUSED,
+        ):
+            facts = LiveRuntimeFacts(
+                model_calls=0,
+                repair_attempts=0,
+                cleanup=CleanupState.NOT_STARTED,
+            )
+        terminal(
+            Outcome.DENIED
+            if error.category
+            in (
+                LiveFailureCategory.AUTHORIZATION_REFUSED,
+                LiveFailureCategory.BUDGET_REFUSED,
+            )
+            else Outcome.TIMED_OUT
+            if error.category == LiveFailureCategory.TIMED_OUT
+            else Outcome.FAILED,
+            error.category,
+        )
         emit(
             "failed",
             calls=error.failure.model_calls,
@@ -174,6 +347,7 @@ async def _execute_canonical_workflow(
             safe.__cause__ = None
             safe.__suppress_context__ = True
             raise
+    terminal(Outcome.COMPLETED, evidence=result.evidence)
     accounting = result.evidence.accounting
     emit("completed", calls=accounting.model_calls, repairs=accounting.repair_attempts)
     return receipt
