@@ -620,3 +620,39 @@ async def test_child_environment_and_content_canaries_absent(
 def test_completed_total_cannot_invent_repair_after_last_role():
     with pytest.raises(LiveValidationError):
         record(facts=dict(model_calls=4, repair_attempts=1, cleanup="reaped"))
+
+
+def test_refinalization_rejected_when_terminal_capacity_full():
+    """A consumed handle stays invalid after bounded terminal eviction."""
+    observer = Observability()
+    consumed_handle = None
+    consumed_terminal = None
+    for index in range(32):
+        terminal = record()
+        handle = begin(observer, terminal)
+        assert handle is not None
+        observer.finish_live(handle, terminal)
+        if index == 31:
+            consumed_handle = handle
+            consumed_terminal = terminal
+    assert len(observer.live_terminal_records) == 32
+    with pytest.raises(LiveValidationError):
+        observer.finish_live(consumed_handle, consumed_terminal)
+    assert len(observer.live_terminal_records) == 32
+
+
+def test_role_completion_rejects_wrong_valid_role_name():
+    """Sequence identity cannot be weakened to any otherwise valid role."""
+    data = record().roles[0].model_dump()
+    data["role"] = LIVE_ROLES[1]
+    with pytest.raises(LiveValidationError):
+        checked_observation(LiveRoleCompletion, data)
+
+
+def test_runtime_facts_reject_five_calls_with_one_repair():
+    """The canonical workflow cannot claim a fifth call after one repair."""
+    data = record().facts.model_dump()
+    data["model_calls"] = 5
+    data["repair_attempts"] = 1
+    with pytest.raises(LiveValidationError):
+        checked_observation(LiveRuntimeFacts, data)

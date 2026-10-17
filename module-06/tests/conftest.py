@@ -4,6 +4,20 @@ import ipaddress
 import socket
 
 import pytest
+from multi_agent_orchestration import canonical_workflow as canonical_service
+
+
+def _blocked_canonical_local_gateway():
+    """Fail if a canonical test reaches the real default local provider."""
+    raise AssertionError("Canonical tests must inject a synthetic local gateway.")
+
+
+@pytest.fixture(autouse=True)
+def _block_canonical_default_local_gateway(monkeypatch):
+    """Keep canonical tests offline without blocking test-owned loopback IPC."""
+    monkeypatch.setattr(
+        canonical_service, "_local_gateway", _blocked_canonical_local_gateway
+    )
 
 
 @pytest.fixture(autouse=True)
