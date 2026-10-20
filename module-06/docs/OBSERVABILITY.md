@@ -2,6 +2,10 @@
 
 ## Objective
 
+Live foundation extension: [Slice 3 local OTel trace projection](LIVE_OTEL_SLICE_3.md)
+documents the candidate post-workflow boundary, SDK correlation, bounded local
+collection and deferred live metrics. This is not external delivery acceptance.
+
 Provide correlated application, AI-execution, and operational evidence without
 making the presentation layer the telemetry source of truth.
 

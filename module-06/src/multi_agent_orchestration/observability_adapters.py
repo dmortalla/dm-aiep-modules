@@ -134,8 +134,11 @@ class LocalOpenTelemetry:
 
         self._spans = deque(maxlen=128)
         self._collection_failures = 0
+        self._collection_failure_marker = None
         self._identity = ContextVar("module6_local_span_identity")
         self._lock = threading.RLock()
+        self._live_attempted = set()
+        self._closed = False
         identity, adapter = self._identity, self
 
         class ApplicationIds(IdGenerator):
@@ -150,6 +153,7 @@ class LocalOpenTelemetry:
                 try:
                     adapter._retain_spans(batch)
                 except (Exception, asyncio.CancelledError):
+                    adapter._collection_failure_marker = object()
                     adapter._collection_failures = min(
                         1_000_000_000, adapter._collection_failures + 1
                     )
@@ -301,5 +305,9 @@ class LocalOpenTelemetry:
             return self._reader.get_metrics_data()
 
     def close(self):
-        self._traces.shutdown()
-        self._meters.shutdown()
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+            self._traces.shutdown()
+            self._meters.shutdown()
