@@ -1,5 +1,16 @@
 # Module 6 Traceability
 
+## Live Observability Slice 4 candidate
+
+[Live metrics Slice 4](LIVE_METRICS_SLICE_4.md) records the additive candidate in
+`live_metrics.py`, `live_metric_delivery.py` and their maintained tests. It adds
+partial evidence toward M6-016/M6-019/M6-020: application-owned live operational
+metrics, unknown-accounting coverage, closed cardinality, explicit bounded
+one-shot OTLP delivery and workflow failure isolation. Evidence is offline SDK
+and test-owned loopback only. External pipeline/storage, curated live UI,
+continuous monitoring and independent Reviewer acceptance remain deferred.
+All 26 source meanings and Planned statuses remain unchanged.
+
 ## Status Legend
 
 - `Planned` - requirement frozen; implementation not yet accepted.

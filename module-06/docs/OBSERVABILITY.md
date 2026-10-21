@@ -2,6 +2,10 @@
 
 ## Objective
 
+[Slice 4 live operational metrics candidate](LIVE_METRICS_SLICE_4.md) adds a
+separate bounded metric window and explicit one-shot loopback OTLP write.
+Offline/test-owned wire evidence is distinct from external pipeline acceptance.
+
 Live foundation extension: [Slice 3 local OTel trace projection](LIVE_OTEL_SLICE_3.md)
 documents the candidate post-workflow boundary, SDK correlation, bounded local
 collection and deferred live metrics. This is not external delivery acceptance.
