@@ -5,7 +5,7 @@ import threading
 import time
 from collections import deque
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 from uuid import UUID
 
 from pydantic import Field, model_validator
@@ -33,6 +33,16 @@ from .observability import Observability
 from .observability_adapters import LocalLangSmith, LocalOpenTelemetry, checked_trace
 from .observability_contracts import Outcome, RunTrace
 from .observed_execution import execute_observed_workflow
+
+if TYPE_CHECKING:  # Additive live definitions load only after run admission.
+    from .console_live import LiveRun
+
+
+def failure_text(category) -> str:
+    """Fixed sanitized failed-live wording; loaded only on this additive path."""
+    from .live_errors import failure_text as fixed
+
+    return fixed(category)
 
 
 class Demonstration(StrEnum):
@@ -293,18 +303,21 @@ class ConsoleFaultError(RuntimeError):
 
 
 class ConsoleSession:
-    """Per-session synchronous application facade; eight curated views, no cache.
+    """Per-session synchronous application facade; curated views, no cache.
 
     Execution uses accepted services only. No keys, requests, SDK objects, raw
     telemetry buffers or exception causes are retained across runs. One run per
     session; SDK providers are created locally and closed before returning.
     The scaling view holds the latest report of the accepted benchmark, which
-    owns all measurement and bounds.
+    owns all measurement and bounds. The live demonstration runs the accepted
+    canonical workflow with the module-level synthetic gateway only: no real
+    provider connection, credential or delivery is attempted.
     """
 
     def __init__(self):
         self._runs = deque(maxlen=8)
         self._scaling = None
+        self._live = deque(maxlen=8)
         self._lock = threading.Lock()
 
     @property
@@ -315,12 +328,22 @@ class ConsoleSession:
             self._runs.clear()
             return ()
 
+    @property
+    def live_runs(self) -> "tuple[LiveRun, ...]":
+        if not self._live:
+            return ()
+        # The additive live boundary loads only when retained views exist.
+        from .console_live import runs
+
+        return runs(self._live)
+
     def clear(self):
         if not self._lock.acquire(blocking=False):
             raise ConsoleBusyError("A run is already active in this session.")
         try:
             self._runs.clear()
             self._scaling = None
+            self._live.clear()
         finally:
             self._lock.release()
 
@@ -382,6 +405,44 @@ class ConsoleSession:
             # Not a caller input error; never surface it as one or keep its cause.
             raise ConsoleFaultError(
                 "The run ended without a recordable result."
+            ) from None
+        finally:
+            self._lock.release()
+
+    def run_live(self, raw: object) -> "LiveRun":
+        """Run the canonical live workflow with the synthetic gateway.
+
+        The authorization, selection and budget are application-owned and
+        fixed; the gateway factory is the module-level synthetic demonstration
+        factory, so no real provider connection is attempted. The accepted
+        service classifies receipts as synthetic offline itself.
+
+        Raises:
+            ConsoleRequestError: The submitted text was refused; nothing executed.
+            ConsoleBusyError: This session already has an active execution.
+            ConsoleFaultError: No recordable view was produced; the earlier
+                views are kept and no cause is retained.
+        """
+        # The additive live boundary and its contracts load only after this
+        # admission; deterministic console startup stays free of them.
+        from .console_live import execute, validate
+
+        try:
+            checked = validate(raw)
+        except (ValueError, TypeError) as exc:
+            raise ConsoleRequestError(
+                "Submit nonblank synthetic text of at most 4096 characters."
+            ) from exc
+        if not self._lock.acquire(blocking=False):
+            raise ConsoleBusyError("A run is already active in this session.")
+        try:
+            return execute(self, checked)
+        except ConsoleRequestError:
+            raise
+        except (Exception, asyncio.CancelledError):
+            # Not a caller input error; never surface it as one or keep its cause.
+            raise ConsoleFaultError(
+                "The live demonstration ended without a recordable result."
             ) from None
         finally:
             self._lock.release()
@@ -488,5 +549,5 @@ class ConsoleSession:
         return view
 
 
-def age_seconds(run: ConsoleRun | ScalingRun) -> int:
+def age_seconds(run: "ConsoleRun | ScalingRun | LiveRun") -> int:
     return max(0, int((time.time_ns() - run.finished_ns) / 1_000_000_000))

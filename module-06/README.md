@@ -40,7 +40,8 @@ module or its requirements; all 26 source requirements remain Planned.
 offline implementation candidate and synthetic process-runtime verification.
 One separately authorized post-repair real Ollama response was verified at the
 accepted adapter baseline; this does not verify the three-role workflow. The
-console still offers deterministic demonstrations only.
+console still offers the eight deterministic demonstrations plus the synthetic
+canonical live workflow demonstration; no real canonical live control is added.
 
 [Canonical live workflow candidate](docs/CANONICAL_LIVE_WORKFLOW.md) documents the
 application API for Researcher → Analyst → Critic and its synthetic offline
@@ -52,3 +53,11 @@ bounded real Researcher → Analyst → Critic execution (3 calls, 0 repairs,
 0 retries). Its Analyst assessment reached the 400-character maximum and
 appeared incomplete (cause unproven), so an offline prose-completeness candidate
 follows; that candidate is **not yet live-verified**.
+
+The console also has a separate **canonical live workflow (synthetic)**
+demonstration: it runs the accepted canonical workflow through the supervised
+live process path with a fixed module-level synthetic gateway, so no real
+provider connection, credential or delivery occurs. Receipts stay classified
+synthetic offline, role content is labeled unverified model-shaped synthetic
+text, and the page presents validated accounting, local observation and
+post-run projection statuses without any delivery or export.

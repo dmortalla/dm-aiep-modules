@@ -55,7 +55,10 @@ For offline tests, trusted application/test code supplies a source-backed
 `gateway_factory`. That factory is the only substituted dependency; the same
 canonical API, graph, role parser, supervisor, and completion boundary execute.
 Factories and observers are trusted infrastructure, never model-supplied
-capabilities. No CLI or console control enabling live inference is added.
+capabilities. No CLI or console control enabling live inference is added. The
+operations console exposes one synthetic demonstration that uses this exact
+factory substitution with the module-level synthetic gateway; see
+[Operations Console](OPERATIONS_CONSOLE.md#canonical-live-workflow-demonstration-synthetic).
 
 ## Content and authority
 

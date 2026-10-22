@@ -318,3 +318,62 @@ interpreters; that is local CPU and memory only.
   corrected; no production code changed for them.
 - Not verified: a live browser session against the launched server. Human
   browser review remains a separate closeout action.
+
+## Canonical live workflow demonstration (synthetic)
+
+### What a reviewer sees
+
+A separate bordered section, `Canonical live workflow (synthetic)`, runs the
+accepted canonical Researcher → Analyst → Critic workflow through the
+supervised live process path with a fixed module-level synthetic gateway
+(`src/multi_agent_orchestration/synthetic_gateway.py`). The gateway returns
+deterministic, role-shaped Ollama envelopes through `httpx.MockTransport`, so
+no socket is opened and no inference runs. The run may submit any nonblank
+bounded task text, including prompt-injection text; the synthetic replies and
+authorizations cannot change because text is always data.
+
+On completion it shows the synthetic offline classification, the three
+validated role replies labeled as unverified model-shaped synthetic text,
+model calls, repair attempts, token usage and transport retries, per-role
+validated completion rows, a bounded event timeline, and post-run projection
+statuses for the accepted LangSmith, local OpenTelemetry and local metric
+window boundaries. On refusal or failure it shows the fixed sanitized
+`failure_text` wording for the closed category. Nothing is delivered, exported
+or collected externally.
+
+### Authorization and exclusions
+
+The authorization, model selection and budget are application-owned and fixed
+inside `console_live.py`; the submitted text is the only input. There are no
+deadline, step, budget, provider, model or delivery controls in this section.
+The receipts remain classified `synthetic_offline` by the accepted canonical
+service itself. No real live execution control, host execution, delivery,
+trace export, credential handling or raw SDK metric dump was added.
+
+### Boundary
+
+`LiveRequest` validates the submitted text before any process is created;
+`ConsoleSession.run_live` shares the single session admission lock, keeps at
+most eight temporary `LiveRun` views, and raises the same sanitized request,
+busy and fault error types as the other sections. The service calls the
+accepted `execute_canonical_workflow`, revalidates the synthetic receipt and
+terminal observation, and projects the terminal observation through the
+accepted Slice 2, Slice 3 and Slice 4 boundaries only after the run returned.
+Correlation across receipt, failure, terminal and events is validated; forged
+or corrupted views are not renderable. `app.py` presents the curated view only.
+
+### Validation record
+
+- `ruff check` passes on the changed files; `compileall` passes.
+- New console live suite: **28 passed** (`tests/test_console_live.py`,
+  counted with parameters), including two real supervised child-process runs
+  under the existing non-loopback guard, injection attacks, forged commands
+  and views, refusal before any execution, sanitized failure/cancel/fault
+  paths, admission sharing, projection-failure isolation and page tests with
+  runs through the real Streamlit UI. No existing test was changed.
+- First cold runs on a cold file cache may expire the honest 30,000 ms run
+  deadline while the child process warms up; the guarded bounded helper makes
+  up to four attempts (asserting any interim outcome is only the honest
+  timed-out boundary) and the page guidance says to retry manually.
+- Not verified: a human browser session against the launched server; that
+  remains a separate closeout action.

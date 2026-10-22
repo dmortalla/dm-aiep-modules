@@ -10,6 +10,7 @@ from multi_agent_orchestration.console import (
     ScalingProfile,
     age_seconds,
     failure_message,
+    failure_text,
     guidance,
     scaling_guidance,
 )
@@ -217,6 +218,198 @@ else:
     )
 
 with st.container(border=True):
+    st.subheader("Canonical live workflow (synthetic)")
+    st.caption(
+        "Purpose: runs the accepted canonical workflow (researcher, analyst and "
+        "critic, with bounded repair) through the supervised live process path, "
+        "with a fixed synthetic gateway."
+    )
+    st.caption(
+        "Action: submit nonblank task text of at most 4,096 characters and select "
+        "the run control. Authorization and budget are application-owned and "
+        "fixed; the supplied text is never echoed back. A first run may hit the "
+        "run deadline while the local child process warms up; retry manually."
+    )
+    st.caption(
+        "Expected result: a synthetic offline receipt with validated role "
+        "content, per-role accounting, and local observation projections; or a "
+        "fixed sanitized failure. No automatic retry."
+    )
+    st.caption(
+        "What it proves: validated role content, repair, usage accounting and "
+        "live observation through the accepted canonical boundary, without any "
+        "model or LLM inference."
+    )
+    st.caption(
+        "What it does not prove: live inference, hosted execution, remote "
+        "delivery, or that the synthetic content reflects any model's reasoning. "
+        "No trace delivery or credential handling occurs here."
+    )
+    live_text = st.text_area(
+        "Live task text",
+        key="live_text",
+        help=(
+            "Use non-sensitive sample text of at most 4,096 characters. It is "
+            "never echoed in results, observations or telemetry."
+        ),
+    )
+    live_rejected = False
+    if st.button(
+        "Run live workflow demonstration",
+        key="run_live",
+        icon=":material/bolt:",
+    ):
+        with st.spinner("Running the bounded canonical live workflow…"):
+            try:
+                console.run_live({"instruction": live_text})
+                st.session_state["recent_live"] = len(console.live_runs) - 1
+            except ConsoleRequestError:
+                live_rejected = True
+                st.error(
+                    "Nothing ran. Submit nonblank text of at most 4,096 "
+                    "characters without invalid surrogate sequences."
+                )
+            except ConsoleBusyError:
+                live_rejected = True
+                st.warning(
+                    "Nothing ran. Wait for the current run in this session to "
+                    "finish."
+                )
+            except ConsoleFaultError:
+                live_rejected = True
+                st.error(
+                    "The live demonstration ended without a recordable result. "
+                    "No automatic fallback or retry ran."
+                )
+    live_runs = console.live_runs
+    if live_runs and live_rejected:
+        st.caption(
+            "This submission produced no live run. Earlier live runs are "
+            "retained and reappear on the next interaction."
+        )
+    elif live_runs:
+        chosen_live = st.selectbox(
+            "Recent live run",
+            tuple(reversed(range(len(live_runs)))),
+            format_func=lambda index: (
+                f"{live_runs[index].outcome.value} · "
+                + (
+                    live_runs[index].terminal.span_id[:8]
+                    if live_runs[index].terminal
+                    else "no-observation"
+                )
+            ),
+            key="recent_live",
+        )
+        if type(chosen_live) is not int or not 0 <= chosen_live < len(live_runs):
+            st.error("Choose a valid recent live run.")
+            st.stop()
+        run = live_runs[chosen_live]
+        age = age_seconds(run)
+        st.caption(
+            f"Snapshot age: {age} s. {'Stale' if age > 60 else 'Recent'}; "
+            "refresh does not execute."
+        )
+        if run.receipt is not None:
+            st.success(
+                "Synthetic canonical run completed; receipt classified "
+                f"{run.receipt.evidence_source.value} (synthetic gateway; no "
+                "inference ran)."
+            )
+            st.caption(
+                "Role content below is unverified model-shaped synthetic text "
+                "produced by the demo gateway, never a claim of model reasoning."
+            )
+            content = run.receipt.result
+            st.text(f"Research findings: {'; '.join(content.research.findings)}")
+            st.text(f"Assessment: {content.analysis.assessment}")
+            st.text(
+                "Support witnesses: "
+                + ", ".join(str(item) for item in content.analysis.supports)
+            )
+            st.text(f"Advisory verdict: {content.critique.advisory_verdict}")
+            st.text(f"Advisory rationale: {content.critique.rationale}")
+            accounting = content.evidence.accounting
+            with st.container(horizontal=True):
+                st.metric("Model calls", accounting.model_calls, border=True)
+                st.metric("Repair attempts", accounting.repair_attempts, border=True)
+                st.metric(
+                    "Input tokens",
+                    (
+                        accounting.usage.input_tokens
+                        if accounting.usage.input_tokens is not None
+                        else "Unavailable"
+                    ),
+                    border=True,
+                )
+                st.metric(
+                    "Output tokens",
+                    (
+                        accounting.usage.output_tokens
+                        if accounting.usage.output_tokens is not None
+                        else "Unavailable"
+                    ),
+                    border=True,
+                )
+                st.metric(
+                    "Transport retries", accounting.transport_retries, border=True
+                )
+        elif run.failure is not None:
+            st.error(failure_text(run.failure.category))
+        else:
+            st.warning(failure_message(run.outcome))
+        if run.terminal is not None:
+            st.subheader("Curated live observation")
+            st.caption(f"Local observation: {run.observation}.")
+            st.text(
+                f"Local trace: {run.terminal.trace_id}\n"
+                f"Root span: {run.terminal.span_id}"
+            )
+            if run.terminal.roles:
+                st.table(
+                    [
+                        {
+                            "Validated role": row.role.value,
+                            "Order": row.sequence,
+                            "Local span": row.span_id,
+                            "Model calls": row.model_calls,
+                            "Repair attempts": row.repair_attempts,
+                        }
+                        for row in run.terminal.roles
+                    ]
+                )
+            st.caption(
+                "Role rows record validated completion instants, not role "
+                "latency. Timing is descriptive, never a capacity claim."
+            )
+        if run.events:
+            st.caption("Observation events (bounded local retention):")
+
+            def live_event(event):
+                if (
+                    event.role is None
+                    or event.model_calls is None
+                    or event.repair_attempts is None
+                ):
+                    return event.phase
+                return (
+                    f"{event.phase}({event.role.value}, "
+                    f"calls {event.model_calls}, repairs {event.repair_attempts})"
+                )
+
+            st.text(" → ".join(live_event(event) for event in run.events))
+        st.caption(
+            "Post-run projections from the terminal observation — LangSmith: "
+            f"{run.langsmith} · local OpenTelemetry: {run.otel} · local metric "
+            f"window: {run.metrics}. No delivery, export or external "
+            "collection occurred."
+        )
+    else:
+        st.caption(
+            "No live run yet. Submitting text or refreshing never executes."
+        )
+
+with st.container(border=True):
     st.subheader("Local scaling benchmark")
     for label, text in scaling_guidance():
         st.caption(f"{label}: {text}")
@@ -328,7 +521,10 @@ with st.expander("How to review these demonstrations", expanded=True):
         "4. Run local distribution to inspect two independent worker PIDs "
         "and managed cleanup.\n"
         "5. Run the local scaling benchmark to compare admission caps on "
-        "this machine."
+        "this machine.\n"
+        "6. Run the canonical live workflow demonstration: it validates role "
+        "content, accounting and observation through the synthetic gateway "
+        "without inference."
     )
     st.table(
         [
