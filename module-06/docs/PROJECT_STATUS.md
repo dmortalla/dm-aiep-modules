@@ -84,6 +84,34 @@ readiness/verification, deployment acceptance, hosted-provider verification,
 portability, release acceptance, M6-014 closure, or Module 6 completion.
 M6-014 remains Planned.
 
+## Local Operational-Telemetry Pipeline Verification (2026-10-23)
+
+One explicitly human-authorized deterministic telemetry execution of the
+committed operator command
+(`uv run --locked --offline python module-06/run_telemetry.py --deliver --runs 14 --verify`)
+delivered Module 6 application telemetry end-to-end through the local
+containerized stack — OTLP/HTTP loopback (`127.0.0.1:4318`) ->
+OpenTelemetry Collector -> Prometheus -> Grafana: 14/14 workflows started and
+finished (12 completed, 2 denied), 6 exports accepted and 0 failed, Prometheus
+finished-workflow total 14.0, all three alert rules loaded, Grafana healthy
+with the `module6-operations` dashboard provisioned, Grafana datasource total
+14.0, and pipeline verification passed. Classification: authorized
+deterministic local operational-telemetry pipeline verification. Delivery was
+explicit operator-selected loopback delivery; environment variables,
+workflow/model output, credentials and untrusted runtime data did not
+authorize or select delivery, and no reusable authority was created. Claim
+boundaries: not production deployment, hosted/cloud or Internet-accessible
+observability, production reliability, SLA/SLO or statistical evidence,
+live-model execution, LangSmith delivery or externally delivered telemetry;
+no portability proof; not Module 6 completion or release acceptance.
+Portfolio significance, accurately bounded: Module 6 includes a
+containerized operational-observability stack (OpenTelemetry Collector,
+Prometheus, Grafana) verified end-to-end locally; this is intended to be
+surfaced prominently in later module/root GitHub presentation, the
+reviewer-facing Streamlit experience and eventual recruiter-facing closeout —
+without premature deployment claims. Requirement statuses are administratively
+Planned until final reconciliation and were not advanced by this event.
+
 ## Dependency Foundation
 
 The separately human-approved dependency milestone integrates the seven direct

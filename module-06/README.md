@@ -68,6 +68,13 @@ confirmation; authority-consumption operator-attested and not independently
 confirmed — see docs/CANONICAL_LIVE_WORKFLOW.md), so four recorded real runs
 is a floor, not a proven total.
 
+The observability side is verified end-to-end locally too: one authorized
+deterministic run delivered application telemetry through OTLP/HTTP loopback
+into an OpenTelemetry Collector, Prometheus (storage, 3 loaded alert rules)
+and a provisioned Grafana dashboard, with the pipeline verification passing
+([details](docs/OPERATIONAL_TELEMETRY.md)). This is local verification of a
+loopback-only stack, not hosted or production observability.
+
 The console also has a separate **canonical live workflow (synthetic)**
 demonstration: it runs the accepted canonical workflow through the supervised
 live process path with a fixed module-level synthetic gateway, so no real

@@ -252,6 +252,62 @@ Image pulls from Docker Hub were infrastructure set-up traffic. No model,
 provider, paid or remote telemetry call was made; all delivered runs report
 zero model calls.
 
+### Authorized deterministic pipeline verification (2026-10-23)
+
+Classification: **authorized deterministic local operational-telemetry
+pipeline verification.** One explicitly human-authorized execution of the
+committed operator path
+`uv run --locked --offline python module-06/run_telemetry.py --deliver --runs 14 --verify`
+delivered the deterministic Module 6 telemetry through OTLP/HTTP to the local
+containerized stack only. Authorization boundary: loopback OTLP/HTTP to
+`http://127.0.0.1:4318/v1/metrics` only; Collector -> Prometheus -> Grafana
+only; no LLM/model inference, no Ollama operation, no LangSmith operation; no
+Internet/external telemetry; no credentials; no repository mutation; no
+configuration, container or image changes; read-only Prometheus and Grafana
+verification; no automatic second telemetry run. The authorization was
+consumed by this single invocation.
+
+Observed result: workflows started 14, finished 14 (completed 12, denied 2);
+exports accepted 6, failed 0; final export accepted: true; Prometheus
+finished-workflow total 14.0; alert rules loaded 3 of 3; Grafana healthy with
+the dashboard provisioned; Grafana datasource query total 14.0; end-to-end
+pipeline verification: **passed** (dashboard
+`http://127.0.0.1:3000/d/module6-operations`).
+
+Post-delivery: the stack remained running on its loopback ports (Collector
+4318; Prometheus 9090, healthy; Grafana 3000); the repository HEAD remained
+unchanged and clean; no model inference was requested; no Ollama or LangSmith
+operation was requested; no second telemetry invocation was performed.
+
+Established, for this verification: the Collector accepted the application
+telemetry path; Prometheus stored and query-exposed the resulting
+finished-workflow metric; all three configured Prometheus alert rules were
+loaded; Grafana was healthy; the Module 6 Grafana dashboard was provisioned;
+Grafana's configured Prometheus datasource returned the expected total of 14.
+Delivery was explicit operator-selected loopback delivery; environment
+variables, workflow or model output, credentials and untrusted runtime data
+did not authorize or select delivery. No reusable authority is created from
+the consumed allocation.
+
+Claim boundaries, preserved: this record is exactly one bounded local
+deterministic verification. It is not production deployment, hosted or cloud
+observability, an Internet-accessible Grafana/Prometheus, production
+reliability, SLA/SLO attainment, percentile or statistical reliability
+evidence, live-model execution, LangSmith delivery, or externally delivered
+telemetry; it proves no general portability, Module 6 completion, or release
+acceptance. Export-count differences from the 2026-10-12 first integration
+run reflect each recorded run's own delivery accounting; no prior
+observation is rewritten by this record.
+
+Portfolio significance: Module 6 includes a containerized
+operational-observability stack — application telemetry over OTLP/HTTP into
+OpenTelemetry Collector, Prometheus storage and rules, Grafana dashboards —
+and this local pipeline is now operationally verified end-to-end. This
+capability is intended to be surfaced prominently in later module/root
+GitHub presentation, reviewer-facing Streamlit experience and
+recruiter-facing closeout material; no premature deployment claim is made
+by this record.
+
 ### Gates
 
 - `ruff check .` passes. Ruff formatting was applied only to the three new

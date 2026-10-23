@@ -37,7 +37,7 @@ All 26 source meanings and Planned statuses remain unchanged.
 | M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
 | M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; accepted current-path external sanitized-trace delivery (2026-10-22); one recorded live-model projection and live-family delivery (`unverified_write`, 2026-10-22; authority-consumption operator-attested); live-model correlation unverified |
 | M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
-| M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection; live trace delivery and hosted backend unverified |
+| M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection with the end-to-end local pipeline verified (2026-10-23); live trace delivery and hosted backend unverified |
 | M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; opt-in bounded local benchmark at caps 1/2/4; queue/utilisation metrics not implemented | Bounded labels verified; cap, integrity and cleanup invariants; no timing assertion | Partial local metrics, Grafana dashboard and one local benchmark run; sustained load, capacity and curated scale view pending |
 | M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
 | M6-019 | Cost optimisation | Planned | Bounded telemetry resources; validated zero-call or unavailable accounting | No invented tokens/prices/billing; credential non-authorization and bounds | Partial offline governance; live optimisation/pricing/console unverified |
@@ -286,6 +286,25 @@ observation and console source/tests, dependencies and Modules 1-5 are unchanged
 M6-014 is unchanged: LangSmith evidence remains offline SDK only. All 26 IDs,
 source meanings and Planned statuses remain unchanged. A local Docker
 verification is not hosted or production evidence.
+
+**Authorized deterministic pipeline verification (2026-10-23).** One
+explicitly human-authorized execution of the committed operator command
+`run_telemetry.py --deliver --runs 14 --verify` delivered the deterministic
+Module 6 telemetry end-to-end through the local containerized stack:
+application telemetry -> OTLP/HTTP (`http://127.0.0.1:4318/v1/metrics`,
+loopback only) -> OpenTelemetry Collector -> Prometheus -> Grafana; 14/14
+workflows started and finished (12 completed, 2 denied), 6 exports accepted
+and 0 failed, Prometheus finished-workflow total 14.0, 3 of 3 alert rules
+loaded, Grafana healthy with the dashboard provisioned, Grafana datasource
+total 14.0, and end-to-end pipeline verification passed. Delivery was
+explicit operator-selected loopback delivery; environment variables,
+workflow/model output, credentials and untrusted runtime data did not
+authorize or select it. Classification: authorized deterministic local
+operational-telemetry pipeline verification — not hosted or production
+evidence, not live-model or LangSmith or Internet-delivered telemetry. The
+full record lives in [Operational Telemetry](OPERATIONAL_TELEMETRY.md).
+This is an increment of the partial evidence below; statuses remain
+unchanged.
 
 ## Local Scaling Benchmark Evidence (Partial)
 
