@@ -600,3 +600,41 @@ require fresh HITL for any further attempt. Run 2's numeric budget was never
 recorded and remains permanently unreconstructable; its ~49.8 s aggregate
 remains valid while its per-call split is unknown. These limitations are
 what force the explicit deviation/HITL and recalibration rules in ADR-008.
+
+
+## Run 4: Authorized current-path real-local verification
+
+**Evidence classification:** Authorized current-path real-local verification.
+
+Run 4 was one explicitly human-authorized canonical real-local execution on commit `be1edd50e73af12646f48d894bf511800b0030bf` using local Ollama 0.40.8 and `qwen2.5-coder:7b` (observed digest prefix `dae161e27b0e`). The authorization was consumed by this single attempt; no automatic rerun occurred.
+
+| Evidence field | Run 4 observation |
+| --- | --- |
+| Workflow | LangGraph Researcher -> Analyst -> Critic |
+| Terminal outcome | `completed` |
+| Human authorization | Explicit in-session one-shot human authorization on 2026-10-22; no separate repository-persisted authorization artifact/reference |
+| `within_human_authorization` | `true` |
+| Policy classification | NORMAL real-local profile |
+| Deadline | 200,000 ms |
+| Per-call timeout | 45,000 ms |
+| Maximum / actual model calls | 4 / 3 |
+| Maximum / actual repairs | 1 / 0 |
+| Transport retries | 0 |
+| Maximum concurrency | 1 |
+| Content bounds | 4,096 input chars / 4,096 output tokens / 16,000 reply bytes |
+| Result duration | 48,407 ms |
+| Approximate role segments | Researcher 23.11 s / Analyst 12.37 s / Critic 12.61 s |
+| Token accounting | 1,104 input / 145 output |
+| Role validation | Researcher, Analyst, and Critic validated on first call |
+| Prose completeness | Passed for all three role outputs |
+| Worker cleanup | `reaped` |
+| Terminal observation | `recorded` / trusted local-provider evidence |
+| Local LangSmith projection | `recorded`; no external delivery |
+| Local OTel trace projection | `recorded`; no external delivery |
+| Local operational metrics | `recorded`; no external delivery |
+| Provider charge classification | `no_provider_charge_local_compute` |
+| Repository integrity | At execution completion, HEAD unchanged; working tree and index clean |
+
+The executed budget exactly matched `NORMAL_REAL_LOCAL_BUDGET`. Runtime/schema compliance is recorded separately from human authority: human authorization was established by the explicit pre-run one-shot authorization, not inferred from successful execution or budget validation.
+
+This evidence does **not** establish production, deployment, hosted-provider, external-observability, reliability/SLA, portability, release, or Module 6 completion claims. Observations remain sparse (three real runs total and two with per-segment timing), Ollama versions differ across runs, the live repair path remains unexercised, and structural/bounds/prose validation is not proof of semantic correctness.
