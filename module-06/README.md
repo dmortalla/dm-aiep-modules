@@ -52,7 +52,15 @@ After the structured-output remediation, a second authorized run completed one
 bounded real Researcher → Analyst → Critic execution (3 calls, 0 repairs,
 0 retries). Its Analyst assessment reached the 400-character maximum and
 appeared incomplete (cause unproven), so an offline prose-completeness candidate
-follows; that candidate is **not yet live-verified**.
+follows; that candidate is exercised by the third run but its acceptance is a
+separate review decision. A third run completed the workflow (3 calls,
+0 repairs, 64,531 ms) on schema-valid 300,000/120,000 ms bounds whose human
+authorization is not established by accepted evidence; it is retained as a
+factual timing observation only and is classified permanently out-of-policy
+per [ADR-008](docs/adr/008-real-local-canonical-budget-profile.md), whose
+named `NORMAL_REAL_LOCAL_BUDGET` profile (200,000 ms workflow / 45,000 ms
+per call, 4,096/4,096/16,000 content ceilings) is policy data that
+authorizes nothing; every real run still needs fresh explicit HITL.
 
 The console also has a separate **canonical live workflow (synthetic)**
 demonstration: it runs the accepted canonical workflow through the supervised

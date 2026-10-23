@@ -359,10 +359,11 @@ punctuation is repairable through the existing single global repair.
    validator enforces it, and the schema maxima and provider `format` schema are
    unchanged.
 
-**This candidate is offline only and has not been live-verified. No third live
-run has occurred.** All M6-001 through M6-026 statuses remain Planned. Any
-further live run requires independent offline acceptance of this candidate and
-fresh HITL.
+**This candidate was offline at acceptance and has since been exercised live
+once, in the out-of-policy Run 3 recorded below: all three prose roles passed
+the invariant on their first real calls.** All M6-001 through M6-026 statuses
+remain Planned. Any further live run requires fresh HITL under the ADR-008
+deviation policy.
 
 ## Slice 1: application-owned live observation foundation
 
@@ -427,8 +428,8 @@ Injected gateways remain `synthetic_offline`, regardless of selection strings.
 
 This foundation does **not** provide LangSmith live RunTree construction/delivery,
 OTel live projection or Streamlit live mode. Those are later integration slices.
-There was no third live run. Run 2 remains **LIVE SUCCESS**. The committed
-prose-completeness hardening remains **not live verified**. All M6-001 through
+Run 2 remains **LIVE SUCCESS**; the out-of-policy Run 3 below has since
+completed the workflow on this path. All M6-001 through
 M6-026 remain **Planned**. Architecture B+ and dependency files are unchanged.
 No end-to-end observability, independent acceptance, release or deployment
 readiness is claimed.
@@ -493,3 +494,109 @@ cleanup and local observation isolation tested; Security—closed payload-free
 projection and authority/correlation controls tested; Cost—zero added inference,
 no billable verification; Evidence—offline gates passed, independent/live
 acceptance pending; Deployment—unchanged and unverified by this slice.
+
+## NORMAL budget profile (ADR-008) and evidence-ledger protocol
+
+[ADR-008](adr/008-real-local-canonical-budget-profile.md), human-approved on
+2026-10-22, records the named NORMAL budget profile for this canonical
+real-local workflow, instance `NORMAL_REAL_LOCAL_BUDGET`: a 200,000 ms
+workflow deadline, 45,000 ms per-call timeout, three planned calls, at most
+one repair, zero retries and concurrency 1, with the accepted real-local
+contract content ceilings unchanged: 4,096-character task text, 4,096-token
+provider output limit and a 16,000-byte reply bound. With the output limit at
+the contract ceiling, a verbose but schema-valid reply is judged by the
+accepted repairable `malformed_output` taxonomy instead of being forced
+prematurely into the non-repairable provider-length `output_too_large`
+classification; only genuine overshoot of 4,096 tokens or 16,000 bytes stays
+closed. The profile is immutable `LiveBudget` data in
+`../src/multi_agent_orchestration/live_policy.py`, is imported by no
+execution path, and is strictly separate from execution authority: every real
+run still requires fresh explicit HITL and explicit `LiveAuthorization`
+construction with every budget value stated. The generic 300,000 ms schema
+ceiling remains provisional and unchanged, the synthetic console authority
+remains 30,000 ms / 5,000 ms with its own separate content envelope, and
+timeout remains fail-closed — a timed-out run is never retried or rerun
+automatically; another attempt consumes fresh authorization. Deviations from
+NORMAL need fresh explicit HITL for that deviation.
+
+Future real-local runs must produce a complete evidence-ledger record that
+represents, separately and with nothing left to reconstruction:
+
+1. **Runtime/schema validity** of the supplied budget pair.
+2. **Execution consistency**: completion within the actually supplied runtime
+   values; actual total duration; calls; repairs; retries; token accounting;
+   cleanup/reaped state; per-segment role timing where observable.
+3. **Human-authorized budget**: the complete `LiveBudget` the human
+   authorized, with the HITL authorization reference/date; if the authorized
+   values cannot be established, the record says so instead of inferring them.
+4. **Actually-used budget**: the complete `LiveBudget` the runtime enforced
+   (identical to the supplied one; recorded explicitly).
+5. **Human-authorization match**: a `within_human_authorization` verdict —
+   `true`, `false` or `unverified` — with the reason when negative or
+   unverified. Runtime budget compliance is never substituted for this
+   verdict.
+6. **Policy classification**: `authorized_live_success`,
+   `out_of_policy_observation`, or a NORMAL-deviation label when applicable.
+
+Runtime/provider version, model identifier and local projection statuses
+round out the record. Sensitive recording stays excluded: no prompts, raw
+replies, credentials, provider diagnostics or payloads. This ledger lives
+here rather than in the runtime schema because the accepted live contracts
+are frozen evidence planes, while HITL references, version strings and ledger
+classifications are authority/documentation metadata, not runtime-produced
+data.
+
+## Run 3: out-of-policy real-local technical observation
+
+Run 3 was performed under an instruction to execute one bounded real-local
+canonical run, but the accepted evidence does **not** establish that its
+supplied bounds were themselves human-authorized. Its record is separated
+below into runtime validity, execution consistency, human authorization and
+later NORMAL comparison. The runtime was local Ollama 0.40.7 with the exact
+`qwen2.5-coder:7b`.
+
+**A. Runtime/schema validity.** The actually supplied runtime pair was
+300,000 ms / 120,000 ms. That pair is schema-valid (`LiveBudget` bounds).
+
+**B. Execution consistency.** The run completed within those supplied values:
+one bounded Researcher → Analyst → Critic execution on the committed path;
+live record `612ab93b-368f-4775-af2b-ec2338c48bf6`; every role validated on
+its first call; 3 real calls, 0 repairs, 0 retries, 1,051 input and 107
+output tokens (`no_provider_charge_local_compute`); 64,531 ms result
+duration and ~65,125 ms terminal-record duration; worker `reaped`; local
+LangSmith, OTel and metric projections all `recorded` with observation
+`local`; no external delivery, credential access or hosted provider contact;
+repository unchanged.
+
+**C. Human authorization.** The human authorization used to justify the run
+did not state numeric deadline or per-call values; the operator applied
+300,000/120,000 ms as an interpretation. Human authorization of exactly
+those numeric values before Run 3 is **not established** by the available
+accepted evidence; there is no invented authorization reference or date, and
+none is constructed. `within_human_authorization: unverified`. Runtime and
+schema budget compliance (A/B) is **not** proof of human authorization, and
+the forensic conclusion stands: Run 3 cannot be accepted as an authorized
+live success.
+
+**D. Later NORMAL policy.** Under ADR-008, Run 3 is outside NORMAL because
+300,000 ms > 200,000 ms and 120,000 ms > 45,000 ms.
+
+Classification, unchanged: factual real-local technical observation;
+`out_of_policy_observation`; not retroactively authorized; not an authorized
+live success; no requirement or acceptance advancement. The run is retained
+as valid factual evidence whose calibration measurements informed the NORMAL
+sizing, as the human-approved derivation itself records. No percentile, SLA
+or reliability claim is made; n = 2 real workflow runs and only n = 1 with
+per-segment timing.
+
+Corrected derivation note (supersedes the raw segment reading): the
+38,622 ms per-call floor included child spawn outside `call_timeout_ms`; the
+single observed in-scope call floor is approximately 37.6 s, and the NORMAL
+45,000 ms call bound therefore provides approximately 19.6% headroom over
+that one in-scope observation. That headroom does not cover the ~31.6%
+aggregate cross-run token-rate difference (37.6 × 1.316 ≈ 49.5 s > 45 s); a
+sufficiently slower future cold call may honestly time out, fail closed and
+require fresh HITL for any further attempt. Run 2's numeric budget was never
+recorded and remains permanently unreconstructable; its ~49.8 s aggregate
+remains valid while its per-call split is unknown. These limitations are
+what force the explicit deviation/HITL and recalibration rules in ADR-008.

@@ -332,7 +332,11 @@ in-memory doubles. No accepted source or test file was changed.
 - Ollama compatibility, token-usage reporting, structured-output support,
   model quality, pricing and hosted support are unverified and not claimed.
 - The 300,000 ms deadline ceiling and the content length bounds are provisional
-  engineering limits, to be confirmed against an authorized measurement.
+  engineering limits, to be confirmed against an authorized measurement. The
+  approved `NORMAL_REAL_LOCAL_BUDGET` profile
+  [ADR-008](adr/008-real-local-canonical-budget-profile.md)
+  is a named per-policy configuration, not a default: real runs still require
+  fresh explicit HITL and explicit authorization.
 - The contracts state what a gateway must not do. The follow-on
   [runtime candidate](LIVE_RUNTIME_ENFORCEMENT.md) implements call/deadline
   enforcement with synthetic gateways; actual inference remains future work.

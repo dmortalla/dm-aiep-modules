@@ -399,3 +399,31 @@ hosted inference, live Streamlit path, dependency or other module is added or
 modified. All 26 source IDs, meanings and Planned statuses remain unchanged;
 independent runtime acceptance and actual model compatibility/inference remain
 future work.
+
+## Real-Local Budget Policy (ADR-008) and Run 3 Record
+
+[ADR-008](adr/008-real-local-canonical-budget-profile.md) records the
+human-approved named NORMAL budget profile for the canonical real-local
+workflow: 200,000 ms workflow deadline, 45,000 ms per-call timeout,
+4 × 45,000 + 20,000 structural coverage, three planned calls, at most one
+repair, zero retries, concurrency 1, and the accepted real-local contract
+content ceilings 4,096/4,096/16,000. The profile instance is
+`NORMAL_REAL_LOCAL_BUDGET`; it is immutable `LiveBudget` data in
+`../src/multi_agent_orchestration/live_policy.py`, pinned by
+`test_live_policy.py` (13 cases). It contains no `ModelSelection`, never
+instantiates or returns `LiveAuthorization`, and is imported by no execution
+path: policy configuration remains strictly separate from the required fresh
+explicit HITL authorization. The generic 300,000 ms ceiling remains a
+provisional schema bound, not a default; the synthetic console authority
+remains 30,000/5,000 ms with its own separate content envelope; timeout
+remains fail-closed with no automatic rerun.
+
+Run 3 is recorded as a real-local technical timing observation and is
+classified permanently **out-of-policy**: it used schema-valid
+300,000/120,000 ms bounds, the human authorization of those specific numeric
+values is **unverified**, and it is not retroactively authorized or accepted
+as an authorized live success. [Canonical live workflow](CANONICAL_LIVE_WORKFLOW.md) carries its
+evidence-ledger record, the corrected 37.6 s in-scope per-call floor and the
+evidence-protocol requirements for future real-local runs. This is
+policy/evidence documentation only; no requirement status advances and no
+live execution is authorized.

@@ -10,7 +10,14 @@ B+ decisions remain unchanged; historical ADRs retain the original decisions.
 The human-approved live gateway supervision boundary is recorded in
 [ADR-007](adr/007-supervised-model-gateway-execution.md). It preserves application
 runtime ownership and does not establish actual model execution or production
-readiness.
+readiness. The human-approved named NORMAL real-local budget profile
+(`NORMAL_REAL_LOCAL_BUDGET`) is
+recorded in
+[ADR-008](adr/008-real-local-canonical-budget-profile.md); it is policy
+configuration only and creates no execution authority: every real live run
+still requires fresh explicit HITL and explicit authorization. The generic
+300,000 ms schema ceiling and the synthetic console authority remain
+unchanged.
 
 Material changes to trust boundaries, source coverage, runtime ownership,
 security posture, or cost exposure require explicit human review and an ADR.

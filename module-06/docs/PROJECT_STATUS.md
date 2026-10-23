@@ -14,6 +14,7 @@
 | Required deliverables | 0 / 2 complete |
 | Runtime targets | LangGraph, CrewAI, Google ADK |
 | AI tracing | LangSmith |
+| Execution budget policy | ADR-008 NORMAL named profile (policy data only; separate from execution authority) |
 | Operational telemetry | OpenTelemetry instrumentation and Collector/compatible collection boundary |
 | Operational metrics backend | Prometheus |
 | Operations dashboard | Grafana specialist dashboards, PromQL exploration, and alerting |
@@ -29,6 +30,29 @@ Streamlit observation decision. Architecture B+ otherwise remains frozen.
 ADRs 001–005 and all 26 source requirement IDs are unchanged. This is
 documentation only; no integration, live delivery, deployment, or production
 readiness is claimed.
+
+## Real-Local Budget Profile and Run 3 Classification
+
+[ADR-008](adr/008-real-local-canonical-budget-profile.md), human-approved on
+2026-10-22, records the named NORMAL budget profile (`NORMAL_REAL_LOCAL_BUDGET`)
+for the canonical real-local workflow: a 200,000 ms workflow deadline and
+45,000 ms per-call timeout, four-call structural coverage with a 20,000 ms
+fixed allowance, three planned calls, at most one repair, zero retries and
+concurrency 1, with the accepted real-local contract content ceilings
+(4,096 / 4,096 / 16,000). The profile is immutable `LiveBudget` data in
+`live_policy.py` and is strictly separate from execution authority: no
+default or factory-made `LiveAuthorization` exists and every real run still
+requires fresh explicit HITL and explicit authorization. The generic
+300,000 ms schema ceiling remains provisional and unchanged; the synthetic
+console authority remains 30,000 ms / 5,000 ms with its own separate content
+envelope; timeout stays fail-closed and never reruns automatically.
+
+Run 3 is retained only as a real-local technical timing observation and is
+classified permanently **out-of-policy**: it used schema-valid
+300,000/120,000 ms bounds whose human authorization is not established by
+accepted evidence, and it is not retroactively authorized or accepted as an
+authorized live success. This is governance/policy work; no requirement
+status changes and no live execution is authorized by ADR-008.
 
 ## Dependency Foundation
 
