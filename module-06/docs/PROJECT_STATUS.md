@@ -352,7 +352,7 @@ this story. Remaining closeout actions: the separately authorized live LangSmith
 verification, human browser review of the console, the documentation-only status
 transition, and release.
 
-## Opt-In LangSmith Trace Delivery (Live Delivery Confirmed, Acceptance Pending)
+## Opt-In LangSmith Trace Delivery (Live Delivery Confirmed; Current-Path Verification Accepted)
 
 The console presentation above was independently accepted. On explicit human
 authorization of 2026-10-13, [LangSmith Delivery](LANGSMITH_DELIVERY.md) adds the
@@ -388,8 +388,32 @@ led to the credential being checked. Independent acceptance then found the
 receipt counting responses instead of request attempts; it now reads the
 session's attempt counter. 510 offline tests exist: Module 6 pytest
 1304 passed; root 3419 passed and 6 skipped. M6-014 is unchanged and all 26
-requirements remain Planned until independent acceptance and the separate status
-transition. Any further external request needs new human authorization.
+requirements remain Planned until the separate status transition. Any further
+external request needs new human authorization.
+
+**Current-path external delivery verification accepted on 2026-10-22.** One
+explicitly human-authorized delivery attempt sent the deterministic sanitized
+trace through the committed
+[LangSmith Delivery](LANGSMITH_DELIVERY.md) path (deterministic trace only; no
+model inference; no automatic write retry or rerun; no repository modification
+during execution; no other external delivery; credential value neither
+displayed nor recorded). The observed receipt: destination
+`https://api.smith.langchain.com`, project `module6-verification`, one write
+along `POST /runs/batch`, trace `01a166fa-1c8d-7b40-9686-a08cfd14444f`, 202,
+4 runs accepted, `service_read` confirmation with the delivered root run
+returned, 2 read attempts, 3 requests, no read failure. The sanitized receipt
+is preserved in the external artifact
+`module-06-langsmith-current-path-delivery.txt` (SHA-256
+`ED84729B851E875669597A1F7A0195A50DA61ED8EA66FEE88AAFD3126FD828D0`, verified
+at capture time by the artifact holder, held outside this workspace); the
+implementing and reviewing agent sessions did not independently observe the
+external service response — the human operator observed the execution. The
+independent Reviewer verdict was **ACCEPT** for the narrow
+`current-path external LangSmith delivery verification` classification. This
+event does not prove live-model LangSmith correlation, hosted-model execution,
+production/deployment readiness, reliability/SLA, or Module 6 completion, and
+does not close live-model tracing or M6-014, which remains Planned; no
+NORMAL-profile, Ollama or other real-local run facts belong to this event.
 
 ## Live-Model Slice, Story 1: Typed Safety Envelope (Acceptance Pending)
 

@@ -35,7 +35,7 @@ All 26 source meanings and Planned statuses remain unchanged.
 | M6-011 | CrewAI | Planned | Real Crew/Task scheduling with deterministic BaseAgent roles | Real kickoff/scheduler/task spies and child execution | Offline orchestration, no AI inference; acceptance pending |
 | M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
 | M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
-| M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; live trace delivery unverified |
+| M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; accepted current-path external sanitized-trace delivery (2026-10-22); live-model correlation unverified |
 | M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
 | M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection; live trace delivery and hosted backend unverified |
 | M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; opt-in bounded local benchmark at caps 1/2/4; queue/utilisation metrics not implemented | Bounded labels verified; cap, integrity and cleanup invariants; no timing assertion | Partial local metrics, Grafana dashboard and one local benchmark run; sustained load, capacity and curated scale view pending |
@@ -333,20 +333,34 @@ model or LLM inference runs, and that no LangSmith trace has been delivered. All
 26 IDs, source meanings and Planned statuses remain unchanged; status transition
 is a separate closeout action.
 
-## Opt-In LangSmith Delivery Evidence (Live Delivery Confirmed, Acceptance Pending)
+## Opt-In LangSmith Delivery Evidence (Current-Path Verification Accepted)
 
 [LangSmith Delivery](LANGSMITH_DELIVERY.md) records `langsmith_delivery.py`,
 `run_langsmith.py` and `tests/test_langsmith_delivery.py`. Offline tests and live
 delivery are separate evidence classes. **One live delivery was confirmed on
 2026-10-13**, run by the human: the batch was accepted with HTTP 202 and the
 root run was read back. Four earlier attempts failed because the credential
-variable held a single pasted control character. That evidence awaits
-independent acceptance. The accepted offline adapter, runtime, observation and console
+variable held a single pasted control character; that 2026-10-13 event itself
+remains independently unaccepted. **One current-path external delivery
+verification was independently reviewed and accepted on 2026-10-22**: one
+explicitly human-authorized delivery attempt of the deterministic sanitized
+trace through this committed path (write `POST /runs/batch` once, status 202,
+4 runs accepted, `service_read` confirmation, 2 read attempts, 3 requests,
+trace `01a166fa-1c8d-7b40-9686-a08cfd14444f`; evidence artifact
+`module-06-langsmith-current-path-delivery.txt`, SHA-256
+`ED84729B851E875669597A1F7A0195A50DA61ED8EA66FEE88AAFD3126FD828D0`, held by the
+artifact holder outside this workspace). The implementing and reviewing agent
+sessions did not observe the external service response; the human operator
+did, and the artifact preserves the sanitized receipt. This accepted event
+does not prove live-model correlation, hosted-model execution, production or
+deployment readiness, reliability/SLA, or Module 6 completion, and no
+NORMAL-profile or model facts belong to it. The accepted offline adapter,
+runtime, observation and console
 source/tests, dependencies and Modules 1-5 are unchanged.
 
 | Existing ID | Partial evidence | Remaining limitation |
 | --- | --- | --- |
-| M6-014 | A real, explicit, bounded delivery path using the installed SDK batch method (one `POST /runs/batch`); pinned destination and write path; wire-validated payload-free batch; single write enforced at the transport; credential confined to its header; bounded failure classification; a bounded, diagnostic-only inspection of a 4xx reply (at most 2048 bytes, closed 51-name vocabulary, no reply text or SDK log text exposed); local credential format validation before any request; a receipt that counts request attempts; 510 offline tests with the network replaced in memory; one human-run live delivery accepted and read back | Independent acceptance of the live delivery; model-backed tracing; status transition |
+| M6-014 | A real, explicit, bounded delivery path using the installed SDK batch method (one `POST /runs/batch`); pinned destination and write path; wire-validated payload-free batch; single write enforced at the transport; credential confined to its header; bounded failure classification; a bounded, diagnostic-only inspection of a 4xx reply (at most 2048 bytes, closed 51-name vocabulary, no reply text or SDK log text exposed); local credential format validation before any request; a receipt that counts request attempts; 510 offline tests with the network replaced in memory; one human-run live delivery accepted and read back (2026-10-13); one human-authorized deterministic sanitized-trace current-path delivery, independently accepted (2026-10-22) | Live-model live-run tracing and correlation; overall M6-014 status transition |
 
 M6-016 gains one delivered payload-free trace. No model or LLM inference is
 involved. All 26 IDs, source meanings and Planned statuses remain unchanged.

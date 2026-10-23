@@ -10,15 +10,20 @@ external calls, hosted deployment and any dependency change were not.
 
 ## Status
 
-**Live delivery confirmed on 2026-10-13; awaiting independent acceptance.** On
-the fifth human-authorized attempt LangSmith accepted the batch (HTTP 202, four
-runs) and returned the delivered root run. The four earlier attempts failed for
-one reason that had nothing to do with the request: the credential variable held
-a single pasted control character instead of the key. Neither the endpoint nor
-the payload was at fault, and the batch path is not what fixed it. After the
-success, the adapter was hardened offline to refuse a malformed credential
-locally before any request. M6-014 is unchanged and remains Planned until
-independent acceptance and the separate status transition. See
+**Current-path external delivery verification independently accepted on
+2026-10-22** (see
+[Current-path delivery verification](#current-path-delivery-verification-2026-10-22):
+one human-authorized, deterministic sanitized-trace delivery on this same
+committed path, reviewed and accepted). The first live delivery was confirmed
+on 2026-10-13: on the fifth human-authorized attempt LangSmith accepted the
+batch (HTTP 202, four runs) and returned the delivered root run. The four
+earlier attempts failed for one reason that had nothing to do with the
+request: the credential variable held a single pasted control character
+instead of the key. Neither the endpoint nor the payload was at fault, and the
+batch path is not what fixed it. After the success, the adapter was hardened
+offline to refuse a malformed credential locally before any request. M6-014
+is unchanged and remains Planned until the separate status transition; no
+model-backed LangSmith correlation is claimed or closed by either event. See
 [Live verification](#live-verification).
 
 ## Purpose and boundaries
@@ -47,6 +52,7 @@ Evidence classes stay distinct:
 | Offline preview | The exact runs of the batch, printed without network or credential | Verified locally |
 | Loopback transport check | The real HTTP stack against a local stand-in, with a dummy key | Verified locally, not part of pytest |
 | Live LangSmith delivery | One real trace accepted and read back | **Achieved once, 2026-10-13, run by the human** |
+| Current-path external delivery verification | One deterministic sanitized trace delivered through this committed path; independent Reviewer accepted | **Accepted, 2026-10-22** |
 | Model or LLM inference | Any model-backed execution | Not implemented, not authorized |
 
 ## SDK contract used
@@ -442,6 +448,54 @@ matters to this story.
 Expected cost is none within LangSmith's free allowance for four runs; pricing
 was not checked from this offline environment and should be confirmed by the
 credential owner.
+
+## Current-path delivery verification (2026-10-22)
+
+Classification: **current-path external LangSmith delivery verification**,
+independently reviewed and **accepted** on 2026-10-22. One explicitly
+human-authorized external delivery attempt executed this committed delivery
+path against the deterministic sanitized trace only. No model inference was
+involved; no automatic write retry or rerun occurred; no repository files were
+modified during execution; no other external observability delivery was
+attempted; the credential value was neither displayed nor recorded.
+
+Observed receipt values:
+
+| Receipt field | Value |
+| --- | --- |
+| Destination | `https://api.smith.langchain.com` |
+| Project | `module6-verification` |
+| Write path | `POST /runs/batch` (once) |
+| Trace ID | `01a166fa-1c8d-7b40-9686-a08cfd14444f` |
+| Runs accepted | 4 |
+| Write status | 202 |
+| Confirmation | `service_read` |
+| Read attempts | 2 |
+| Requests (write + reads) | 3 |
+| Read failure | null |
+| Root run | the delivered root run was returned by LangSmith |
+
+Evidence artifact: `module-06-langsmith-current-path-delivery.txt`, held by the
+authorized artifact holder outside the repository workspace (the Reviewer
+intentionally did not access it under the workspace least-privilege boundary;
+it is not stored in this repository). Artifact SHA-256:
+`ED84729B851E875669597A1F7A0195A50DA61ED8EA66FEE88AAFD3126FD828D0`, verified
+at capture time by the artifact holder.
+
+Observation boundary: the implementing and reviewing agent sessions did not
+independently observe the external LangSmith service response. The human
+operator observed the execution, and the external evidence artifact preserves
+the sanitized receipt above.
+
+Scope and non-claims, preserved: this is one current-path external delivery
+event on the deterministic sanitized trace. It does not prove live-model
+LangSmith correlation, hosted-model execution, production readiness,
+reliability or SLA performance, deployment readiness, or Module 6 completion.
+It does not close live-model tracing or the M6-014 requirement, which remains
+Planned; the model-backed LangSmith correlation and status-transition work
+remain separate future authorized tasks. No NORMAL-profile, Ollama, model
+digest or other real-local run facts belong to this event: it is orthogonal to
+those, and no model was involved.
 
 ## Evidence
 
