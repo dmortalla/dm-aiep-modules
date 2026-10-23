@@ -60,7 +60,13 @@ factual timing observation only and is classified permanently out-of-policy
 per [ADR-008](docs/adr/008-real-local-canonical-budget-profile.md), whose
 named `NORMAL_REAL_LOCAL_BUDGET` profile (200,000 ms workflow / 45,000 ms
 per call, 4,096/4,096/16,000 content ceilings) is policy data that
-authorizes nothing; every real run still needs fresh explicit HITL.
+authorizes nothing; every real run still needs fresh explicit HITL. A fourth,
+explicitly authorized run verified the NORMAL path (48,407 ms). A fifth
+recorded run took a live-model trace through the committed live-family
+LangSmith projection and delivery (`unverified_write` only; no service-read
+confirmation; authority-consumption operator-attested and not independently
+confirmed — see docs/CANONICAL_LIVE_WORKFLOW.md), so four recorded real runs
+is a floor, not a proven total.
 
 The console also has a separate **canonical live workflow (synthetic)**
 demonstration: it runs the accepted canonical workflow through the supervised

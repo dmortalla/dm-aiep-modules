@@ -35,7 +35,7 @@ All 26 source meanings and Planned statuses remain unchanged.
 | M6-011 | CrewAI | Planned | Real Crew/Task scheduling with deterministic BaseAgent roles | Real kickoff/scheduler/task spies and child execution | Offline orchestration, no AI inference; acceptance pending |
 | M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
 | M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
-| M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; accepted current-path external sanitized-trace delivery (2026-10-22); live-model correlation unverified |
+| M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; accepted current-path external sanitized-trace delivery (2026-10-22); one recorded live-model projection and live-family delivery (`unverified_write`, 2026-10-22; authority-consumption operator-attested); live-model correlation unverified |
 | M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
 | M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection; live trace delivery and hosted backend unverified |
 | M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; opt-in bounded local benchmark at caps 1/2/4; queue/utilisation metrics not implemented | Bounded labels verified; cap, integrity and cleanup invariants; no timing assertion | Partial local metrics, Grafana dashboard and one local benchmark run; sustained load, capacity and curated scale view pending |
@@ -363,7 +363,28 @@ source/tests, dependencies and Modules 1-5 are unchanged.
 | M6-014 | A real, explicit, bounded delivery path using the installed SDK batch method (one `POST /runs/batch`); pinned destination and write path; wire-validated payload-free batch; single write enforced at the transport; credential confined to its header; bounded failure classification; a bounded, diagnostic-only inspection of a 4xx reply (at most 2048 bytes, closed 51-name vocabulary, no reply text or SDK log text exposed); local credential format validation before any request; a receipt that counts request attempts; 510 offline tests with the network replaced in memory; one human-run live delivery accepted and read back (2026-10-13); one human-authorized deterministic sanitized-trace current-path delivery, independently accepted (2026-10-22) | Live-model live-run tracing and correlation; overall M6-014 status transition |
 
 M6-016 gains one delivered payload-free trace. No model or LLM inference is
-involved. All 26 IDs, source meanings and Planned statuses remain unchanged.
+involved in that accepted deterministic event. All 26 IDs, source meanings and
+Planned statuses remain unchanged.
+
+**Run 5 record (2026-10-22).** One real model-backed canonical workflow trace
+was projected (4 runs; trusted trace UUID preserved) and externally delivered
+through the committed live-family delivery with the committed
+`unverified_write` / HTTP 2xx confirmation contract: recorded
+classification "One-run live-model current-path LangSmith projection and
+delivery verification (`unverified_write` receipt); authority-consumption
+status operator-attested and not independently confirmed." Two earlier
+operator compositions qualify the event: A2 (PowerShell stdin-mode;
+zero retained output; pre-effect status NOT ESTABLISHED — a prior model
+dispatch and/or prior LangSmith batch write cannot be excluded) and A6
+(missing-import `NameError` before both effects; pre-effect status
+ESTABLISHED). Consequently the one-inference and one-write global bounds are
+not independently confirmed, four recorded real runs is a floor rather than
+a proven total, and the LangSmith project must not be claimed to contain
+exactly one Run 5 trace/batch. No service-read confirmation exists for Run 5;
+`unverified_write` remains the exact committed class. The full record lives
+in the [canonical live workflow ledger](CANONICAL_LIVE_WORKFLOW.md); no
+credential value is recorded. M6-014 remains Planned; the model-backed
+correlation status transition remains separate future work.
 
 ## Live-Model Slice Story 1 Evidence (Prerequisite Only)
 

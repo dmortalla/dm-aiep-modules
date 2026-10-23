@@ -638,3 +638,91 @@ Run 4 was one explicitly human-authorized canonical real-local execution on comm
 The executed budget exactly matched `NORMAL_REAL_LOCAL_BUDGET`. Runtime/schema compliance is recorded separately from human authority: human authorization was established by the explicit pre-run one-shot authorization, not inferred from successful execution or budget validation.
 
 This evidence does **not** establish production, deployment, hosted-provider, external-observability, reliability/SLA, portability, release, or Module 6 completion claims. Observations remain sparse (three real runs total and two with per-segment timing), Ollama versions differ across runs, the live repair path remains unexercised, and structural/bounds/prose validation is not proof of semantic correctness.
+
+## Run 5: live-model current-path LangSmith delivery verification
+
+**Evidence classification, exactly as independently approved:** "One-run
+live-model current-path LangSmith projection and delivery verification
+(`unverified_write` receipt); authority-consumption status operator-attested
+and not independently confirmed." The word "Authorized"/"authorized" is
+deliberately **not** used for this event.
+
+### Recorded successful composition (2026-10-22)
+
+| Evidence field | Run 5 observation |
+| --- | --- |
+| Runtime | Python 3.12.14; local Ollama 0.40.9; `qwen2.5-coder:7b` only |
+| Workflow | LangGraph sequential; Researcher -> Analyst -> Critic |
+| Trusted application trace UUID | `e48944ac-1e67-4562-b6e7-e3cab5abbb4c` |
+| Workflow / task IDs | `407928fa-2b8e-4ee6-991e-6720db8b922d` / `90b4a3f4-1c17-4623-a3c4-9295578856ad` |
+| Root span | `4a64b981459a44c6` |
+| Terminal outcome | `completed`; `evidence_source: local_provider_execution` |
+| Finalized observation | validated `LiveTerminalObservation` |
+| Model calls / repairs / retries | 3 / 0 / 0; concurrency 1 |
+| Total duration | 48,438 ms |
+| Role segments | Researcher ~27.66 s / Analyst ~9.44 s / Critic ~11.24 s |
+| Provider-reported tokens | 1,049 input / 124 output |
+| Cost status | `no_provider_charge_local_compute` |
+| Role validation | all three roles validated on first calls |
+| Worker cleanup | `reaped` |
+| Projection trace UUID | `e48944ac-1e67-4562-b6e7-e3cab5abbb4c` — equals the trusted application trace UUID |
+| Projected runs | 4 (root + 3 role runs; payload-free) |
+| Delivery status / evidence class | `accepted` / `unverified_write` |
+| Delivery accounting | planned_runs 4; write_attempts 1 for the recorded successful composition; failure null; external LangSmith requests 1 for the recorded successful composition; read-back requests 0 |
+| Delivery destination / project | `https://api.smith.langchain.com` / `module6-verification` |
+| Confirmation contract | committed `unverified_write` / HTTP 2xx write contract; **no service-read confirmation exists** for this event |
+
+Credential provenance for the delivery (facts only): source Windows
+Credential Manager target `LangSmith-Module6`; process-local
+`LANGSMITH_API_KEY` exposure inside the execution composition; credential
+value undisclosed; not intentionally persisted elsewhere; process-local value
+cleared after the recorded successful composition; no external
+OTel/Collector/Prometheus/Grafana delivery in the recorded successful
+composition; repository unchanged by Run 5.
+
+### Pre-execution compositions A2 and A6 (authority history)
+
+Two earlier operator compositions preceded the recorded successful one. The
+independent Reviewer qualifies the event's authority on their account:
+
+**A2 (PowerShell stdin-mode composition).** Returned zero retained
+stdout/stderr: no traceback, no report, no wall-clock timestamp. The exact
+failure point cannot be determined. Pre-effect status: **NOT ESTABLISHED.**
+The retained evidence does **not** establish that `execute_canonical_workflow`
+was unentered, does **not** establish that no model dispatch occurred, does
+**not** establish that `deliver()` was unentered, and does **not** establish
+that no `POST /runs/batch` occurred. **Therefore a prior model dispatch
+and/or a prior LangSmith batch write cannot be excluded.**
+
+**A6 (missing-import composition).** Direct retained traceback:
+`NameError: name 'Observability' is not defined`, at the top-level statement
+`observer = Observability()` (frame `File "<string>", line 80`). Recovered
+source ordering places `execute_canonical_workflow` strictly after that
+statement; LangSmith delivery follows only a successful workflow/projection.
+Pre-effect status: **ESTABLISHED.** No model inference occurred in A6; no
+LangSmith write occurred in A6; the credential was cleared.
+
+**Authority conclusion.** Run 5's authority-consumption status is
+**operator-attested and not independently confirmed.** The one-inference and
+one-write global bounds are **not independently confirmed**, because A2's
+effects are indeterminate. Do **not** claim the recorded successful
+composition was necessarily the only effectful composition, and do **not**
+claim the LangSmith project contains exactly one Run 5 trace/batch.
+
+### Population and limitations (floor accounting)
+
+Four real runs are **recorded**; four recorded runs is a **floor, not a
+proven total**, because an additional undescribed real execution in
+composition A2 cannot be excluded. Three recorded runs carry per-segment
+timing. Recorded Ollama versions across runs: 0.40.4 / 0.40.7 / 0.40.8 /
+0.40.9. The live repair path remains unexercised. No percentile, SLA, or
+reliability claim is made, and structural/bounds/prose validation is not
+proof of semantic correctness.
+
+### Non-claims
+
+Run 5 does **not** establish service-read confirmation, LangSmith
+service-side persistence/visibility, production readiness, production
+verification, deployment acceptance, hosted-provider verification,
+reliability/SLA performance, portability, release acceptance, M6-014 closure
+(M6-014 remains Planned), or Module 6 completion.

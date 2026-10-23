@@ -53,7 +53,8 @@ Evidence classes stay distinct:
 | Loopback transport check | The real HTTP stack against a local stand-in, with a dummy key | Verified locally, not part of pytest |
 | Live LangSmith delivery | One real trace accepted and read back | **Achieved once, 2026-10-13, run by the human** |
 | Current-path external delivery verification | One deterministic sanitized trace delivered through this committed path; independent Reviewer accepted | **Accepted, 2026-10-22** |
-| Model or LLM inference | Any model-backed execution | Not implemented, not authorized |
+| Live-model live-run delivery | One real model-backed workflow trace projected (4 runs, trace UUID preserved) and delivered through the committed live-family delivery; `unverified_write` only; no service-read confirmation exists | **Recorded once, 2026-10-22** (Run 5; authority-consumption status operator-attested and not independently confirmed — see [Canonical live workflow](CANONICAL_LIVE_WORKFLOW.md#run-5-live-model-current-path-langsmith-delivery-verification)) |
+| Model or LLM inference | Any model-backed execution | Recorded for local live runs (Run 4 NORMAL verification; Run 5 delivery verification); hosted/paid model execution remains not implemented and never authorized |
 
 ## SDK contract used
 
@@ -496,6 +497,29 @@ Planned; the model-backed LangSmith correlation and status-transition work
 remain separate future authorized tasks. No NORMAL-profile, Ollama, model
 digest or other real-local run facts belong to this event: it is orthogonal to
 those, and no model was involved.
+
+### Run 5 live-model delivery record (2026-10-22)
+
+One real model-backed canonical workflow (local Ollama 0.40.9,
+`qwen2.5-coder:7b`, LangGraph sequential Researcher -> Analyst -> Critic)
+finalized a trusted `LiveTerminalObservation` whose projection (4 runs; root
+trace UUID `e48944ac-1e67-4562-b6e7-e3cab5abbb4c`, preserved unchanged) was
+externally delivered through the committed live-family
+`LiveLangSmithDelivery` on this same batch endpoint and project: one write
+(`POST /runs/batch`, status `accepted`), zero programmatic read-back
+requests, committed evidence class **`unverified_write`** only. No
+service-read confirmation exists for this event.
+
+The full technical record, the mandatory pre-execution A2/A6 authority
+history, the population-floor accounting and all non-claims are maintained in
+the [canonical live workflow ledger](CANONICAL_LIVE_WORKFLOW.md). Summary of
+the authority qualification, carried here because this file records
+delivery: the event's authority-consumption status is operator-attested and
+not independently confirmed; a prior model dispatch and/or prior LangSmith
+batch write in an earlier indeterminate composition (A2) cannot be excluded,
+so the one-inference and one-write global bounds are not independently
+confirmed and the project must not be claimed to contain exactly one Run 5
+trace/batch. No credential value is or was recorded in this file.
 
 ## Evidence
 

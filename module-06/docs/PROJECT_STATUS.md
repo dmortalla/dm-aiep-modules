@@ -54,6 +54,36 @@ accepted evidence, and it is not retroactively authorized or accepted as an
 authorized live success. This is governance/policy work; no requirement
 status changes and no live execution is authorized by ADR-008.
 
+## Real-Run Population and Run 5 Record
+
+Four real canonical runs are **recorded**; four is a **floor, not a proven
+total**. Run 4 (2026-10-22, commit `be1edd5`) was the one explicitly
+human-authorized NORMAL-profile real-local verification (48,407 ms; see the
+[canonical ledger](CANONICAL_LIVE_WORKFLOW.md#run-4-authorized-current-path-real-local-verification)).
+Run 5 (2026-10-22) recorded one live-model trace projected (4 runs; trusted
+trace UUID preserved as `e48944ac-1e67-4562-b6e7-e3cab5abbb4c`) and
+externally delivered through the committed live-family LangSmith delivery
+with the committed `unverified_write` / HTTP 2xx confirmation contract; no
+service-read confirmation exists. Its independent Reviewer classification is
+exactly: "One-run live-model current-path LangSmith projection and delivery
+verification (`unverified_write` receipt); authority-consumption status
+operator-attested and not independently confirmed" — the event is never
+characterized as authorized. Two earlier operator compositions qualify it:
+A2 (PowerShell stdin-mode; zero retained output; pre-effect **NOT
+ESTABLISHED** — a prior model dispatch and/or prior LangSmith batch write
+cannot be excluded) and A6 (missing-import `NameError` at
+`observer = Observability()` before both effects; pre-effect
+**ESTABLISHED**). The one-inference and one-write global bounds are therefore
+not independently confirmed, and the LangSmith project must not be claimed to
+contain exactly one Run 5 trace/batch. Recorded Ollama versions across runs:
+0.40.4 / 0.40.7 / 0.40.8 / 0.40.9; the live repair path remains unexercised;
+no percentile, SLA, or reliability claim is made; structural/bounds/prose
+validation is not proof of semantic correctness. Run 5 does not establish
+service-read confirmation, service-side persistence/visibility, production
+readiness/verification, deployment acceptance, hosted-provider verification,
+portability, release acceptance, M6-014 closure, or Module 6 completion.
+M6-014 remains Planned.
+
 ## Dependency Foundation
 
 The separately human-approved dependency milestone integrates the seven direct
