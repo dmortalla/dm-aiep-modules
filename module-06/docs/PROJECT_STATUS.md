@@ -677,3 +677,32 @@ telemetry modules). Ruff passed; the complete Module 6 suite: **2,682 passed**
 untouched); compileall passed; nothing staged/committed. Reviewer-experience
 stories S2-S7 are future work; no requirement status changed and this candidate is
 not module completion.
+
+## Reviewer Cockpit S2 Candidate: Deterministic Demo Integration
+
+Story S2 implements the tabbed reviewer cockpit in `app.py` with the
+accepted S1 presentation contracts only: the deterministic/no-key Demo tab
+is the safe default and hosts the eight demonstrations, the synthetic
+canonical live demonstration and the local scaling benchmark, each fresh
+result carrying a truthful S1 evidence caption (`deterministic_demo` /
+`canonical_live_demo` with `synthetic_offline`/`not_sent`,
+`fresh_execution`; no real-local, live-model, service-read or external
+delivery claims). Rendering/import performs no execution or request; only
+explicit submissions run accepted service methods; reruns are safe. The
+Live/BYOK tab presents truthful unavailability (S5 future; no credential
+surface); the Operations tab presents no probe (S3 future); the LangSmith
+tracing tab reconciles the previously stale specialist wording truthfully
+within the accepted wording pins; the Guide tab renders the demo-relevant
+S1 guidance panels (full guidance surface is S6). Twelve focused cases in
+`../tests/test_cockpit_demo.py` (A-M: no render-time execution/telemetry/
+network, explicit execution path, truthful labels, not-executed state,
+historical separation, rerun safety, inert output/no unsafe HTML, sanitized
+refusals, no credential surface, S1 posture semantics intact) and one
+bounded additive pin extension (`test_console.py` page-import contract now
+accepts the accepted presentation-contract module `cockpit_view`).
+Accepted architecture is unchanged: presentation/aggregation only, service
+paths unchanged, no new authority. Gates: Ruff clean; focused S1+S2+console
+group 165 passed; complete Module 6 suite **2,694 passed**; compileall
+passed; `git diff --check` clean; nothing staged/committed. S3-S7 remain
+future; no requirement status advanced; no deployment/release/completion
+claim.

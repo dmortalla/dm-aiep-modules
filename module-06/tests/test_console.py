@@ -526,6 +526,9 @@ def test_page_imports_only_presentation_and_console_services():
         "streamlit",
         "multi_agent_orchestration.console",
         "multi_agent_orchestration.observability_contracts",
+        # S1 presentation contracts only: immutable evidence-view/state
+        # contracts. No authority, delivery or telemetry module.
+        "multi_agent_orchestration.cockpit_view",
     }
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
     names |= {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
