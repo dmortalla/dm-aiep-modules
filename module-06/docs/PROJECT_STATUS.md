@@ -649,3 +649,31 @@ boundaries. See [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitatio
 ## Compatibility Evidence
 
 - [Dependency Compatibility](DEPENDENCY_COMPATIBILITY.md)
+
+## Reviewer Experience Cockpit (S1 Candidate; Stories 2-7 Future)
+
+Story S1 of the accepted
+[reviewer experience contract](REVIEWER_EXPERIENCE_CONTRACT.md) delivers the
+additive presentation-layer evidence/view/state contracts in
+`../src/multi_agent_orchestration/cockpit_view.py` with 19 focused cases in
+`../tests/test_cockpit_view.py`: the compositional evidence model
+(`execution_kind` / accepted `provenance` / accepted LangSmith
+`delivery_confirmation` vocabulary verbatim / exact recorded operational
+classification / `fresh_execution` vs `recorded_historical` source), curated
+minimal historical records (Runs 3-5, the accepted deterministic LangSmith
+delivery verification, the accepted operational pipeline verification)
+preserving accepted classification texts verbatim, the explicit Operations
+activation state, truthful local/deployed live availability posture
+(local live: only the trusted local/operator runtime; deployed/public live:
+unavailable by default, representable only through a separately verified
+deployment-compatible boundary), reviewer guidance panels with required
+distinctions and no
+production/hosted/SLA/completion claims, cross-field invariants rejecting
+misleading combinations with sanitized deterministic errors, and proofs of
+zero side effects on import/construction plus authority isolation
+(no `LiveAuthorization` producibility, no importing of authority/delivery/
+telemetry modules). Ruff passed; the complete Module 6 suite: **2,682 passed**
+(the accepted CrewAIUI intermittent test failed once and passed on rerun,
+untouched); compileall passed; nothing staged/committed. Reviewer-experience
+stories S2-S7 are future work; no requirement status changed and this candidate is
+not module completion.
