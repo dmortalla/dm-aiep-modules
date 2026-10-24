@@ -126,8 +126,10 @@ def test_f_demo_results_cannot_claim_real_local_or_delivery_facts(execution_coun
         line
         for line in rendered(at).splitlines()
         if line.lower().startswith("evidence class:")
+        and "recorded_historical" not in line
     ]
-    assert labels, "fresh results must carry their evidence-class caption"
+    fresh_labels = [line for line in labels if "fresh_execution" in line]
+    assert fresh_labels, "fresh results must carry their evidence-class caption"
     for label in labels:
         assert "deterministic_demo" in label or "canonical_live_demo" in label
         assert "local_provider_execution" not in label
@@ -141,12 +143,28 @@ def test_f_demo_results_cannot_claim_real_local_or_delivery_facts(execution_coun
 
 
 def test_g_historical_records_are_not_substituted(execution_counter):
-    """No recorded/historical presentation exists in this S2 build."""
+    """Recorded evidence stays labelled; fresh results are never merged."""
     at = app()
     at.selectbox(key="demonstration").select(Demonstration.FIXTURE).run()
     at.button(key="run").click().run()
     assert not at.exception
-    assert "recorded_historical" not in rendered(at)
+    text = rendered(at)
+    # The recorded operational verification is shown only in its explicitly
+    # labelled recorded context.
+    recorded_lines = [ln for ln in text.splitlines() if "recorded_historical" in ln]
+    assert recorded_lines, "the recorded block must be explicitly labelled"
+    for line in recorded_lines:
+        assert "recorded" in line.lower()
+    # Fresh demo evidence lines never carry the recorded source or a claim of
+    # the recorded verification.
+    for label in (
+        line
+        for line in text.splitlines()
+        if line.lower().startswith("evidence class:")
+        and "recorded_historical" not in line
+    ):
+        assert "recorded_historical" not in label
+        assert "authorized deterministic local operational-telemetry" not in label
 
 
 def test_h_rerun_without_submission_does_not_execute_again(execution_counter):

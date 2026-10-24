@@ -35,6 +35,7 @@ from .observability_contracts import Outcome, RunTrace
 from .observed_execution import execute_observed_workflow
 
 if TYPE_CHECKING:  # Additive live definitions load only after run admission.
+    from .cockpit_ops import StoredOperationsObservation
     from .console_live import LiveRun
 
 
@@ -318,7 +319,34 @@ class ConsoleSession:
         self._runs = deque(maxlen=8)
         self._scaling = None
         self._live = deque(maxlen=8)
+        self._operations = None
         self._lock = threading.Lock()
+
+    @property
+    def operations(self) -> "StoredOperationsObservation | None":
+        """The last explicit current-host operational check, if any.
+
+        Returns:
+            A revalidated presentation-scoped result, or ``None`` when the
+            reviewer never requested a check; ``None`` is the honest
+            not-activated state, never a fabricated success.
+
+        Raises:
+            ConsoleFaultError: The retained view was not revalidatable; the
+                stale value is cleared and no cause is kept.
+        """
+        from .cockpit_ops import StoredOperationsObservation
+
+        if self._operations is None:
+            return None
+        try:
+            return fresh(self._operations, StoredOperationsObservation)
+        except (ValueError, TypeError) as exc:
+            self._operations = None
+            raise ConsoleFaultError(
+                "The stored operational observation was not revalidatable and "
+                "was cleared; request a new check."
+            ) from exc
 
     @property
     def runs(self) -> tuple[ConsoleRun, ...]:
@@ -344,8 +372,46 @@ class ConsoleSession:
             self._runs.clear()
             self._scaling = None
             self._live.clear()
+            self._operations = None
         finally:
             self._lock.release()
+
+    def check_operations(self) -> "StoredOperationsObservation":
+        """Run one explicit bounded read-only local operational check.
+
+        The querying logic is the accepted ``cockpit_ops`` boundary: fixed
+        loopback endpoints of the current running host, single attempt,
+        bounded timeouts, untrusted responses validated before any value is
+        shown, no retries or background refresh, no credentials. The result
+        is presentation state only; it never authorizes anything and is
+        never merged with, or substituted by, the recorded historical
+        operational evidence.
+
+        Returns:
+            The validated fresh observation with its acquisition time; the
+            ``unavailable`` state is a truthful outcome, not a failure.
+
+        Raises:
+            ConsoleFaultError: Unexpected read-only boundary failure; no
+                cause and no diagnostics are retained.
+        """
+        from .cockpit_ops import LocalStackObservation, StoredOperationsObservation
+        from .cockpit_ops import query_local_stack as perform
+
+        try:
+            observation = fresh(perform(), LocalStackObservation)
+            view = StoredOperationsObservation(
+                happened_ns=time.time_ns(), observation=observation
+            )
+            fresh(view, StoredOperationsObservation)
+        except (Exception, asyncio.CancelledError) as exc:
+            raise ConsoleFaultError(
+                "The operational check could not produce a validated "
+                "observation. The deterministic demonstrations remain "
+                "available; no historical value is substituted."
+            ) from exc
+        self._operations = view
+        return view
 
     @property
     def scaling(self) -> ScalingRun | None:

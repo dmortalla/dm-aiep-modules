@@ -449,6 +449,21 @@ class OperationsActivation(Contract):
     state: OperationsState = OperationsState.NOT_ACTIVATED
 
 
+def age_in_seconds(happened_ns: int) -> int:
+    """Approximate age of a stored observation, in whole seconds.
+
+    Args:
+        happened_ns: Wall-clock nanosecond marker captured with the result.
+
+    Returns:
+        The whole number of seconds since the marker, floored at zero;
+        presentation freshness only, never an authority or a probe.
+    """
+    import time
+
+    return max(0, (time.time_ns() - happened_ns) // 1_000_000_000)
+
+
 DEFAULT_COCKPIT_STATE = (
     CockpitMode.DEMO,
     LiveCapability(),

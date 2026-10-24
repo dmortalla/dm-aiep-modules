@@ -2,12 +2,15 @@
 
 import streamlit as st
 from multi_agent_orchestration.cockpit_view import (
+    CURATED_OPERATIONAL_PIPELINE,
     DEFAULT_COCKPIT_STATE,
     GUIDANCE_SECTIONS,
     DeliveryConfirmation,
     EvidenceView,
     ExecutionKind,
+    OperationsState,
     PresentationProvenance,
+    age_in_seconds,
 )
 from multi_agent_orchestration.console import (
     ConsoleBusyError,
@@ -618,13 +621,121 @@ with live_tab:
     )
 
 with ops_tab:
-    st.info(
-        "Operational observability aggregation is not offered by this candidate "
-        "build (reserved for a later story, S3). No probe has been requested: "
-        "rendering this tab performs zero localhost or external observability "
-        "requests, and no values are fabricated or substituted. Recorded "
-        "operational evidence remains in the Module 6 documentation."
+    record = CURATED_OPERATIONAL_PIPELINE
+    st.subheader("Recorded verification (not a current check)")
+    st.caption(
+        "Evidence class: "
+        f"{record.source.value} · kind: {record.execution_kind.value} · "
+        f"classification: {record.accepted_classification}. Preserved from the "
+        "accepted deterministic local operational-telemetry verification "
+        "records: not a fresh health probe, not proof that the services are "
+        "running now, and not production, hosted or SLA evidence."
     )
+    st.text(record.summary)
+    st.subheader("Fresh current-host check (explicit action)")
+    st.caption(
+        "localhost means the host running this Streamlit application — in a "
+        "deployment, the deployed host or container, never your personal "
+        "machine or the visitor's workstation. A public deployment cannot "
+        "inspect services on your computer, and this UI will not pretend to."
+    )
+    st.caption(
+        "Fixed read-only endpoints only: 127.0.0.1 Prometheus (9090) and "
+        "Grafana (3000), one bounded attempt, validated untrusted responses, "
+        "no retries, no polling, no background refresh."
+    )
+    if st.button(
+        "Check current local observability stack",
+        key="ops_query",
+        icon=":material/query_stats:",
+    ):
+        with st.spinner("Bounded read-only local check…"):
+            try:
+                console.check_operations()
+            except ConsoleFaultError:
+                st.error(
+                    "The check could not produce a validated observation. "
+                    "No historical value is substituted and nothing executed "
+                    "beyond read-only requests."
+                )
+    try:
+        stored = console.operations
+    except ConsoleFaultError:
+        stored = None
+        st.warning(
+            "A retained operational observation was not revalidatable and "
+            "was cleared. Nothing ran on this render; request a new check."
+        )
+    if stored is None:
+        st.caption(
+            "Not activated: nothing has been queried in this session. The "
+            "recorded verification above stays historical; no fresh values "
+            "are shown until you request a check."
+        )
+    else:
+        age = age_in_seconds(stored.happened_ns)
+        obs = stored.observation
+        st.caption(
+            f"Checked {age} s ago on this host. Source: fresh_execution — "
+            "a read-only local observation, NOT the recorded pipeline "
+            "verification and not current production health."
+        )
+        if obs is None:
+            st.error(
+                "The check produced no observation. The deterministic demo "
+                "remains fully available; nothing was fabricated."
+            )
+        elif obs.query_state == OperationsState.UNAVAILABLE:
+            st.warning(
+                "The local observability stack was not reachable on this "
+                "host. The deterministic demo remains available; no values "
+                "are fabricated and no historical value is substituted."
+            )
+        else:
+            st.metric(
+                "Finished workflows (local Prometheus)",
+                (
+                    "Unavailable"
+                    if obs.finished_total is None
+                    else f"{obs.finished_total:g}"
+                ),
+                border=True,
+            )
+            st.metric(
+                "Alert rules loaded",
+                (
+                    obs.alert_rules_loaded
+                    if obs.alert_rules_loaded is not None
+                    else "Unavailable"
+                ),
+                border=True,
+            )
+            st.metric(
+                "Grafana healthy",
+                (
+                    "True"
+                    if obs.grafana_healthy
+                    else "False"
+                    if obs.grafana_healthy is False
+                    else "Unavailable"
+                ),
+                border=True,
+            )
+            st.metric(
+                "Dashboard provisioned",
+                (
+                    "True"
+                    if obs.dashboard_provisioned
+                    else "False"
+                    if obs.dashboard_provisioned is False
+                    else "Unavailable"
+                ),
+                border=True,
+            )
+            if obs.dashboard_reference:
+                # Validated loopback reference for the CURRENT HOST; shown as
+                # inert text. Never usable from a visitor's browser host.
+                st.text(f"Dashboard (current host only): {obs.dashboard_reference}")
 
 with tracing_tab:
     st.info(

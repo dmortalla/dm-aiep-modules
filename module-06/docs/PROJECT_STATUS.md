@@ -706,3 +706,30 @@ group 165 passed; complete Module 6 suite **2,694 passed**; compileall
 passed; `git diff --check` clean; nothing staged/committed. S3-S7 remain
 future; no requirement status advanced; no deployment/release/completion
 claim.
+
+## Reviewer Cockpit S3 Candidate: Operational Observability Aggregation
+
+Story S3 delivers the bounded read-only operational aggregation boundary
+`../src/multi_agent_orchestration/cockpit_ops.py` (fixed loopback endpoints
+of the current running host only; fixed PromQL and rule allowlist; one
+bounded attempt of five read-only requests; validated untrusted responses;
+no retries, polling or background refresh; no credentials and no SSRF
+surface), the explicit reviewer action (`ConsoleSession.check_operations`
+with revalidated presentation state, sanitized faults and cleared stale
+views), and the Operations tab: the accepted recorded verification remains
+separately labelled recorded_historical preserving its exact accepted
+classification text; fresh observations are labelled fresh, never merged
+with or substituted by recorded values; unreachable stacks show an honest
+unavailable state; and the deterministic Demo remains fully independent of
+operational availability. Twelve offline cases in
+`../tests/test_cockpit_ops.py` (A-T behavioral coverage with test-injected
+readers: zero render/tab-render probes, the explicit exact-once check,
+rerun persistence, typed separation, hostile/malformed responses failing
+closed and sanitized, fixed bounded endpoints and fixed query, no polling,
+truthful localhost semantics, no iframes) plus one bounded additive pin
+extension (page staleness helper moved into the accepted
+presentation-contract module as a pure function). Gates: Ruff clean;
+complete Module 6 suite **2,706 passed**; compileall passed; `git diff
+--check` clean; nothing staged/committed. S4-S7 remain future; recorded
+operational evidence stays historical; no requirement status advanced; no
+deployment/release/completion claim.
