@@ -51,6 +51,9 @@ from .langsmith_delivery import PROJECT
 class TraceReadProvider(Protocol):
     """Read-only evidence capability injected by a trusted runtime.
 
+    This is a trusted-caller seam, never reviewer or visitor input: the page
+    offers no widget, URL or session value that can supply or replace it.
+
     Implementations must be read-only, bounded and application-owned; the
     cockpit never supplies network traffic, credentials, endpoints or write
     operations through this protocol, and this contract has no credential,

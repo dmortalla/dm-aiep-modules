@@ -2,6 +2,17 @@
 
 ## Current State
 
+Reviewer-experience chronology: S1, S2, S3 and S4 are accepted and committed.
+S5 is the current secure-local-live presentation candidate; S6–S7 remain future.
+Earlier milestone paragraphs below describe the state at their recorded time,
+including historical "future"/"candidate" wording; they are not current status.
+The deployed/public posture remains deterministic/no-key. Local live requires an
+explicit trusted private-operator runtime and fresh execution-scoped authority;
+credentials/connectivity are never authority. No actual live execution was
+performed for S5; live verification remains a separate future human-authorized
+action after independent review. No deployment, release, completion or source
+requirement advancement is claimed.
+
 | Item | State |
 | --- | --- |
 | Module | 6 - Multi-Agent Systems & Orchestration |
@@ -734,7 +745,7 @@ complete Module 6 suite **2,706 passed**; compileall passed; `git diff
 operational evidence stays historical; no requirement status advanced; no
 deployment/release/completion claim.
 
-## Reviewer Cockpit S4 Candidate: LangSmith Observability Aggregation
+## Reviewer Cockpit S4 (Accepted, Committed): LangSmith Observability Aggregation
 
 Story S4 replaces the tracing-tab placeholder with the native recorded
 LangSmith-evidence surface and the bounded read-only current-inspection
@@ -760,3 +771,26 @@ passed**; compileall passed; `git diff --check` clean; nothing
 staged/committed. S5-S7 remain future; no live execution, no real LangSmith
 read, no new delivery, no credential access; no deployment/release/
 completion claim and no requirement status advanced.
+
+## Reviewer Cockpit S5 (Candidate, Not Accepted): Secure Local Live/BYOK Presentation
+
+Story S5 connects the accepted canonical real-local workflow to the Live / BYOK
+tab for a trusted private operator only, through
+`../src/multi_agent_orchestration/cockpit_local_live.py`; design record:
+[`REVIEWER_S5_LOCAL_LIVE.md`](REVIEWER_S5_LOCAL_LIVE.md). Local live is
+available only when trusted embedding code injects a `TrustedLocalRuntime`
+capability; the stock/deployed `app.py` never does, so public live stays
+unavailable and Demo stays the deterministic no-key default. Credentials,
+environment, hostname and provider/model availability are never authority. Each
+explicit "Run authorized local live workflow" click issues one fresh
+execution-scoped `LiveAuthorization` with the exact ADR-008 NORMAL values,
+consumes it once, and keeps only a closed payload-free current-run packet in
+the session; rerenders never execute and there is no automatic retry. No
+optional external delivery is composed. 36 offline cases in
+`../tests/test_cockpit_local_live.py` (A-AF). Gates: Ruff clean; focused S5 36
+passed; S1-S4 cockpit 65 passed; live suites 1,069 passed; console/app 134
+passed; complete Module 6 suite **2,764 passed**; compileall clean;
+whitespace clean; nothing staged/committed. No real live execution was
+performed during S5 implementation; live verification remains a separate
+future human-authorized action after independent review. S6-S7 remain future;
+no deployment/release/completion claim and no requirement status advanced.

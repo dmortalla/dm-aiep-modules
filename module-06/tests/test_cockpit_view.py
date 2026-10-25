@@ -332,14 +332,15 @@ def test_p_local_and_deployed_live_postures_are_separate():
     boundary_only = LiveCapability(
         deployment_compatible_authority_verified=True)
     assert boundary_only.local_live_available is False
-    assert boundary_only.deployed_public_live_available is True
+    # S5 follow-up: a verified flag alone is not an authority boundary.
+    assert boundary_only.deployed_public_live_available is False
 
     both = LiveCapability(
         local_trusted_operator_runtime=True,
         deployment_compatible_authority_verified=True,
     )
     assert both.local_live_available is True
-    assert both.deployed_public_live_available is True
+    assert both.deployed_public_live_available is False  # No accepted public boundary
 
     for capability in (default, local_only, boundary_only, both):
         assert not hasattr(capability, "credential")

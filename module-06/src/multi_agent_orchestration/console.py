@@ -36,7 +36,9 @@ from .observed_execution import execute_observed_workflow
 
 if TYPE_CHECKING:  # Additive live definitions load only after run admission.
     from .cockpit_langsmith import StoredLangSmithObservation
+    from .cockpit_local_live import CurrentLocalRun
     from .cockpit_ops import StoredOperationsObservation
+    from .cockpit_view import LiveCapability
     from .console_live import LiveRun
 
 
@@ -45,6 +47,46 @@ def failure_text(category) -> str:
     from .live_errors import failure_text as fixed
 
     return fixed(category)
+
+
+def local_live_capability() -> "LiveCapability":
+    """Return S1 live postures for this render; never probe or authorize.
+
+    Local live reflects only an explicitly injected trusted private-operator
+    capability. Credentials, environment, hostname and provider/model
+    reachability are never consulted. Deployed/public live stays unavailable.
+
+    Returns:
+        The accepted S1 ``LiveCapability`` presentation state.
+    """
+    from .cockpit_local_live import current_runtime
+    from .cockpit_view import LiveCapability
+
+    return LiveCapability(local_trusted_operator_runtime=current_runtime() is not None)
+
+
+def local_live_profile() -> str:
+    """Return fixed NORMAL presentation text; never create authorization."""
+    from .cockpit_local_live import PROFILE_TEXT
+
+    return PROFILE_TEXT
+
+
+def local_live_failure_guidance(failure: str) -> str:
+    """Return fixed actionable wording for one closed current-run failure.
+
+    Args:
+        failure: A closed ``CurrentLocalRun.failure`` value.
+
+    Returns:
+        Application-owned guidance; never diagnostic or provider text.
+
+    Raises:
+        KeyError: The value is not a closed failure value.
+    """
+    from .cockpit_local_live import failure_guidance
+
+    return failure_guidance(failure)
 
 
 class Demonstration(StrEnum):
@@ -314,6 +356,8 @@ class ConsoleSession:
     owns all measurement and bounds. The live demonstration runs the accepted
     canonical workflow with the module-level synthetic gateway only: no real
     provider connection, credential or delivery is attempted.
+    S5's separate explicit private-operator action uses an out-of-session runtime
+    capability and retains only a closed payload-free current presentation packet.
     """
 
     def __init__(self):
@@ -322,6 +366,7 @@ class ConsoleSession:
         self._live = deque(maxlen=8)
         self._operations = None
         self._langsmith = None
+        self._current_local = None
         self._lock = threading.Lock()
 
     @property
@@ -375,6 +420,46 @@ class ConsoleSession:
             self._scaling = None
             self._live.clear()
             self._operations = None
+            self._current_local = None
+        finally:
+            self._lock.release()
+
+    @property
+    def current_local(self) -> "CurrentLocalRun | None":
+        """Revalidate only sanitized current S5 evidence; never retain authority."""
+        from .cockpit_local_live import CurrentLocalRun
+
+        if self._current_local is None:
+            return None
+        try:
+            return CurrentLocalRun.model_validate_json(self._current_local)
+        except (ValueError, TypeError):
+            self._current_local = None
+            return None
+
+    def run_authorized_local(self) -> "CurrentLocalRun":
+        """Handle one explicit private-operator action with fresh authority.
+
+        Returns:
+            Only bounded current presentation facts. A failed attempt replaces
+            the previous current view; historical records are never substituted.
+
+        Raises:
+            ConsoleBusyError: Another session operation is already running.
+        """
+        from .cockpit_local_live import refused, run_explicit_action
+
+        if not self._lock.acquire(blocking=False):
+            raise ConsoleBusyError("A run is already active in this session.")
+        try:
+            self._current_local = None
+            try:
+                view = run_explicit_action()
+            except (Exception, asyncio.CancelledError):
+                # Service failure boundary: no diagnostics/payload/cause retained.
+                view = refused("runtime_failure")
+            self._current_local = view.model_dump_json()
+            return view
         finally:
             self._lock.release()
 

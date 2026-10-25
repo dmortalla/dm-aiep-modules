@@ -433,8 +433,13 @@ class LiveCapability(Contract):
 
     @property
     def deployed_public_live_available(self) -> bool:
-        """Only an explicitly verified deployment-compatible boundary."""
-        return self.deployment_compatible_authority_verified
+        """Fail closed: a verified flag is not an implemented authority boundary.
+
+        The legacy field remains descriptive data for compatibility. No public
+        boundary is accepted; a future implementation needs independent review,
+        explicit enablement and fresh execution authority, not boolean toggles.
+        """
+        return False
 
 
 class OperationsActivation(Contract):

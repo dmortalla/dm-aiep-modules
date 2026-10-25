@@ -4,6 +4,8 @@ import streamlit as st
 from multi_agent_orchestration.cockpit_view import (
     CURATED_LANGSMITH_DELIVERY,
     CURATED_OPERATIONAL_PIPELINE,
+    CURATED_RUN_3,
+    CURATED_RUN_4,
     CURATED_RUN_5,
     DEFAULT_COCKPIT_STATE,
     GUIDANCE_SECTIONS,
@@ -25,6 +27,9 @@ from multi_agent_orchestration.console import (
     failure_message,
     failure_text,
     guidance,
+    local_live_capability,
+    local_live_failure_guidance,
+    local_live_profile,
     scaling_guidance,
 )
 from multi_agent_orchestration.observability_contracts import Outcome
@@ -36,7 +41,9 @@ if type(st.session_state.get("console")) is not ConsoleSession:
     st.session_state.console = ConsoleSession()
 console = st.session_state.console
 
-orientation, live_capability, operations_state = DEFAULT_COCKPIT_STATE
+orientation, _, operations_state = DEFAULT_COCKPIT_STATE
+# S1 postures for this render: only an injected trusted capability enables local live.
+live_capability = local_live_capability()
 st.title("Module 6 reviewer cockpit")
 st.caption(
     "Multi-agent orchestration • deterministic local execution • no credentials needed"
@@ -49,8 +56,11 @@ st.info(
     "Demo is the baseline posture of this cockpit."
 )
 st.caption(
-    f"Mode: {orientation.value} (baseline) • live/BYOK posture: "
+    f"Mode: {orientation.value} (baseline) • local live/BYOK: "
     f"{'available' if live_capability.local_live_available else 'unavailable'} • "
+    "public live: "
+    + ("available" if live_capability.deployed_public_live_available else "unavailable")
+    + " • "
     f"operations queries: {operations_state.state.value} (nothing probes until an "
     "explicit request is offered by a later story)"
 )
@@ -610,17 +620,92 @@ with demo_tab:
 
 with live_tab:
     st.info(
-        "Live/BYOK execution is not offered by this candidate build. The "
-        "reviewer-experience contract reserves it for the secure local live "
-        "presentation story (S5); a deployed public application reports live as "
-        "unavailable unless a separately verified deployment-compatible "
-        "authority boundary is enabled. Nothing executes from rendering this "
-        "tab, and no credential is requested, accepted or stored."
+        "Demo is deterministic and needs no keys. Local Live runs the accepted "
+        "Researcher → Analyst → Critic workflow with real local inference through "
+        "Ollama, for a trusted private operator only. Public/deployed live "
+        "execution is unavailable: no deployment authority boundary is accepted. "
+        "BYOK means the trusted runtime supplies provider connectivity, never a "
+        "secret pasted into this page. Credentials and model availability are "
+        "connectivity, not execution authority."
     )
+    st.text(local_live_profile())
     st.caption(
-        "What this build demonstrates instead: the Deterministic demo tab and "
-        "the synthetic canonical live workflow demonstration."
+        "Each click below explicitly authorizes one fresh, bounded NORMAL "
+        "execution of a fixed application task. No approval is remembered; "
+        "rerenders never execute. Expect validated role/call/cleanup evidence "
+        "and local projection states, not raw model output or external delivery. "
+        "A completed run demonstrates the control plane: explicit intent → fresh "
+        "authority → bounded canonical workflow → local model → validated result "
+        "→ sanitized evidence → local observability projection."
     )
+    if not live_capability.local_live_available:
+        # The default posture, not an alert: warnings signal attempted actions.
+        st.caption(
+            "Local live unavailable: no trusted private-operator capability was "
+            "supplied by the embedding runtime. No readiness probe or credential "
+            "lookup was performed. Demo and recorded historical evidence "
+            "remain available."
+        )
+    if st.button(
+        "Run authorized local live workflow",
+        key="local_live_run",
+        disabled=not live_capability.local_live_available,
+        type="primary",
+    ):
+        with st.spinner("One bounded local execution; no automatic retry…"):
+            try:
+                console.run_authorized_local()
+            except ConsoleBusyError:
+                st.warning("A session operation is already active; nothing else ran.")
+    current_local = console.current_local
+    if current_local is None:
+        st.caption(
+            "No current local Live attempt in this session. "
+            "Historical runs below are separate."
+        )
+    else:
+        st.subheader("Current local Live attempt (this session)")
+        st.caption(
+            f"Finished {age_in_seconds(current_local.finished_ns)} s ago · "
+            f"execution_kind: {current_local.evidence.execution_kind.value} · "
+            f"source: {current_local.evidence.source.value} · delivery: "
+            f"{current_local.evidence.delivery_confirmation.value}. LangSmith, "
+            "OTel and metrics states are local projections only; no current "
+            "operational health or LangSmith service-read confirmation is inferred."
+        )
+        if current_local.failure:
+            st.warning(
+                f"Current attempt: {current_local.outcome} "
+                f"({current_local.category or current_local.failure}). "
+                + (
+                    failure_text(current_local.category) + " "
+                    if current_local.category
+                    else ""
+                )
+                + local_live_failure_guidance(current_local.failure)
+                + " No historical result replaces this failure."
+            )
+        else:
+            st.success("Canonical local workflow completed with validated evidence.")
+        st.json(current_local.model_dump(mode="json"))
+    with st.expander("Recorded historical real-local runs (not current)"):
+        for record in (CURATED_RUN_3, CURATED_RUN_4, CURATED_RUN_5):
+            st.text(f"Recorded · {record.accepted_classification}")
+            st.caption(
+                f"source: {record.source.value} · kind: "
+                f"{record.execution_kind.value} · provenance: "
+                f"{record.provenance.value if record.provenance else 'none'} · "
+                "delivery confirmation: "
+                + (
+                    record.delivery_confirmation.value
+                    if record.delivery_confirmation
+                    else "none"
+                )
+            )
+            st.text(
+                f"{record.summary}\nrecorded reference: "
+                f"{record.reference_id or 'none recorded'}"
+            )
 
 with ops_tab:
     record = CURATED_OPERATIONAL_PIPELINE
@@ -751,11 +836,7 @@ with tracing_tab:
         "evidence is shown below, clearly labelled recorded/historical."
     )
     for record in (CURATED_LANGSMITH_DELIVERY, CURATED_RUN_5):
-        st.subheader(
-            f"Recorded · {record.accepted_classification[:52]}…"
-            if len(record.accepted_classification) > 52
-            else f"Recorded · {record.accepted_classification}"
-        )
+        st.subheader(f"Recorded · {record.accepted_classification}")
         st.caption(
             f"evidence class: {record.source.value} · delivery confirmation: "
             f"{record.delivery_confirmation.value} — "
@@ -769,6 +850,10 @@ with tracing_tab:
             )
         )
         st.text(record.summary)
+    st.text(
+        "Recorded LangSmith project: module6-verification · "
+        "destination: api.smith.langchain.com"
+    )
     st.caption(
         "service_read means the service returned the requested recorded "
         "evidence; unverified_write means only that the delivery write was "
@@ -821,14 +906,16 @@ with tracing_tab:
         age = age_in_seconds(stored_read.happened_ns)
         st.caption(
             f"Checked {age} s ago · source: fresh_execution — a current "
-            "holder-service observation of a recorded trace: not a new "
+            "inspection of a recorded trace: not a new "
             "execution, not a new delivery, and not an authority."
         )
         if obs is None or obs.read_state == "unavailable":
+            # This page never supplies a read capability, so no read is attempted.
             st.warning(
-                "No compatible current-inspection capability is available in "
-                "this posture. The recorded evidence above remains "
-                "historical and available; nothing was fabricated."
+                "Not available in this posture: no trusted read capability is "
+                "supplied here, so no service read was attempted (this is not a "
+                "failed read). The recorded evidence remains historical and "
+                "available; nothing was fabricated."
             )
         else:
             st.metric(
