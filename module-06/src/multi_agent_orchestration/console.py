@@ -35,6 +35,7 @@ from .observability_contracts import Outcome, RunTrace
 from .observed_execution import execute_observed_workflow
 
 if TYPE_CHECKING:  # Additive live definitions load only after run admission.
+    from .cockpit_langsmith import StoredLangSmithObservation
     from .cockpit_ops import StoredOperationsObservation
     from .console_live import LiveRun
 
@@ -320,6 +321,7 @@ class ConsoleSession:
         self._scaling = None
         self._live = deque(maxlen=8)
         self._operations = None
+        self._langsmith = None
         self._lock = threading.Lock()
 
     @property
@@ -333,7 +335,7 @@ class ConsoleSession:
 
         Raises:
             ConsoleFaultError: The retained view was not revalidatable; the
-                stale value is cleared and no cause is kept.
+                stale value is cleared and the error carries no diagnostics.
         """
         from .cockpit_ops import StoredOperationsObservation
 
@@ -411,6 +413,89 @@ class ConsoleSession:
                 "available; no historical value is substituted."
             ) from exc
         self._operations = view
+        return view
+
+    @property
+    def langsmith_read(self) -> "StoredLangSmithObservation | None":
+        """The last explicit current LangSmith inspection, if any.
+
+        Returns:
+            A revalidated presentation-scoped result, or ``None`` when the
+            reviewer never requested one; ``None`` is the honest
+            not-activated state.
+
+        Raises:
+            ConsoleFaultError: The retained view was not revalidatable; the
+                stale value is cleared and the error carries no diagnostics.
+        """
+        from .cockpit_langsmith import StoredLangSmithObservation as stored_cls
+
+        if self._langsmith is None:
+            return None
+        try:
+            return fresh(self._langsmith, stored_cls)
+        except (ValueError, TypeError) as exc:
+            self._langsmith = None
+            raise ConsoleFaultError(
+                "The retained LangSmith inspection was not revalidatable and "
+                "was cleared; request a new check."
+            ) from exc
+
+    def inspect_langsmith(
+        self,
+        provider: "object | None" = None,
+        trace_id: "object | None" = None,
+    ) -> "StoredLangSmithObservation":
+        """Run one explicit, bounded, read-only LangSmith inspection.
+
+        The inspecting logic is the accepted ``cockpit_langsmith`` boundary:
+        read-only, allowlisted recorded traces only, no credential lookup, no
+        network performed by the boundary itself, and no fabricated fact
+        when a trusted read capability is absent. The supplied provider is
+        a trusted runtime capability, never a visitor artifact; credential
+        presence is never asked about and never authorizes anything.
+
+        Args:
+            provider: A trusted read capability, or ``None`` (the honest
+                result is then an unavailable observation).
+            trace_id: Reserved for a single allowlisted target in a later
+                story; ``None`` inspects the call's default recorded trace.
+
+        Returns:
+            The validated current observation with its acquisition time.
+
+        Raises:
+            ConsoleFaultError: Unexpected inspection-boundary failure; no
+                cause and no diagnostics are retained.
+        """
+        from .cockpit_langsmith import (
+            LangSmithObservation,
+            StoredLangSmithObservation,
+            allowlisted_targets,
+        )
+        from .cockpit_langsmith import inspect_recorded_trace as perform
+
+        allowed = tuple(item[0] for item in allowlisted_targets())
+        target = None
+        if trace_id is None:
+            target = allowed[0]
+        elif type(trace_id) is str and trace_id in allowed:
+            target = trace_id
+        try:
+            observation = fresh(
+                perform(target, provider), LangSmithObservation
+            )
+            view = StoredLangSmithObservation(
+                happened_ns=time.time_ns(), observation=observation
+            )
+            fresh(view, StoredLangSmithObservation)
+        except (Exception, asyncio.CancelledError) as exc:
+            raise ConsoleFaultError(
+                "The LangSmith inspection could not produce a validated "
+                "observation. The deterministic demonstrations remain "
+                "available; no historical value is substituted."
+            ) from exc
+        self._langsmith = view
         return view
 
     @property

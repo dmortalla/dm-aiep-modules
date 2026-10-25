@@ -650,7 +650,7 @@ boundaries. See [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitatio
 
 - [Dependency Compatibility](DEPENDENCY_COMPATIBILITY.md)
 
-## Reviewer Experience Cockpit (S1 Candidate; Stories 2-7 Future)
+## Reviewer Experience Cockpit (S1 Accepted, Committed; Later Stories Tracked Below)
 
 Story S1 of the accepted
 [reviewer experience contract](REVIEWER_EXPERIENCE_CONTRACT.md) delivers the
@@ -678,7 +678,7 @@ untouched); compileall passed; nothing staged/committed. Reviewer-experience
 stories S2-S7 are future work; no requirement status changed and this candidate is
 not module completion.
 
-## Reviewer Cockpit S2 Candidate: Deterministic Demo Integration
+## Reviewer Cockpit S2 (Accepted, Committed): Deterministic Demo Integration
 
 Story S2 implements the tabbed reviewer cockpit in `app.py` with the
 accepted S1 presentation contracts only: the deterministic/no-key Demo tab
@@ -694,7 +694,7 @@ surface); the Operations tab presents no probe (S3 future); the LangSmith
 tracing tab reconciles the previously stale specialist wording truthfully
 within the accepted wording pins; the Guide tab renders the demo-relevant
 S1 guidance panels (full guidance surface is S6). Twelve focused cases in
-`../tests/test_cockpit_demo.py` (A-M: no render-time execution/telemetry/
+`../tests/test_cockpit_demo.py` (A-L: no render-time execution/telemetry/
 network, explicit execution path, truthful labels, not-executed state,
 historical separation, rerun safety, inert output/no unsafe HTML, sanitized
 refusals, no credential surface, S1 posture semantics intact) and one
@@ -707,7 +707,7 @@ passed; `git diff --check` clean; nothing staged/committed. S3-S7 remain
 future; no requirement status advanced; no deployment/release/completion
 claim.
 
-## Reviewer Cockpit S3 Candidate: Operational Observability Aggregation
+## Reviewer Cockpit S3 (Accepted, Committed): Operational Observability Aggregation
 
 Story S3 delivers the bounded read-only operational aggregation boundary
 `../src/multi_agent_orchestration/cockpit_ops.py` (fixed loopback endpoints
@@ -727,9 +727,36 @@ readers: zero render/tab-render probes, the explicit exact-once check,
 rerun persistence, typed separation, hostile/malformed responses failing
 closed and sanitized, fixed bounded endpoints and fixed query, no polling,
 truthful localhost semantics, no iframes) plus one bounded additive pin
-extension (page staleness helper moved into the accepted
-presentation-contract module as a pure function). Gates: Ruff clean;
+extension (a new pure staleness helper added to the accepted
+presentation-contract module). Gates: Ruff clean;
 complete Module 6 suite **2,706 passed**; compileall passed; `git diff
 --check` clean; nothing staged/committed. S4-S7 remain future; recorded
 operational evidence stays historical; no requirement status advanced; no
 deployment/release/completion claim.
+
+## Reviewer Cockpit S4 Candidate: LangSmith Observability Aggregation
+
+Story S4 replaces the tracing-tab placeholder with the native recorded
+LangSmith-evidence surface and the bounded read-only current-inspection
+boundary `../src/multi_agent_orchestration/cockpit_langsmith.py`
+(`TraceReadProvider` is a trusted, injected, read-only capability — no HTTP
+performed by the boundary, no credential/token/environment field anywhere,
+targets allowlisted from the accepted curated records only, unsupported or
+mismatched service replies fail closed). The tab shows the accepted
+deterministic delivery record (`service_read`) and the recorded Run 5
+record (`unverified_write`, exact accepted classification preserved) as
+distinct, never merged; the "Check current LangSmith evidence" action is
+explicit-only, performs at most one read-only recorded-trace inspection,
+stays `not_activated` before action and honest `unavailable` in the
+default posture (no credential lookup, no writes, no polling, no iframe),
+and a positive read means exactly "a current service observation of a
+recorded trace" — not execution, delivery or authority; recorded Run 3
+remains `out_of_policy_observation` + `local_provider_execution` and Run 4
+carries no unsupported identifier. Twenty-two offline cases in
+`../tests/test_cockpit_langsmith.py` (A-X). Gates: Ruff clean; focused S4
+22 passed; S1-S3 cockpit + console compatibility **199 passed**; LangSmith/
+live-observability suites **618 passed**; complete Module 6 suite **2,728
+passed**; compileall passed; `git diff --check` clean; nothing
+staged/committed. S5-S7 remain future; no live execution, no real LangSmith
+read, no new delivery, no credential access; no deployment/release/
+completion claim and no requirement status advanced.

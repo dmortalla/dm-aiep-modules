@@ -2,7 +2,9 @@
 
 import streamlit as st
 from multi_agent_orchestration.cockpit_view import (
+    CURATED_LANGSMITH_DELIVERY,
     CURATED_OPERATIONAL_PIPELINE,
+    CURATED_RUN_5,
     DEFAULT_COCKPIT_STATE,
     GUIDANCE_SECTIONS,
     DeliveryConfirmation,
@@ -739,26 +741,102 @@ with ops_tab:
 
 with tracing_tab:
     st.info(
-        "LangSmith aggregation is not offered by this candidate build "
-        "(reserved for a later story, S4). The application itself delivers "
-        "nothing from a page render and performs no LangSmith fetch."
+        "LangSmith remains the specialist AI/agent tracing system; this tab "
+        "presents accepted recorded evidence natively and never fetches, "
+        "iframes or delivers anything from a page render."
     )
     st.caption(
         "From this console, no trace has been delivered and live verification "
         "is pending: no console action sends anything. Recorded module "
-        "evidence, kept in documentation and labelled there: one "
-        "independently accepted deterministic sanitized-trace delivery "
-        "(POST /runs/batch, 202, four runs accepted, service_read receipt) "
-        "and one recorded live-model projection and delivery under the "
-        "committed unverified_write contract (not independently confirmed "
-        "authority-consumption). This console presents no fresh LangSmith "
-        "evidence in this build."
+        "evidence is shown below, clearly labelled recorded/historical."
+    )
+    for record in (CURATED_LANGSMITH_DELIVERY, CURATED_RUN_5):
+        st.subheader(
+            f"Recorded · {record.accepted_classification[:52]}…"
+            if len(record.accepted_classification) > 52
+            else f"Recorded · {record.accepted_classification}"
+        )
+        st.caption(
+            f"evidence class: {record.source.value} · delivery confirmation: "
+            f"{record.delivery_confirmation.value} — "
+            + (
+                "the service returned the recorded root run under the "
+                "accepted read contract"
+                if record.service_read_confirmed
+                else "the write was accepted with HTTP 2xx and no "
+                "programmatic service read-back exists for this event; it "
+                "never implies a service-read confirmation"
+            )
+        )
+        st.text(record.summary)
+    st.caption(
+        "service_read means the service returned the requested recorded "
+        "evidence; unverified_write means only that the delivery write was "
+        "accepted. They are different confirmed facts and this tab never "
+        "merges them into a generic delivered state."
     )
     st.caption(
         "This build offers no dashboard link from the console; Grafana remains "
         "the specialist drill-down for recorded operational evidence while "
-        "the operations presentation story is pending."
+        "the operations presentation story is pending, and the LangSmith "
+        "project UI stays the specialist trace drill-down."
     )
+    st.subheader("Current evidence check (explicit action)")
+    st.caption(
+        "A current read is read-only, allowlisted to the accepted recorded "
+        "traces, and requires a compatible trusted runtime supplied "
+        "capability; the deployed default posture has none, so this check "
+        "reports honest unavailability instead of touching credentials or "
+        "endpoints. No credential is read from any store by this console."
+    )
+    if st.button(
+        "Check current LangSmith evidence",
+        key="langsmith_read",
+        icon=":material/manage_search:",
+    ):
+        with st.spinner("Bounded read-only recorded-trace check…"):
+            try:
+                console.inspect_langsmith()
+            except ConsoleFaultError:
+                st.error(
+                    "The inspection could not produce a validated "
+                    "observation. No historical value is substituted and no "
+                    "write or delivery occurred."
+                )
+    try:
+        stored_read = console.langsmith_read
+    except ConsoleFaultError:
+        stored_read = None
+        st.warning(
+            "A retained inspection was not revalidatable and was cleared. "
+            "Nothing ran on this render; request a new check."
+        )
+    if stored_read is None:
+        st.caption(
+            "Not activated: no current LangSmith read has been requested in "
+            "this session; the recorded evidence above stays historical."
+        )
+    else:
+        obs = stored_read.observation
+        age = age_in_seconds(stored_read.happened_ns)
+        st.caption(
+            f"Checked {age} s ago · source: fresh_execution — a current "
+            "holder-service observation of a recorded trace: not a new "
+            "execution, not a new delivery, and not an authority."
+        )
+        if obs is None or obs.read_state == "unavailable":
+            st.warning(
+                "No compatible current-inspection capability is available in "
+                "this posture. The recorded evidence above remains "
+                "historical and available; nothing was fabricated."
+            )
+        else:
+            st.metric(
+                "Recorded service-read confirmed",
+                "True" if obs.service_read else "False",
+                border=True,
+            )
+            st.text(f"Inspected recorded trace: {obs.target_trace_id}")
 
 with guide_tab:
     st.caption(
