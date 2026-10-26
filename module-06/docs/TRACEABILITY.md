@@ -360,7 +360,7 @@ automatic operational query; external writes need separate authority.
 
 ### Verification rule
 
-No requirement becomes `Verified` merely because documentation says it exists.
+No requirement becomes `Verified` merely because implementation exists.
 Evidence must match the claim: simulated distribution cannot prove genuine
 distributed execution; an installed dependency cannot prove meaningful framework
 use; an adapter test cannot prove live remote tracing; an estimated cost cannot

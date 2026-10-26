@@ -93,6 +93,9 @@ the expected result and what that result proves.
 - No automatic LangSmith write and no automatic operational query; external
   writes require separate authority. See [SECURITY.md](docs/SECURITY.md).
 
+Use synthetic text rather than secrets.
+
+
 ## Evidence classifications
 
 Every result and recorded item is labelled by `execution_kind`, `provenance`,
