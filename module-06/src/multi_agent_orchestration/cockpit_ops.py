@@ -16,12 +16,14 @@ Policy, all encoded here and therefore testable:
   a visitor's machine); no caller can supply a URL, host, port or query, so
   there is no SSRF surface and no arbitrary PromQL;
 - one attempt per query call, bounded timeouts, bounded response reads,
-  no retries, no polling, no background refresh;
+  no retries, no polling, no background refresh, no proxies and no
+  redirects (a loopback reply can never steer a read to another host);
 - malformed or failed responses produce truthful ``None`` fields and an
   ``unavailable`` state; values are never fabricated and recorded
   historical evidence is never substituted for a fresh observation.
 """
 
+import http.client
 import json
 import urllib.parse
 import urllib.request
@@ -43,17 +45,43 @@ ALERT_RULE_NAMES = (
 )
 QUERY_TIMEOUT_S = 5
 MAX_RESPONSE_BYTES = 1_048_576
+# Expected failures of one bounded read: connection/HTTP status errors (OSError),
+# HTTP protocol errors, and malformed or unexpected JSON shapes. The telemetry
+# curators raise ``TelemetryDeliveryError``, a ``ValueError`` subclass.
+_READ_FAILURES = (
+    OSError,
+    http.client.HTTPException,
+    ValueError,
+    TypeError,
+    KeyError,
+    IndexError,
+    AttributeError,
+)
 
 
 class StackReader(Protocol):
-    """Bounded read-only fetcher boundary; the cockpit only injects test fakes.
+    """Bounded read-only fetcher boundary.
 
-    Implementations receive only URLs built from this module's fixed internal
-    constants; no proxies, credentials, retries or background refresh.
+    Production uses this module's loopback reader; only deterministic tests
+    inject another implementation. Implementations receive only URLs built
+    from this module's fixed internal constants; no proxies, redirects,
+    credentials, retries or background refresh.
     """
 
     def __call__(self, url: str, body: dict | None = None) -> object:
-        """Fetch one bounded read-only JSON document; raise on failure."""
+        """Fetch one bounded read-only JSON document.
+
+        Args:
+            url: A URL built from this module's fixed loopback constants.
+            body: Fixed application-owned JSON query body, or ``None`` for GET.
+
+        Returns:
+            The decoded, still untrusted JSON document.
+
+        Raises:
+            OSError: The endpoint was unreachable or answered with an error.
+            ValueError: The reply was not valid JSON.
+        """
 
 
 class LocalStackObservation(Contract):
@@ -63,10 +91,14 @@ class LocalStackObservation(Contract):
         query_state: ``result`` when the check ran, ``unavailable`` when the
             stack could not be read; never the recorded historical state.
         finished_total: Curated finished-workflow total, or ``None`` when
-            absent/unleasable — never fabricated as zero.
+            absent/unreadable — never fabricated as zero.
         alert_rules_loaded: Number of accepted alert rules loaded.
         grafana_healthy: Grafana health fact, or ``None`` unknown.
         dashboard_provisioned: Dashboard provisioning fact, or ``None``.
+        grafana_datasource_total: The same finished-workflow total read
+            through Grafana's provisioned Prometheus data source, or ``None``
+            when absent/unreadable; it shows whether Grafana sees what
+            Prometheus holds, never a separate measurement.
         dashboard_reference: The validated loopback dashboard reference for
             the current host, rendered inertly; never a fabricated link.
     """
@@ -76,6 +108,7 @@ class LocalStackObservation(Contract):
     alert_rules_loaded: int | None = None
     grafana_healthy: bool | None = None
     dashboard_provisioned: bool | None = None
+    grafana_datasource_total: float | None = None
     dashboard_reference: (
         Annotated[str, Field(strict=True, min_length=1, max_length=256)] | None
     ) = None
@@ -97,9 +130,33 @@ class StoredOperationsObservation(Contract):
     observation: LocalStackObservation | None
 
 
+class _RefuseRedirects(urllib.request.HTTPRedirectHandler):
+    """Refuse every redirect; the 3xx reply then fails as an ``HTTPError``."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl) -> None:
+        """Decline the redirect so no request reaches another location."""
+        return None
+
+
 def _production_reader(url: str, body: dict | None = None) -> object:
-    """Bounded loopback GET/POST ignoring proxies; raises on failure."""
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    """Bounded loopback GET/POST ignoring proxies and refusing redirects.
+
+    Args:
+        url: A URL built from this module's fixed loopback constants.
+        body: Fixed application-owned JSON query body, or ``None`` for GET.
+
+    Returns:
+        The decoded, still untrusted JSON document (at most
+        ``MAX_RESPONSE_BYTES`` read).
+
+    Raises:
+        OSError: Unreachable endpoint, error status or refused redirect.
+        http.client.HTTPException: HTTP protocol failure.
+        ValueError: The reply was not valid JSON.
+    """
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}), _RefuseRedirects()
+    )
     target = url
     data = None
     if body is not None:
@@ -121,7 +178,9 @@ def query_local_stack(
     Exactly one attempt per call: five read-only requests against the fixed
     loopback endpoints (Prometheus instant query and rules; Grafana health,
     dashboard and data source query). No retries, no polling, no background
-    refresh; failures do not raise and never fabricate values.
+    refresh. Expected read failures (unreachable endpoint, error status,
+    refused redirect, HTTP protocol error, malformed JSON or shape) leave the
+    affected fact ``None`` and never fabricate a value.
 
     Args:
         reader: Optional bounded fetcher injection for deterministic tests.
@@ -130,10 +189,12 @@ def query_local_stack(
 
     Returns:
         A validated fresh observation; every unreadable fact stays ``None``
-        and the state reflects truth.
+        and the state is ``unavailable`` when no fact could be read.
 
     Raises:
-        Never; all expected failures are represented in the result.
+        Exception: Only an unexpected reader failure outside the expected
+            read failures propagates; the console boundary converts it into
+            a sanitized ``ConsoleFaultError``.
     """
     from .telemetry_delivery import (
         DASHBOARD_UID,
@@ -156,7 +217,7 @@ def query_local_stack(
         finished = prometheus_scalar(
             reader(f"{prometheus}/api/v1/query?{query}", None)
         )
-    except (TelemetryDeliveryError, OSError, ValueError, TypeError):
+    except _READ_FAILURES:
         finished = None
     try:
         rules = reader(f"{prometheus}/api/v1/rules", None)
@@ -168,18 +229,18 @@ def query_local_stack(
                 if rule["name"] in ALERT_RULE_NAMES
             }
         )
-    except (OSError, ValueError, TypeError, KeyError, IndexError):
+    except _READ_FAILURES:
         rules_loaded = None
     try:
         health = reader(f"{grafana}/api/health", None)
         if type(health) is dict:
             healthy = health.get("database") == "ok"
-    except (OSError, ValueError, AttributeError):
+    except _READ_FAILURES:
         healthy = None
     try:
         board = reader(f"{grafana}/api/dashboards/uid/{DASHBOARD_UID}", None)
         provisioned = board["dashboard"]["uid"] == DASHBOARD_UID
-    except (OSError, ValueError, TypeError, KeyError):
+    except _READ_FAILURES:
         provisioned = None
     try:
         expected = {
@@ -195,21 +256,25 @@ def query_local_stack(
                 {"queries": [expected], "from": "now-5m", "to": "now"},
             )
         )
-    except (TelemetryDeliveryError, OSError, ValueError, TypeError):
+    except _READ_FAILURES:
         through = None
 
     if finished is None and rules_loaded is None and healthy is None \
             and provisioned is None and through is None:
         return LocalStackObservation(query_state=OperationsState.UNAVAILABLE)
-    try:
-        reference = grafana_reference(f"{grafana}/d/{DASHBOARD_UID}")
-    except TelemetryDeliveryError:
-        reference = None
+    if provisioned is True:
+        # A reference is offered only when this check actually read the
+        # provisioned dashboard; it is never offered for an unreachable Grafana.
+        try:
+            reference = grafana_reference(f"{grafana}/d/{DASHBOARD_UID}")
+        except TelemetryDeliveryError:
+            reference = None
     return LocalStackObservation(
         query_state=OperationsState.RESULT,
         finished_total=finished,
         alert_rules_loaded=rules_loaded,
         grafana_healthy=healthy,
         dashboard_provisioned=provisioned,
+        grafana_datasource_total=through,
         dashboard_reference=reference,
     )

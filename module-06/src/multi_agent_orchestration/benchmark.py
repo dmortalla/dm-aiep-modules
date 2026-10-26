@@ -68,7 +68,8 @@ class BenchmarkPlan(Contract):
     warmup: Annotated[bool, Field(strict=True)] = True
 
     @model_validator(mode="after")
-    def bounded_caps(self):
+    def bounded_caps(self) -> "BenchmarkPlan":
+        """Reject caps outside the approved set or not strictly increasing."""
         if any(cap not in CAPS for cap in self.caps) or any(
             low >= high for low, high in zip(self.caps, self.caps[1:], strict=False)
         ):
@@ -120,7 +121,8 @@ class LevelResult(Contract):
     speedup_vs_cap_1: Ratio | None = None
 
     @model_validator(mode="after")
-    def consistency(self):
+    def consistency(self) -> "LevelResult":
+        """Reject counts, timings or ratios inconsistent with the level."""
         finished = (
             self.completed + self.failed + self.timed_out + self.denied + self.cancelled
         )
@@ -175,7 +177,8 @@ class BenchmarkReport(Contract):
     passed: Annotated[bool, Field(strict=True)]
 
     @model_validator(mode="after")
-    def consistency(self):
+    def consistency(self) -> "BenchmarkReport":
+        """Reject a report whose levels or verdict contradict its plan."""
         expected = tuple(
             (repeat, cap)
             for repeat in range(1, self.plan.repeats + 1)

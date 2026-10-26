@@ -12,16 +12,22 @@ MAX_PACKET_BYTES = 16_384
 
 
 class WorkerId(StrEnum):
+    """The two fixed local worker identities."""
+
     LEFT = "worker_left"
     RIGHT = "worker_right"
 
 
 class WorkerRole(StrEnum):
+    """The fixed counting role owned by each worker."""
+
     LEFT = "left_counter"
     RIGHT = "right_counter"
 
 
 class AssignmentIdentity(Contract):
+    """Coordinator-owned identity shared by an assignment and its result."""
+
     protocol: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     workflow_id: UUID
     task_id: UUID
@@ -36,7 +42,8 @@ class AssignmentIdentity(Contract):
     limits: ExecutionLimits
 
     @model_validator(mode="after")
-    def ownership(self):
+    def ownership(self) -> "AssignmentIdentity":
+        """Reject role/sequence mismatches or insufficient authorized bounds."""
         index = tuple(WorkerId).index(self.worker)
         if self.role != tuple(WorkerRole)[index] or self.sequence != index + 1:
             raise ValueError("Worker role/sequence contradicts assignment ownership.")
@@ -51,17 +58,23 @@ class AssignmentIdentity(Contract):
 
 
 class WorkerAssignment(AssignmentIdentity):
+    """One serialized assignment: a bounded text fragment for one worker."""
+
     kind: Literal["assignment"] = "assignment"
     fragment: Annotated[str, Field(strict=True, max_length=2048)] = Field(repr=False)
 
 
 class WorkerResponse(AssignmentIdentity):
+    """Untrusted worker result; revalidated against its assignment."""
+
     kind: Literal["result"] = "result"
     pid: Annotated[int, Field(strict=True, ge=1)]
     characters: Annotated[int, Field(strict=True, ge=0, le=2048)]
 
 
 class WorkerReady(Contract):
+    """Worker readiness packet carrying its own and its parent PID."""
+
     protocol: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     kind: Literal["ready"] = "ready"
     worker: WorkerId
@@ -70,6 +83,8 @@ class WorkerReady(Contract):
 
 
 class WorkerStarted(Contract):
+    """Worker barrier packet: the assignment has started."""
+
     protocol: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     kind: Literal["started"] = "started"
     workflow_id: UUID
@@ -81,6 +96,8 @@ class WorkerStarted(Contract):
 
 
 class WorkerRelease(Contract):
+    """Coordinator barrier release for one assignment."""
+
     protocol: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     kind: Literal["release"] = "release"
     assignment_id: UUID
@@ -89,6 +106,8 @@ class WorkerRelease(Contract):
 
 
 class WorkerFailure(Contract):
+    """Closed worker failure category; only a bounded exception type name."""
+
     protocol: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     kind: Literal["failure"] = "failure"
     category: Literal["invalid_assignment", "invalid_output", "execution", "offline"]
@@ -116,6 +135,8 @@ class WorkerRecord(Contract):
 
 
 class DistributedEvidence(Contract):
+    """Application-created payload-free evidence of one two-process run."""
+
     workflow_id: UUID
     task_id: UUID
     runtime: Literal[RuntimeId.GOOGLE_ADK] = RuntimeId.GOOGLE_ADK
@@ -134,7 +155,8 @@ class DistributedEvidence(Contract):
     workers: Annotated[tuple[WorkerRecord, ...], Field(min_length=2, max_length=2)]
 
     @model_validator(mode="after")
-    def consistency(self):
+    def consistency(self) -> "DistributedEvidence":
+        """Reject evidence contradicting worker identity, PIDs or bounds."""
         if (
             tuple(record.worker for record in self.workers) != tuple(WorkerId)
             or tuple(record.role for record in self.workers) != tuple(WorkerRole)
@@ -152,6 +174,8 @@ class DistributedEvidence(Contract):
 
 
 class DistributedResult(Contract):
+    """Validated aggregate result of one distributed run."""
+
     workflow_id: UUID
     task_id: UUID
     status: Literal["completed"] = "completed"
@@ -160,7 +184,8 @@ class DistributedResult(Contract):
     evidence: DistributedEvidence
 
     @model_validator(mode="after")
-    def consistency(self):
+    def consistency(self) -> "DistributedResult":
+        """Reject output or identity contradicting the evidence."""
         if (
             self.workflow_id != self.evidence.workflow_id
             or self.task_id != self.evidence.task_id

@@ -2,15 +2,19 @@
 
 ## Current State
 
-Reviewer-experience chronology: S1, S2, S3 and S4 are accepted and committed.
-S5 is the current secure-local-live presentation candidate; S6–S7 remain future.
-Earlier milestone paragraphs below describe the state at their recorded time,
-including historical "future"/"candidate" wording; they are not current status.
+Reviewer-experience chronology: S1, S2, S3, S4 and S5 are accepted and
+committed; S5 is committed at `bb383fcbdee624e64aa9ac025018389d41bc905c`. S6
+(reviewer guidance/polish and final code-quality/full-gate closeout) is the
+current candidate, uncommitted and awaiting independent review; S7
+(documentation/traceability reconciliation) remains future. Earlier milestone
+paragraphs below describe the state at their recorded time, including
+historical "future"/"candidate" wording; they are not current status.
 The deployed/public posture remains deterministic/no-key. Local live requires an
 explicit trusted private-operator runtime and fresh execution-scoped authority;
 credentials/connectivity are never authority. No actual live execution was
-performed for S5; live verification remains a separate future human-authorized
-action after independent review. No deployment, release, completion or source
+performed for S5 or S6, and S6 performed no real model, LangSmith, telemetry,
+credential or container operation; live verification remains a separate future
+human-authorized action. No deployment, release, completion or source
 requirement advancement is claimed.
 
 | Item | State |
@@ -772,7 +776,9 @@ staged/committed. S5-S7 remain future; no live execution, no real LangSmith
 read, no new delivery, no credential access; no deployment/release/
 completion claim and no requirement status advanced.
 
-## Reviewer Cockpit S5 (Candidate, Not Accepted): Secure Local Live/BYOK Presentation
+## Reviewer Cockpit S5 (Accepted, Committed at `bb383fc`): Secure Local Live/BYOK Presentation
+
+The paragraph below is the S5 candidate record as written before acceptance.
 
 Story S5 connects the accepted canonical real-local workflow to the Live / BYOK
 tab for a trusted private operator only, through
@@ -794,3 +800,35 @@ whitespace clean; nothing staged/committed. No real live execution was
 performed during S5 implementation; live verification remains a separate
 future human-authorized action after independent review. S6-S7 remain future;
 no deployment/release/completion claim and no requirement status advanced.
+
+## Reviewer Cockpit S6 (Candidate, Not Accepted): Guidance, Polish and Code-Quality Closeout
+
+Story S6 makes the five-tab cockpit one guided reviewer experience and performs
+the B4 closing quality gate; design and audit record:
+[`REVIEWER_S6_CLOSEOUT.md`](REVIEWER_S6_CLOSEOUT.md). Every workflow tab states
+its purpose, action, expected result and what it proves; the Guide renders the
+complete static guidance (start path, orchestration architectures, Demo versus
+trusted-local Live, evidence labels, the LangSmith and OpenTelemetry ->
+Collector -> Prometheus -> Grafana observability layers verified locally, why
+public live is fail-closed, and how to test each capability). Bounded repairs:
+the Grafana data-source total is presented, the dashboard reference is offered
+only after a real dashboard read, the read-only operational reader refuses
+redirects and treats HTTP protocol errors as honest unavailability, Clear also
+removes a retained LangSmith inspection, recorded trace identifiers are shown as
+inert text, `console.age_seconds` reuses the S1 helper, and docstrings, types and
+exception-chaining descriptions were audited. Architecture, evidence taxonomy,
+S1–S5 behaviour, ADR-008 and the public fail-closed posture are unchanged; no
+dependency changed. Engineering/presentation polish is complete as a candidate.
+
+Gates (2026-10-25, fail-fast): Ruff `check .` clean; focused S6 **30 passed**;
+S1–S5 cockpit **101 passed**; live runtime/observability/delivery **2,004
+passed**; console/app/console-live **134 passed**; execution/contract/registry/
+distributed/benchmark failure paths **239 passed**; complete Module 6 **2,794
+passed**; root full pytest: first run **2 failed, 4,907 passed, 6 skipped** (two
+real-process distributed nodes; tracebacks not retained), both exact nodes then
+passed in isolation three times, and a complete root rerun gave **4,909 passed,
+6 skipped, 3 existing ChromaDB warnings**; compileall clean; candidate
+UTF-8/BOM/LF/whitespace and `git diff --check` clean. No real model, provider,
+LangSmith, telemetry, credential or container operation occurred. S7 remains
+future; no deployment, release, completion or requirement advancement is
+claimed, and nothing is staged or committed.

@@ -26,6 +26,8 @@ Duration = Annotated[float, Field(strict=True, ge=0, le=MAX_DEADLINE_MS + 2000)]
 
 
 class CleanupState(StrEnum):
+    """Closed supervised child-process cleanup states."""
+
     NOT_STARTED = "not_started"
     REAPED = "reaped"
     FAILED = "failed"
@@ -42,7 +44,8 @@ class LiveRuntimeFacts(LiveContract):
     cleanup: CleanupState
 
     @model_validator(mode="after")
-    def accounting(self):
+    def accounting(self) -> "LiveRuntimeFacts":
+        """Reject unpaired, invented or out-of-profile supervisor accounting."""
         if (self.model_calls is None) != (self.repair_attempts is None):
             raise ValueError("Accounting availability must be paired.")
         if self.model_calls is None:
@@ -60,6 +63,8 @@ class LiveRuntimeFacts(LiveContract):
 
 
 class LiveObservationIdentity(LiveContract):
+    """Correlation identity of one live observation; never authority."""
+
     workflow_id: CanonicalUUID
     task_id: CanonicalUUID
     trace_id: CanonicalUUID
@@ -68,7 +73,8 @@ class LiveObservationIdentity(LiveContract):
     started_ns: Stamp
 
     @model_validator(mode="after")
-    def nonzero(self):
+    def nonzero(self) -> "LiveObservationIdentity":
+        """Reject all-zero trace or span identifiers."""
         if self.trace_id.int == 0 or int(self.span_id, 16) == 0:
             raise ValueError("Observation identity must be nonzero.")
         return self
@@ -85,7 +91,8 @@ class LiveRoleCompletion(LiveContract):
     repair_attempts: Repairs
 
     @model_validator(mode="after")
-    def completion(self):
+    def completion(self) -> "LiveRoleCompletion":
+        """Reject out-of-order roles or inconsistent call/repair counts."""
         if (
             self.role != LIVE_ROLES[self.sequence - 1]
             or self.model_calls != self.sequence + self.repair_attempts
@@ -109,7 +116,8 @@ class LiveTerminalObservation(LiveObservationIdentity):
     duration_ms: Duration
 
     @model_validator(mode="after")
-    def terminal(self):
+    def terminal(self) -> "LiveTerminalObservation":
+        """Reject outcomes, timings or facts the accepted taxonomy forbids."""
         refused = (
             LiveFailureCategory.AUTHORIZATION_REFUSED,
             LiveFailureCategory.BUDGET_REFUSED,
@@ -190,8 +198,22 @@ _SCHEMAS = (
 )
 
 
-def checked_observation(schema, value):
-    """Rebuild exact declared nested data; expose no rejected diagnostics."""
+def checked_observation[SchemaT: LiveContract](
+    schema: type[SchemaT], value: object
+) -> SchemaT:
+    """Rebuild exact declared nested data; expose no rejected diagnostics.
+
+    Args:
+        schema: One of the closed live observation schemas.
+        value: Untrusted plain data or an owned observation contract.
+
+    Returns:
+        A freshly validated ``schema`` instance.
+
+    Raises:
+        LiveValidationError: Unsupported schema, unowned nested contract or
+            failed validation; no cause or rejected value is exposed.
+    """
 
     def plain(item):
         if isinstance(item, LiveContract):

@@ -33,7 +33,8 @@ class LiveMetricDeliveryConfig(LiveContract):
     timeout_ms: Annotated[int, Field(strict=True, ge=100, le=5000)] = 2000
 
     @model_validator(mode="after")
-    def loopback(self):
+    def loopback(self) -> "LiveMetricDeliveryConfig":
+        """Revalidate the destination with the accepted loopback rules."""
         DeliveryConfig(
             mode=self.mode,
             endpoint=self.endpoint,

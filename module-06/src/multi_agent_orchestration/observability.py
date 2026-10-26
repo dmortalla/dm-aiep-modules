@@ -23,6 +23,7 @@ from .observability_contracts import (
 
 if TYPE_CHECKING:
     from .canonical_contracts import LiveWorkflowEvent
+    from .live_observation import LiveTerminalObservation
 
 CEILING = 1_000_000_000
 
@@ -30,23 +31,32 @@ CEILING = 1_000_000_000
 class ObservationAdapter(Protocol):
     """Trusted bounded synchronous local infrastructure, never request data."""
 
-    def emit(self, trace: RunTrace) -> None: ...
+    def emit(self, trace: RunTrace) -> None:
+        """Record one validated completed trace locally; no remote I/O."""
+        ...
 
-    def state(self, snapshot: MetricSnapshot) -> None: ...
+    def state(self, snapshot: MetricSnapshot) -> None:
+        """Record one bounded metric snapshot locally."""
+        ...
 
 
 class LiveObservationAdapter(Protocol):
     """Trusted bounded synchronous local sink; no remote I/O or authority."""
 
-    def emit_live(self, event: LiveWorkflowEvent) -> None: ...
+    def emit_live(self, event: LiveWorkflowEvent) -> None:
+        """Record one revalidated live workflow event locally."""
+        ...
 
 
-def span_id():
+def span_id() -> str:
+    """Return a fresh random 16-hex-digit local span identifier."""
     return f"{uuid4().int >> 64:016x}"
 
 
 @dataclass(frozen=True)
 class ObservationHandle:
+    """Opaque owned handle for one active deterministic observation."""
+
     request: WorkflowRequest
     trace_id: UUID
     span_id: str
@@ -97,8 +107,20 @@ class Observability:
         )
         self._lock = threading.RLock()
 
-    def begin_live(self, identity):
-        """Own an opaque invocation handle; a valid UUID is not ownership."""
+    def begin_live(self, identity: object) -> object | None:
+        """Own an opaque invocation handle; a valid UUID is not ownership.
+
+        Args:
+            identity: Untrusted live observation identity data.
+
+        Returns:
+            A new opaque handle, or ``None`` when the bounded active set is
+            full or the trace identifier is already active or finalized (the
+            drop is counted).
+
+        Raises:
+            LiveValidationError: The identity failed validation.
+        """
         from .live_observation import LiveObservationIdentity, checked_observation
 
         checked = checked_observation(LiveObservationIdentity, identity)
@@ -121,8 +143,22 @@ class Observability:
             self._live_active[handle] = checked.model_dump_json()
             return handle
 
-    def finish_live(self, handle, observation):
-        """Validate linkage and finalize once; no adapter or SDK is called."""
+    def finish_live(
+        self, handle: object, observation: object
+    ) -> LiveTerminalObservation:
+        """Validate linkage and finalize once; no adapter or SDK is called.
+
+        Args:
+            handle: The exact opaque handle returned by ``begin_live``.
+            observation: Untrusted terminal observation data.
+
+        Returns:
+            A fresh validated snapshot of the retained terminal observation.
+
+        Raises:
+            LiveValidationError: Unowned/replayed handle, invalid observation
+                or identity mismatch; no cause is exposed.
+        """
         from .live_errors import LiveValidationError
         from .live_observation import LiveTerminalObservation, checked_observation
 
@@ -148,7 +184,7 @@ class Observability:
             self._live_terminal.append(packet)
             return LiveTerminalObservation.model_validate_json(packet)
 
-    def abandon_live(self, handle):
+    def abandon_live(self, handle: object) -> None:
         """Release local bookkeeping without changing execution authority."""
         with self._lock:
             owned = next((key for key in self._live_active if key is handle), None)
@@ -157,7 +193,7 @@ class Observability:
             self._increment("observation_drops")
 
     @property
-    def live_terminal_records(self):
+    def live_terminal_records(self) -> tuple[LiveTerminalObservation, ...]:
         """Fresh immutable snapshots; independent of deterministic traces."""
         from .live_observation import LiveTerminalObservation
 
@@ -219,7 +255,19 @@ class Observability:
             except (Exception, asyncio.CancelledError):
                 self._increment("adapter_failures")
 
-    def begin(self, request: WorkflowRequest, distributed: bool):
+    def begin(
+        self, request: WorkflowRequest, distributed: bool
+    ) -> ObservationHandle | None:
+        """Start observing one revalidated request.
+
+        Args:
+            request: The workflow request about to execute.
+            distributed: Whether execution uses the distributed service.
+
+        Returns:
+            An owned handle, or ``None`` when 16 observations are already
+            active (the drop is counted; execution is unaffected).
+        """
         # Revalidate even nested model_construct/model_copy inputs.
         checked = WorkflowRequest.model_validate(request.model_dump(warnings="error"))
         checked = WorkflowRequest.model_validate(checked.model_dump())
@@ -241,7 +289,26 @@ class Observability:
             self._publish_state()
             return handle
 
-    def finish(self, handle, outcome: Outcome, result=None):
+    def finish(
+        self,
+        handle: ObservationHandle | None,
+        outcome: Outcome,
+        result: ValidatedWorkflowResult | DistributedResult | None = None,
+    ) -> RunTrace | None:
+        """Finalize one observation from validated execution evidence.
+
+        Args:
+            handle: The owned handle from ``begin``, or ``None`` (no-op).
+            outcome: The closed workflow outcome.
+            result: Validated success result; only with ``completed``.
+
+        Returns:
+            The bounded payload-free trace, or ``None`` for a ``None`` handle.
+
+        Raises:
+            ValueError: Unowned/replayed handle, evidence correlation failure
+                or success evidence on a failure outcome.
+        """
         if handle is None:
             return
         with self._lock:
@@ -346,7 +413,7 @@ class Observability:
                     self._increment("adapter_failures")
             return trace
 
-    def abandon(self, handle):
+    def abandon(self, handle: ObservationHandle | None) -> None:
         """Release bookkeeping after observation failure without exposing content."""
         with self._lock:
             if handle is not None and self._active.get(handle.trace_id) is handle:
@@ -355,11 +422,13 @@ class Observability:
             self._publish_state()
 
     @property
-    def records(self):
+    def records(self) -> tuple[RunTrace, ...]:
+        """Retained completed traces (at most 32), oldest first."""
         with self._lock:
             return tuple(self._records)
 
     @property
-    def metrics(self):
+    def metrics(self) -> MetricSnapshot:
+        """A bounded snapshot of the saturated observation counters."""
         with self._lock:
             return MetricSnapshot(active=len(self._active), **self._counts)

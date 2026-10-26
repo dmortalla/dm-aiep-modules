@@ -6,6 +6,7 @@ from collections import deque
 from contextvars import ContextVar
 from datetime import UTC, datetime
 from importlib import import_module
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from .observability_contracts import (
@@ -16,8 +17,23 @@ from .observability_contracts import (
     StepTrace,
 )
 
+if TYPE_CHECKING:
+    from opentelemetry.sdk.metrics.export import MetricsData
 
-def checked_trace(trace):
+
+def checked_trace(trace: RunTrace) -> RunTrace:
+    """Rebuild a trace from its exact declared fields before any SDK use.
+
+    Args:
+        trace: A retained trace, untrusted until rebuilt.
+
+    Returns:
+        A freshly validated trace.
+
+    Raises:
+        ValueError: Unowned fields or types, more than three steps, or a
+            validation failure.
+    """
     # Inspect closed fields before any SDK/Pydantic serialization can warn with
     # rejected values. Revalidate nested objects from plain data, not instances.
     def fields(record, schema):
@@ -35,7 +51,8 @@ def checked_trace(trace):
     return RunTrace.model_validate(raw)
 
 
-def timestamp(nanoseconds):
+def timestamp(nanoseconds: int) -> datetime:
+    """Convert a wall-clock nanosecond marker to an aware UTC datetime."""
     return datetime.fromtimestamp(nanoseconds / 1_000_000_000, UTC)
 
 
@@ -51,7 +68,12 @@ class LocalLangSmith:
         self._trees = deque(maxlen=32)
         self._lock = threading.Lock()
 
-    def emit(self, trace: RunTrace):
+    def emit(self, trace: RunTrace) -> None:
+        """Build one local RunTree with payload-free metadata; never sent.
+
+        Raises:
+            ValueError: The trace failed revalidation.
+        """
         # Match the repository's lazy SDK boundary; no domain-level SDK import.
         RunTree = import_module("langsmith.run_trees").RunTree
 
@@ -102,8 +124,8 @@ class LocalLangSmith:
         with self._lock:
             self._trees.append(tree)
 
-    def state(self, snapshot: MetricSnapshot):
-        pass  # LangSmith does not own operational aggregates.
+    def state(self, snapshot: MetricSnapshot) -> None:
+        """Ignore operational aggregates, which LangSmith does not own."""
 
 
 class LocalOpenTelemetry:
@@ -214,7 +236,8 @@ class LocalOpenTelemetry:
     def _retain_spans(self, batch):
         self._spans.extend(batch)
 
-    def state(self, snapshot: MetricSnapshot):
+    def state(self, snapshot: MetricSnapshot) -> None:
+        """Record active/started deltas from one revalidated snapshot."""
         snapshot = MetricSnapshot.model_validate(snapshot.model_dump())
         with self._lock:
             active, started = self._last_state
@@ -223,7 +246,14 @@ class LocalOpenTelemetry:
                 self._started.add(snapshot.started - started)
             self._last_state = (snapshot.active, snapshot.started)
 
-    def emit(self, trace: RunTrace):
+    def emit(self, trace: RunTrace) -> None:
+        """Record local spans and closed-dimension metrics for one trace.
+
+        Raises:
+            ValueError: The trace failed revalidation.
+            RuntimeError: Local span collection failed; the observer counts it
+                as an adapter failure without changing the workflow.
+        """
         from opentelemetry.context import Context
         from opentelemetry.trace import (
             NonRecordingSpan,
@@ -299,12 +329,13 @@ class LocalOpenTelemetry:
             finally:
                 self._identity.reset(token)
 
-    def collect_metrics(self):
+    def collect_metrics(self) -> "MetricsData | None":
         """Local SDK collection data; infrastructure must curate before presentation."""
         with self._lock:
             return self._reader.get_metrics_data()
 
-    def close(self):
+    def close(self) -> None:
+        """Shut down the private providers once; later calls do nothing."""
         with self._lock:
             if self._closed:
                 return

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from .contracts import GraphTopology, RuntimeId, WorkflowRequest
+from .contracts import Contract, GraphTopology, RuntimeId, WorkflowRequest
 from .distributed_contracts import (
     MAX_PACKET_BYTES,
     WorkerAssignment,
@@ -21,6 +21,18 @@ from .errors import (
 
 
 def validate_request(raw: object) -> WorkflowRequest:
+    """Revalidate an explicit Google ADK distribution request.
+
+    Args:
+        raw: Untrusted request data or contract.
+
+    Returns:
+        A freshly validated request.
+
+    Raises:
+        InvalidWorkflowRequestError: Schema failure or wrong runtime/topology.
+        StepBudgetExceededError: Bounds below the distributed minimum.
+    """
     try:
         request = WorkflowRequest.model_validate(
             raw.model_dump() if isinstance(raw, WorkflowRequest) else raw
@@ -51,6 +63,15 @@ def validate_request(raw: object) -> WorkflowRequest:
 
 
 def make_assignments(request: WorkflowRequest, coordinator_pid: int) -> tuple:
+    """Split the task text into two fixed, owned worker assignments.
+
+    Args:
+        request: The distribution request.
+        coordinator_pid: PID of the coordinating process.
+
+    Returns:
+        The left and right ``WorkerAssignment`` in fixed order.
+    """
     request = validate_request(request)
     text = request.task.instruction
     split = (len(text) + 1) // 2
@@ -70,7 +91,12 @@ def make_assignments(request: WorkflowRequest, coordinator_pid: int) -> tuple:
     )
 
 
-def encode_packet(packet) -> bytes:
+def encode_packet(packet: Contract) -> bytes:
+    """Serialize one protocol packet as bounded newline-framed JSON.
+
+    Raises:
+        InvalidRuntimeOutputError: The packet exceeds the hard byte limit.
+    """
     data = (
         json.dumps(
             packet.model_dump(mode="json"),
@@ -85,7 +111,9 @@ def encode_packet(packet) -> bytes:
     return data
 
 
-def decode_packet(data: bytes, schema):
+def decode_packet[PacketT: Contract](
+    data: bytes, schema: type[PacketT]
+) -> PacketT:
     """Reject duplicate keys, non-finite values, malformed UTF-8 and extra fields."""
 
     def pairs(items):
@@ -114,6 +142,11 @@ def decode_packet(data: bytes, schema):
 
 
 def validate_assignment(raw: object) -> WorkerAssignment:
+    """Revalidate one untrusted worker assignment.
+
+    Raises:
+        InvalidWorkflowRequestError: The assignment failed validation.
+    """
     try:
         assignment = WorkerAssignment.model_validate(
             raw.model_dump() if isinstance(raw, WorkerAssignment) else raw
@@ -126,6 +159,7 @@ def validate_assignment(raw: object) -> WorkerAssignment:
 
 
 def expected_response(assignment: WorkerAssignment, pid: int) -> WorkerResponse:
+    """Build the only acceptable result for an assignment and worker PID."""
     assignment = validate_assignment(assignment)
     return WorkerResponse(
         **assignment.model_dump(exclude={"kind", "fragment"}),
@@ -134,7 +168,15 @@ def expected_response(assignment: WorkerAssignment, pid: int) -> WorkerResponse:
     )
 
 
-def validate_response(raw: object, assignment: WorkerAssignment, pid: int):
+def validate_response(
+    raw: object, assignment: WorkerAssignment, pid: int
+) -> WorkerResponse:
+    """Accept a worker result only if it equals the expected response.
+
+    Raises:
+        InvalidRuntimeOutputError: Schema failure or any contradiction of
+            ownership, context or provenance.
+    """
     try:
         response = WorkerResponse.model_validate(
             raw.model_dump() if isinstance(raw, WorkerResponse) else raw

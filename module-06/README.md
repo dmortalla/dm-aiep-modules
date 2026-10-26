@@ -14,6 +14,25 @@ WebSocket messages to 1 MB. No credentials are needed. Do not expose this review
 publicly; authentication, multi-user deployment and aggregate capacity are not
 implemented or verified.
 
+## Reviewer cockpit at a glance
+
+The page is one reviewer cockpit with five tabs; each tab states its purpose,
+the action to take, the expected result and what that result proves. Start with
+**Guide**, then **Deterministic demo**.
+
+| Tab | What it shows | Default behaviour |
+| --- | --- | --- |
+| Deterministic demo | Eight deterministic multi-agent demonstrations, the synthetic canonical workflow and the local scaling benchmark | Runs only on an explicit action; no keys, model or external delivery |
+| Live / BYOK | The canonical workflow with real local Ollama inference for a trusted private operator | Unavailable unless trusted embedding code supplies the runtime; the stock launcher never does |
+| Operations | Recorded local OpenTelemetry → Collector → Prometheus → Grafana verification beside an explicit current-host check | Nothing is queried until the check is selected |
+| LangSmith tracing | Recorded `service_read` and `unverified_write` deliveries, never merged | The current check reports unavailable: this page supplies no read capability |
+| Guide | Orientation, evidence labels, observability roles and how to test each capability | Static text only |
+
+Observability is presented in three layers: LangSmith for AI/agent tracing;
+OpenTelemetry → Collector → Prometheus → Grafana for operational metrics,
+verified end-to-end locally (not hosted); and this Streamlit cockpit as the
+unified reviewer view. No external service is embedded in the page.
+
 Choose one of the eight demonstrations explicitly, enter synthetic text and
 select **Run demonstration**. The page explains what each run proves and how to
 try bounded failures. Start with eight steps and a 30,000 ms deadline. Text over

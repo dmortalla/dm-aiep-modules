@@ -49,11 +49,17 @@ st.caption(
     "Multi-agent orchestration • deterministic local execution • no credentials needed"
 )
 st.info(
-    "Choose a demonstration, use synthetic task text, then select Run demonstration. "
-    "These real runtime paths use deterministic agents; "
-    "no model or LLM inference is performed. "
-    "No paid inference or external telemetry delivery is enabled. "
-    "Demo is the baseline posture of this cockpit."
+    "Demo is the baseline posture of this cockpit: real LangGraph, CrewAI and ADK "
+    "runtime paths with deterministic agents; no model or LLM inference is "
+    "performed, and no paid inference or external telemetry delivery is enabled. "
+    "New here? Read the Guide tab, then choose a demonstration below and select "
+    "Run demonstration. Nothing runs, queries or delivers until you select an "
+    "action."
+)
+st.caption(
+    "Observability • AI/agent tracing: LangSmith • operational: OpenTelemetry → "
+    "Collector → Prometheus → Grafana (verified end-to-end locally; not hosted) • "
+    "unified reviewer view: this Streamlit cockpit"
 )
 st.caption(
     f"Mode: {orientation.value} (baseline) • local live/BYOK: "
@@ -61,8 +67,8 @@ st.caption(
     "public live: "
     + ("available" if live_capability.deployed_public_live_available else "unavailable")
     + " • "
-    f"operations queries: {operations_state.state.value} (nothing probes until an "
-    "explicit request is offered by a later story)"
+    f"operations queries: {operations_state.state.value} (nothing is queried until "
+    "you select a check on the Operations tab)"
 )
 
 demo_tab, live_tab, ops_tab, tracing_tab, guide_tab = st.tabs(
@@ -70,6 +76,23 @@ demo_tab, live_tab, ops_tab, tracing_tab, guide_tab = st.tabs(
 )
 
 with demo_tab:
+    st.caption(
+        "Purpose: run the accepted multi-agent runtimes with deterministic agents, "
+        "offline and without keys."
+    )
+    st.caption(
+        "Action: choose a demonstration, keep or edit the synthetic text, then "
+        "select Run demonstration."
+    )
+    st.caption(
+        "Expected result: a validated result with its evidence label, role order "
+        "and local trace, or a named denial or timeout with no fallback."
+    )
+    st.caption(
+        "What it proves: real runtime scheduling, validated hand-offs, bounded "
+        "failure handling and evidence creation. It does not prove model "
+        "reasoning, hosted operation or production capacity."
+    )
     mode = st.selectbox(
         "Demonstration",
         tuple(Demonstration),
@@ -620,23 +643,30 @@ with demo_tab:
 
 with live_tab:
     st.info(
-        "Demo is deterministic and needs no keys. Local Live runs the accepted "
-        "Researcher → Analyst → Critic workflow with real local inference through "
-        "Ollama, for a trusted private operator only. Public/deployed live "
-        "execution is unavailable: no deployment authority boundary is accepted. "
-        "BYOK means the trusted runtime supplies provider connectivity, never a "
-        "secret pasted into this page. Credentials and model availability are "
-        "connectivity, not execution authority."
+        "Purpose: Local Live runs the accepted Researcher → Analyst → Critic "
+        "workflow with real local inference through Ollama, for a trusted private "
+        "operator only; Demo stays deterministic and needs no keys. Public/deployed "
+        "live execution is unavailable by design: no deployment authority boundary "
+        "is accepted, so a public visitor can never spend an operator's compute or "
+        "credentials. BYOK means the operator's trusted runtime brings its own "
+        "provider connectivity, never a secret pasted into this page; credentials "
+        "and model availability are connectivity, not execution authority."
     )
     st.text(local_live_profile())
     st.caption(
-        "Each click below explicitly authorizes one fresh, bounded NORMAL "
-        "execution of a fixed application task. No approval is remembered; "
-        "rerenders never execute. Expect validated role/call/cleanup evidence "
-        "and local projection states, not raw model output or external delivery. "
-        "A completed run demonstrates the control plane: explicit intent → fresh "
-        "authority → bounded canonical workflow → local model → validated result "
-        "→ sanitized evidence → local observability projection."
+        "Action: select Run authorized local live workflow. Each click explicitly "
+        "authorizes one fresh, bounded NORMAL execution of a fixed application "
+        "task. No approval is remembered; rerenders never execute."
+    )
+    st.caption(
+        "Expected result: validated role, call, timing and cleanup facts plus "
+        "local projection states — not raw model output and not external delivery."
+    )
+    st.caption(
+        "What it proves: the control plane — explicit intent → fresh authority → "
+        "bounded canonical workflow → local model → validated result → sanitized "
+        "evidence → local observability projection. It does not prove model "
+        "quality, hosted-provider support or delivery to LangSmith."
     )
     if not live_capability.local_live_available:
         # The default posture, not an alert: warnings signal attempted actions.
@@ -708,6 +738,19 @@ with live_tab:
             )
 
 with ops_tab:
+    st.caption(
+        "Purpose: operational observability — OpenTelemetry instruments the "
+        "application → the OpenTelemetry Collector ingests → Prometheus stores "
+        "metrics and alert rules → Grafana is the specialist dashboard. "
+        "Streamlit only curates results here and never embeds those services."
+    )
+    st.caption(
+        "Action: read the recorded verification, then optionally select Check "
+        "current local observability stack. Expected result: fresh current-host "
+        "values when the local stack is running, otherwise an honest unavailable "
+        "state. What it proves: what this host's stack reports at that moment — "
+        "not hosted telemetry, public Grafana or any service level."
+    )
     record = CURATED_OPERATIONAL_PIPELINE
     st.subheader("Recorded verification (not a current check)")
     st.caption(
@@ -819,6 +862,15 @@ with ops_tab:
                 ),
                 border=True,
             )
+            st.metric(
+                "Finished workflows (via Grafana data source)",
+                (
+                    "Unavailable"
+                    if obs.grafana_datasource_total is None
+                    else f"{obs.grafana_datasource_total:g}"
+                ),
+                border=True,
+            )
             if obs.dashboard_reference:
                 # Validated loopback reference for the CURRENT HOST; shown as
                 # inert text. Never usable from a visitor's browser host.
@@ -826,14 +878,22 @@ with ops_tab:
 
 with tracing_tab:
     st.info(
-        "LangSmith remains the specialist AI/agent tracing system; this tab "
-        "presents accepted recorded evidence natively and never fetches, "
-        "iframes or delivers anything from a page render."
+        "Purpose: AI/agent observability. LangSmith remains the specialist "
+        "AI/agent tracing system; this tab presents accepted recorded evidence "
+        "natively and never fetches, iframes or delivers anything from a page "
+        "render."
     )
     st.caption(
-        "From this console, no trace has been delivered and live verification "
-        "is pending: no console action sends anything. Recorded module "
+        "From this console, no trace has been delivered: no console action sends "
+        "anything. Service-read verification of the recorded live-model trace "
+        "(Run 5) is pending; it remains unverified_write. Recorded module "
         "evidence is shown below, clearly labelled recorded/historical."
+    )
+    st.caption(
+        "Action: compare the two recorded deliveries, then optionally select "
+        "Check current LangSmith evidence. Expected result here: an honest "
+        "unavailable state, because this page supplies no read capability. What "
+        "the records prove: exactly their accepted classifications, no more."
     )
     for record in (CURATED_LANGSMITH_DELIVERY, CURATED_RUN_5):
         st.subheader(f"Recorded · {record.accepted_classification}")
@@ -849,7 +909,7 @@ with tracing_tab:
                 "never implies a service-read confirmation"
             )
         )
-        st.text(record.summary)
+        st.text(f"{record.summary}\nrecorded trace: {record.reference_id}")
     st.text(
         "Recorded LangSmith project: module6-verification · "
         "destination: api.smith.langchain.com"
@@ -861,18 +921,17 @@ with tracing_tab:
         "merges them into a generic delivered state."
     )
     st.caption(
-        "This build offers no dashboard link from the console; Grafana remains "
-        "the specialist drill-down for recorded operational evidence while "
-        "the operations presentation story is pending, and the LangSmith "
-        "project UI stays the specialist trace drill-down."
+        "This build offers no dashboard link from the console: the LangSmith "
+        "project UI stays the specialist trace drill-down, and Grafana is the "
+        "specialist operational drill-down (see the Operations tab)."
     )
     st.subheader("Current evidence check (explicit action)")
     st.caption(
         "A current read is read-only, allowlisted to the accepted recorded "
-        "traces, and requires a compatible trusted runtime supplied "
-        "capability; the deployed default posture has none, so this check "
-        "reports honest unavailability instead of touching credentials or "
-        "endpoints. No credential is read from any store by this console."
+        "traces, and requires a read capability supplied by a trusted runtime; "
+        "this page supplies none, so this check reports honest unavailability "
+        "instead of touching credentials or endpoints. No credential is read "
+        "from any store by this console."
     )
     if st.button(
         "Check current LangSmith evidence",
@@ -927,18 +986,9 @@ with tracing_tab:
 
 with guide_tab:
     st.caption(
-        "Guidance essentials for this candidate build; the complete "
-        "reviewer-guidance surface arrives with the later polish story (S6). "
+        "Reviewer orientation: static guidance only; reading it runs nothing. "
         f"Current mode: {orientation.value}."
     )
-    wanted = {
-        "What Module 6 demonstrates",
-        "Demo mode (offline, no keys)",
-        "Evidence classes",
-        "Historical versus fresh evidence",
-        "What the evidence does not prove",
-    }
     for section in GUIDANCE_SECTIONS:
-        if section.title in wanted:
-            st.subheader(section.title)
-            st.write(section.body)
+        st.subheader(section.title)
+        st.write(section.body)

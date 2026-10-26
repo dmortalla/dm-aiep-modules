@@ -8,7 +8,7 @@ admitted. Every contract type used here is from the additive live family.
 
 import asyncio
 import time
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 from uuid import uuid4
 
 from pydantic import Field, model_validator
@@ -33,6 +33,11 @@ from .observability import Observability
 from .observability_adapters import LocalOpenTelemetry
 from .observability_contracts import Outcome
 
+if TYPE_CHECKING:
+    from collections import deque
+
+    from .console import ConsoleSession
+
 ProjectionStatus = Literal["recorded", "refused", "failed", "unavailable"]
 
 
@@ -44,7 +49,7 @@ class LiveRequest(Contract):
     )
 
     @model_validator(mode="after")
-    def bounded_text(self):
+    def bounded_text(self) -> "LiveRequest":
         """Mirror the accepted runtime input checks before any execution."""
         if not self.instruction.strip():
             raise ValueError("Synthetic task text is required.")
@@ -70,7 +75,8 @@ class LiveRun(Contract):
     metrics: ProjectionStatus = "unavailable"
 
     @model_validator(mode="after")
-    def correlated(self):
+    def correlated(self) -> "LiveRun":
+        """Reject views whose parts disagree on identity, outcome or provenance."""
         identity = set()
         for model in (
             self.receipt.result.evidence if self.receipt is not None else None,
@@ -117,17 +123,32 @@ def live_outcome(category: LiveFailureCategory) -> Outcome:
     }.get(LiveFailureCategory(category), Outcome.FAILED)
 
 
-
-
 def validate(raw: object) -> LiveRequest:
-    """Revalidate one untrusted console submission as a live request."""
+    """Revalidate one untrusted console submission as a live request.
+
+    Args:
+        raw: Untrusted submission data.
+
+    Returns:
+        The validated request.
+
+    Raises:
+        ValueError: The submission failed validation.
+    """
     from .console import fresh
 
     return fresh(raw, LiveRequest)
 
 
-def runs(records) -> tuple[LiveRun, ...]:
-    """Revalidate retained live views; a corrupted one clears the whole set."""
+def runs(records: "deque[LiveRun]") -> tuple[LiveRun, ...]:
+    """Revalidate retained live views; a corrupted one clears the whole set.
+
+    Args:
+        records: The session's retained live views, cleared on corruption.
+
+    Returns:
+        The revalidated views, or ``()``.
+    """
     from .console import fresh
 
     try:
@@ -137,8 +158,23 @@ def runs(records) -> tuple[LiveRun, ...]:
         return ()
 
 
-def execute(session, command: LiveRequest) -> LiveRun:
-    """Run the canonical live workflow with the synthetic gateway only."""
+def execute(session: "ConsoleSession", command: LiveRequest) -> LiveRun:
+    """Run the canonical live workflow with the synthetic gateway only.
+
+    The caller holds the session admission lock. Authority, selection and the
+    pinned 30,000/5,000 ms synthetic budget are application-owned constants.
+
+    Args:
+        session: The admitting console session that retains the view.
+        command: The validated synthetic request.
+
+    Returns:
+        The validated view; canonical failures are recorded outcomes.
+
+    Raises:
+        ConsoleRequestError: The runtime refused the text before execution.
+        ConsoleFaultError: No recordable view could be produced.
+    """
     from .canonical_workflow import (
         CanonicalWorkflowError,
         execute_canonical_workflow,

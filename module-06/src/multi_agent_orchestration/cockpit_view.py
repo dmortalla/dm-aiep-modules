@@ -1,13 +1,14 @@
 """Presentation-layer cockpit evidence, view and state contracts (S1).
 
-Immutable reviewer-facing view state for the future unified cockpit. This
-layer transforms already-validated application objects and curated
-recorded/historical facts into labelled view state; it is never an
+Immutable reviewer-facing view state and static guidance for the unified
+cockpit. This layer transforms already-validated application objects and
+curated recorded/historical facts into labelled view state; it is never an
 orchestration, provider, policy or live-execution authority, never telemetry
 storage or an evidence backend, and never a LangSmith, Prometheus or Grafana
 client. It holds no credential material and performs no network, model,
 delivery, telemetry or container action on import, construction, rendering or
-any state transition; operations querying behavior belongs to a later story.
+any state transition; the explicit operational check lives in ``cockpit_ops``
+and the explicit LangSmith inspection in ``cockpit_langsmith``.
 
 Evidence model (accepted composition, no coarse enum): every item carries an
 ``execution_kind``, optional ``provenance`` in the accepted authoritative
@@ -90,7 +91,7 @@ class CockpitMode(StrEnum):
 
 
 class OperationsState(StrEnum):
-    """Operations surface activation life cycle; querying is a later story."""
+    """Operations surface activation life cycle; ``cockpit_ops`` performs queries."""
 
     NOT_ACTIVATED = "not_activated"
     QUERY_REQUESTED = "query_requested"
@@ -284,34 +285,58 @@ class HistoricalEvidence(Contract):
 
 
 class GuidanceSection(Contract):
-    """One static reviewer guidance panel; rendering happens later."""
+    """One static reviewer guidance panel, rendered by the Guide tab.
+
+    Attributes:
+        title: Short unique panel heading.
+        body: Static guidance text; no caller or runtime content.
+    """
 
     title: Annotated[str, Field(strict=True, min_length=1, max_length=120)]
     body: Annotated[str, Field(strict=True, min_length=1, max_length=2000)]
 
 
 _GUIDANCE = {
+    "start": "Start here",
     "what": "What Module 6 demonstrates",
     "demo": "Demo mode (offline, no keys)",
     "live": "Live / BYOK (local trusted operator)",
     "classes": "Evidence classes",
     "history": "Historical versus fresh evidence",
+    "stack": "Observability: LangSmith, OpenTelemetry, Prometheus, Grafana",
     "ops": "Operations tab and current-host localhost",
     "langsmith": "LangSmith: specialist AI/agent tracing",
-    "stack": "OpenTelemetry, Prometheus, Grafana roles",
+    "test": "How to test each capability",
     "bounds": "What the evidence does not prove",
 }
 GUIDANCE_SECTIONS: tuple[GuidanceSection, ...] = (
     GuidanceSection(
+        title=_GUIDANCE["start"],
+        body=(
+            "Start on the Deterministic demo tab: choose a demonstration, keep "
+            "the sample text and select Run demonstration. Each result shows "
+            "its evidence label, validated facts and local trace. Then open "
+            "Operations and LangSmith tracing to compare recorded historical "
+            "evidence with an explicit current check, and Live / BYOK to see "
+            "why real inference is reserved for a trusted local operator. "
+            "Nothing on this page executes, queries or delivers anything until "
+            "you select an action."
+        ),
+    ),
+    GuidanceSection(
         title=_GUIDANCE["what"],
         body=(
             "Module 6 demonstrates bounded, evidence-governed multi-agent "
-            "orchestration in a standalone module: deterministic LangGraph, "
-            "CrewAI and "
-            "Google ADK runtimes, bounded distributed orchestration, scaling "
-            "benchmarks, and layered observability (application observation, "
-            "LangSmith AI/agent tracing, and an OpenTelemetry -> Collector -> "
-            "Prometheus -> Grafana operational stack)."
+            "orchestration in a standalone module. Orchestration architectures "
+            "represented: LangGraph coordinator-worker, sequential, parallel "
+            "and hierarchical graphs; a CrewAI collaborative crew; Google ADK "
+            "delegation in one process and across two independent local "
+            "worker processes; the canonical Researcher -> Analyst -> Critic "
+            "workflow with bounded repair; and a local scaling benchmark. "
+            "Observability is layered: application observation, LangSmith "
+            "AI/agent tracing, and an OpenTelemetry -> Collector -> "
+            "Prometheus -> Grafana operational stack, all presented through "
+            "this one Streamlit reviewer cockpit."
         ),
     ),
     GuidanceSection(
@@ -319,77 +344,129 @@ GUIDANCE_SECTIONS: tuple[GuidanceSection, ...] = (
         body=(
             "Demo mode runs the accepted deterministic applications offline: "
             "no model inference, no provider, no credentials, no Docker and "
-            "no telemetry delivery. Every result is labelled deterministic "
-            "demo evidence and its validated application facts are real "
-            "deterministic execution, not screenshots or fabricated success."
+            "no telemetry delivery. Every result is deterministic demo "
+            "evidence (deterministic_demo, or canonical_live_demo with "
+            "synthetic_offline provenance for the synthetic canonical "
+            "workflow): real deterministic LangGraph, CrewAI and ADK "
+            "execution, not screenshots or fabricated success. A Demo result "
+            "proves runtime scheduling, validated hand-offs, bounded failure "
+            "handling and evidence creation. It does not prove model "
+            "reasoning or quality, hosted operation, remote distribution or "
+            "production capacity."
         ),
     ),
     GuidanceSection(
         title=_GUIDANCE["live"],
         body=(
-            "Live/BYOK runs the canonical Researcher -> Analyst -> Critic "
-            "workflow with real local model inference (local Ollama, "
-            "qwen2.5-coder:7b only). It requires explicit operator action and "
-            "a fresh explicit authorization for every execution; credential "
-            "presence alone never authorizes anything, authority is never "
-            "derived from session, environment or model output, and there is "
-            "no automatic rerun or provider escalation. A deployed public "
-            "application reports live as unavailable unless a separately "
-            "verified deployment-compatible authority boundary is enabled."
+            "Live / BYOK runs the same canonical Researcher -> Analyst -> "
+            "Critic workflow with real local model inference (local Ollama, "
+            "qwen2.5-coder:7b only) for a trusted private operator whose "
+            "embedding supplies the runtime. BYOK means that trusted runtime "
+            "brings its own provider connectivity; this page never asks for, "
+            "stores or displays a key. Each click is a fresh explicit "
+            "authorization for one execution under the fixed ADR-008 NORMAL "
+            "profile; credential presence alone never authorizes anything, "
+            "authority is never derived from session, environment or model "
+            "output, and there is no automatic rerun or provider escalation. "
+            "Public live is intentionally fail-closed: a public visitor must "
+            "never be able to spend an operator's compute or credentials, and "
+            "no deployment-compatible authority boundary exists, so a deployed "
+            "or stock page always reports live as unavailable."
         ),
     ),
     GuidanceSection(
         title=_GUIDANCE["classes"],
         body=(
-            "Every panel labels its evidence: deterministic_demo, "
-            "canonical_live_demo (synthetic, offline; no model executed), "
-            "canonical_real_local (recorded real local inference), plus the "
-            "accepted LangSmith confirmation vocabulary: service_read, "
-            "accepted_only, unverified_write, not_sent."
+            "Each result carries a composed label instead of one coarse "
+            "status. execution_kind: deterministic_demo, canonical_live_demo "
+            "(synthetic, offline; no model executed), canonical_real_local "
+            "(real local inference), unavailable or not_executed. provenance: "
+            "synthetic_offline or local_provider_execution. "
+            "delivery_confirmation (LangSmith only): service_read (the service "
+            "returned the recorded run), accepted_only (write accepted, no "
+            "read-back in the window), unverified_write (HTTP 2xx write, no "
+            "read-back) or not_sent. operational_classification: only the one "
+            "accepted recorded pipeline verification. source: fresh_execution "
+            "or recorded_historical. LangSmith, OpenTelemetry and metric "
+            "states on a run are local projections, never external delivery. "
+            "Run 3 stays an out_of_policy_observation, and wording never "
+            "upgrades a label."
         ),
     ),
     GuidanceSection(
         title=_GUIDANCE["history"],
         body=(
             "Recorded evidence is curated static content preserved from the "
-            "accepted project records, labelled recorded/historical. It is "
-            "never presented as a fresh execution and can never be promoted "
-            "into one; fresh results always say when they were produced."
+            "accepted project records, labelled recorded/historical, with "
+            "each accepted classification shown verbatim. It is never "
+            "presented as a fresh execution and can never be promoted into "
+            "one; fresh results always say when they were produced, and a "
+            "failed or unavailable current check is never filled in from "
+            "history."
+        ),
+    ),
+    GuidanceSection(
+        title=_GUIDANCE["stack"],
+        body=(
+            "AI/agent observability: LangSmith, the specialist tracing "
+            "system for agent runs. Operational observability: OpenTelemetry "
+            "instruments the application -> the OpenTelemetry Collector is "
+            "the ingestion boundary -> Prometheus stores metrics and "
+            "evaluates three alert rules -> Grafana is the specialist "
+            "dashboard and drill-down. This containerized stack was verified "
+            "end-to-end locally (recorded 2026-10-23: 14 of 14 workflows, "
+            "dashboard provisioned, rules loaded); it is not hosted telemetry "
+            "and Prometheus is never exposed publicly. Unified presentation: "
+            "this Streamlit cockpit curates both natively. It never embeds "
+            "Grafana, Prometheus or LangSmith, and it shows a current-host "
+            "dashboard reference only as inert text after an explicit check "
+            "has read the provisioned dashboard."
         ),
     ),
     GuidanceSection(
         title=_GUIDANCE["ops"],
         body=(
             "The Operations tab shows operational evidence only after you "
-            "explicitly request a bounded local query. Any 127.0.0.1 value "
-            "means the loopback of the host running the app: in a deployed "
-            "environment that is the deployed host or container, never a "
-            "developer workstation, and the UI labels it accordingly. An "
-            "unreachable local stack shows an honest unavailable state; "
-            "values are never fabricated and history is never passed off as "
-            "a fresh observation."
+            "explicitly request a bounded local query: one read-only attempt "
+            "against fixed 127.0.0.1 Prometheus and Grafana endpoints, with no "
+            "retries or polling. Any 127.0.0.1 value means the loopback of "
+            "the host running the app: in a deployed environment that is the "
+            "deployed host or container, never a developer workstation, and "
+            "the UI labels it accordingly. An unreachable local stack shows "
+            "an honest unavailable state; values are never fabricated and "
+            "history is never passed off as a fresh observation."
         ),
     ),
     GuidanceSection(
         title=_GUIDANCE["langsmith"],
         body=(
             "LangSmith is the specialist AI/agent tracing surface. The "
-            "cockpit shows application-held projection and delivery state "
-            "natively (no iframe, no fetch): delivery confirmations use the "
-            "committed vocabulary only, and externally sourced identifiers "
-            "are inert text unless a fixed trusted link is offered."
+            "cockpit shows the recorded evidence natively (no iframe, no "
+            "fetch): the accepted deterministic delivery (service_read) and "
+            "the recorded live-model Run 5 (unverified_write), never merged. "
+            "Identifiers are inert text. The explicit current check reads "
+            "only allowlisted recorded traces through a read capability that "
+            "a trusted runtime must supply; this page supplies none, so it "
+            "reports unavailable without touching credentials. A positive "
+            "read would mean only a current service observation of a "
+            "recorded trace, never a new execution or delivery."
         ),
     ),
     GuidanceSection(
-        title=_GUIDANCE["stack"],
+        title=_GUIDANCE["test"],
         body=(
-            "OpenTelemetry instruments the application; the OpenTelemetry "
-            "Collector is the ingestion boundary; Prometheus stores "
-            "operational metrics and evaluates alert rules; Grafana is the "
-            "specialist drill-down and dashboard surface. The cockpit "
-            "presents curated operational results natively and links to the "
-            "dashboard only when it is genuinely reachable on the current "
-            "host. Prometheus is never exposed publicly by this module."
+            "Demo: run each demonstration and expect completed with validated "
+            "roles; set one step on a graph to see denied, or a very short "
+            "deadline to see timed_out. Synthetic canonical workflow: expect "
+            "a synthetic_offline receipt with per-role accounting and local "
+            "projections. Scaling: run the quick check and expect every cap "
+            "respected and every worker reaped. Operations: select the check; "
+            "without the local stack expect an honest unavailable state, with "
+            "it expect fresh current-host values beside the unchanged recorded "
+            "verification. LangSmith: select the check and expect "
+            "unavailable in this posture. Live / BYOK: the action stays "
+            "disabled unless a trusted embedding supplies the runtime. Each "
+            "success proves exactly what its panel states."
         ),
     ),
     GuidanceSection(
@@ -412,15 +489,21 @@ class LiveCapability(Contract):
     postures with separate availability. Local live reflects only the
     accepted trusted local/operator runtime: when that runtime is present,
     local live is available and this representation asserts nothing about a
-    deployed boundary. Deployed/public live is available only when a
-    separate deployment-compatible secret/identity/authorization boundary
-    has been deliberately implemented, independently verified and
-    explicitly enabled; it stays unavailable by default, and no such
-    boundary is claimed to exist today. A deployed/public visitor never
+    deployed boundary. Deployed/public live is always unavailable in the
+    accepted architecture: no deployment-compatible
+    secret/identity/authorization boundary exists, and a future one would
+    need separate implementation, independent verification and explicit
+    enablement — never a boolean flag. A deployed/public visitor never
     inherits local/operator authority. Credential presence is never an
     availability or authorization signal (this contract has no credential
     state at all); presentation state never constructs
     ``LiveAuthorization`` or any other privileged authority.
+
+    Attributes:
+        local_trusted_operator_runtime: Whether trusted embedding code
+            injected the private-operator runtime for this render.
+        deployment_compatible_authority_verified: Legacy descriptive flag
+            kept for compatibility; it never enables public live.
     """
 
     local_trusted_operator_runtime: bool = False
@@ -446,9 +529,12 @@ class OperationsActivation(Contract):
     """Operations surface activation state; no query is embedded here.
 
     Constructing, importing or rendering this state performs zero requests.
-    The later operational story performs any explicit bounded local query
-    itself; this contract only carries the activation state and the
-    reviewer-facing explanation.
+    ``cockpit_ops`` performs the explicit bounded local query only when the
+    reviewer selects the check; this contract only carries the activation
+    state.
+
+    Attributes:
+        state: The activation state; ``not_activated`` by default.
     """
 
     state: OperationsState = OperationsState.NOT_ACTIVATED

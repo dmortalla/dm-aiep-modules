@@ -59,7 +59,8 @@ class DeliveryConfig(Contract):
     export_timeout_ms: Annotated[int, Field(strict=True, ge=100, le=5000)] = 2000
 
     @model_validator(mode="after")
-    def bounded_loopback(self):
+    def bounded_loopback(self) -> "DeliveryConfig":
+        """Require a loopback endpoint and a timeout below the interval."""
         _loopback_port(_ENDPOINT, self.endpoint)
         if self.export_timeout_ms >= self.export_interval_ms:
             raise ValueError("Export timeout must be shorter than the interval.")

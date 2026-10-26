@@ -13,6 +13,8 @@ SpanId = Annotated[str, Field(strict=True, pattern=r"^[0-9a-f]{16}$")]
 
 
 class Outcome(StrEnum):
+    """Closed workflow outcomes shared by results, traces and metrics."""
+
     COMPLETED = "completed"
     FAILED = "failed"
     TIMED_OUT = "timed_out"
@@ -21,6 +23,8 @@ class Outcome(StrEnum):
 
 
 class Role(StrEnum):
+    """Closed validated role names recorded in trace steps."""
+
     FIXTURE = "fixture_agent"
     WORKER = "deterministic_worker"
     RESEARCHER = "researcher"
@@ -65,7 +69,8 @@ class StepTrace(Contract):
     assignment_id: UUID | None = None
 
     @model_validator(mode="after")
-    def worker_pair(self):
+    def worker_pair(self) -> "StepTrace":
+        """Require worker PID and assignment identity together or not at all."""
         if (self.worker_pid is None) != (self.assignment_id is None):
             raise ValueError("Worker provenance must be complete.")
         if int(self.span_id, 16) == 0:
@@ -93,7 +98,8 @@ class RunTrace(Contract):
     workers_reaped: Annotated[int, Field(strict=True, ge=2, le=2)] | None = None
 
     @model_validator(mode="after")
-    def consistency(self):
+    def consistency(self) -> "RunTrace":
+        """Reject duplicate spans, disordered steps or invented accounting."""
         spans = (self.span_id, *(step.span_id for step in self.steps))
         if (
             self.trace_id.int == 0
@@ -178,6 +184,8 @@ class MetricLabels(Contract):
 
 
 class MetricSnapshot(Contract):
+    """Bounded saturated observation counters; never request content."""
+
     started: Count
     active: Annotated[int, Field(strict=True, ge=0, le=16)]
     completed: Count
@@ -197,7 +205,8 @@ class CollectionBoundary(Contract):
     max_retained_runs: Annotated[int, Field(strict=True, ge=1, le=32)] = 32
 
     @model_validator(mode="after")
-    def offline_only(self):
+    def offline_only(self) -> "CollectionBoundary":
+        """Refuse remote delivery in the offline collection boundary."""
         if self.delivery_enabled:
             raise ValueError("Remote delivery is outside this authorized story.")
         return self

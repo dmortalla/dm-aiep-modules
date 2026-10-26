@@ -47,7 +47,8 @@ class LiveMetricObservation(LiveContract):
     repair_attempts: Repairs | None
 
     @model_validator(mode="after")
-    def paired(self):
+    def paired(self) -> "LiveMetricObservation":
+        """Require a nonzero trace and paired call/repair availability."""
         if self.trace_id.int == 0 or (
             (self.model_calls is None) != (self.repair_attempts is None)
         ):

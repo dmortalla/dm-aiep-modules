@@ -42,8 +42,17 @@ if TYPE_CHECKING:  # Additive live definitions load only after run admission.
     from .console_live import LiveRun
 
 
-def failure_text(category) -> str:
-    """Fixed sanitized failed-live wording; loaded only on this additive path."""
+def failure_text(category: str) -> str:
+    """Return fixed sanitized failed-live wording for one closed category.
+
+    The live error module loads only on this additive path.
+
+    Args:
+        category: A closed ``LiveFailureCategory`` value.
+
+    Returns:
+        Application-owned wording; never diagnostic or provider text.
+    """
     from .live_errors import failure_text as fixed
 
     return fixed(category)
@@ -90,6 +99,8 @@ def local_live_failure_guidance(failure: str) -> str:
 
 
 class Demonstration(StrEnum):
+    """Closed reviewer choices for the eight deterministic demonstrations."""
+
     FIXTURE = "Deterministic fixture"
     COORDINATOR = "LangGraph coordinator-worker"
     SEQUENTIAL = "LangGraph sequential"
@@ -100,8 +111,20 @@ class Demonstration(StrEnum):
     DISTRIBUTED = "Local multi-process distributed orchestration"
 
 
-def selection(mode: Demonstration):
-    """Closed application selection, never runtime/provider strings from a model."""
+def selection(mode: Demonstration) -> tuple[RuntimeId, GraphTopology, bool]:
+    """Map a closed demonstration to its application-owned runtime selection.
+
+    Never accepts runtime or provider strings from a model or caller.
+
+    Args:
+        mode: One closed demonstration choice.
+
+    Returns:
+        The runtime, the graph topology and whether execution is distributed.
+
+    Raises:
+        ValueError: ``mode`` is not a closed demonstration.
+    """
     mode = Demonstration(mode)
     runtime = (
         RuntimeId.FIXTURE
@@ -205,6 +228,8 @@ def scaling_guidance() -> tuple[tuple[str, str], ...]:
 
 
 class ScalingRequest(Contract):
+    """Untrusted scaling submission: one closed profile, never numbers."""
+
     profile: ScalingProfile
 
 
@@ -216,13 +241,16 @@ class ScalingRun(Contract):
     report: BenchmarkReport
 
     @model_validator(mode="after")
-    def correlated(self):
+    def correlated(self) -> "ScalingRun":
+        """Reject a report whose plan differs from the selected profile."""
         if self.report.plan != scaling_plan(self.profile):
             raise ValueError("Scaling report contradicts the selected profile.")
         return self
 
 
 class ConsoleRequest(Contract):
+    """Untrusted demonstration submission, revalidated before any execution."""
+
     mode: Demonstration
     instruction: Annotated[str, Field(strict=True, min_length=1, max_length=4096)] = (
         Field(repr=False)
@@ -231,7 +259,8 @@ class ConsoleRequest(Contract):
     timeout_ms: Annotated[int, Field(strict=True, ge=1, le=30000)] = 30000
 
     @model_validator(mode="after")
-    def nonblank(self):
+    def nonblank(self) -> "ConsoleRequest":
+        """Reject blank synthetic task text."""
         if not self.instruction.strip():
             raise ValueError("Synthetic task text is required.")
         return self
@@ -267,7 +296,8 @@ class ConsoleRun(Contract):
     observation: Literal["local", "degraded", "unavailable"]
 
     @model_validator(mode="after")
-    def correlated(self):
+    def correlated(self) -> "ConsoleRun":
+        """Reject outcomes, evidence or traces that contradict the selection."""
         runtime, topology, distributed = selection(self.mode)
         if self.outcome == Outcome.COMPLETED:
             if self.evidence is None or self.output is None:
@@ -296,8 +326,24 @@ class ConsoleRun(Contract):
         return self
 
 
-def fresh(model, schema):
-    """Closed recursive revalidation without rejected-value serialization warnings."""
+def fresh[ContractT: Contract](model: object, schema: type[ContractT]) -> ContractT:
+    """Revalidate a value as a fresh instance of a closed contract.
+
+    Contract instances are decomposed into their declared field data first, so
+    a retained object can never smuggle unowned fields, subclass behavior or
+    rejected-value serialization warnings past validation.
+
+    Args:
+        model: Untrusted plain data or a previously validated contract.
+        schema: The exact contract type to rebuild.
+
+    Returns:
+        A newly validated ``schema`` instance.
+
+    Raises:
+        ValueError: Unowned fields, excessive nesting/collection size, or a
+            validation failure (pydantic ``ValidationError``).
+    """
 
     def data(value, depth=0):
         if depth > 8:
@@ -316,6 +362,14 @@ def fresh(model, schema):
 
 
 def failure_message(outcome: Outcome) -> str:
+    """Return fixed actionable wording for one closed demonstration outcome.
+
+    Args:
+        outcome: A closed workflow outcome.
+
+    Returns:
+        Application-owned wording; never exception or runtime text.
+    """
     return {
         Outcome.DENIED: (
             "Request or execution evidence was denied. Check the selected "
@@ -343,7 +397,14 @@ class ConsoleBusyError(ValueError):
 
 
 class ConsoleFaultError(RuntimeError):
-    """An admitted run ended without a recordable view; no cause is retained."""
+    """An admitted action ended without a recordable, revalidated view.
+
+    The message is fixed, sanitized and safe to render. Execution actions
+    (``run``, ``run_scaling``, ``run_live``) suppress the cause; the read-only
+    check/inspection paths chain it (``__cause__``) for in-process diagnostics
+    only. The session never stores the exception or its cause, and the page
+    renders only fixed wording.
+    """
 
 
 class ConsoleSession:
@@ -358,9 +419,12 @@ class ConsoleSession:
     provider connection, credential or delivery is attempted.
     S5's separate explicit private-operator action uses an out-of-session runtime
     capability and retains only a closed payload-free current presentation packet.
+    The read-only operational check and LangSmith inspection retain only their
+    latest revalidated presentation result. Streamlit runs one script at a time
+    per browser session, so each explicit click maps to at most one action.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._runs = deque(maxlen=8)
         self._scaling = None
         self._live = deque(maxlen=8)
@@ -380,7 +444,8 @@ class ConsoleSession:
 
         Raises:
             ConsoleFaultError: The retained view was not revalidatable; the
-                stale value is cleared and the error carries no diagnostics.
+                stale value is cleared and the fixed message carries no
+                diagnostics (the validation cause is chained only).
         """
         from .cockpit_ops import StoredOperationsObservation
 
@@ -397,6 +462,11 @@ class ConsoleSession:
 
     @property
     def runs(self) -> tuple[ConsoleRun, ...]:
+        """Revalidated recent demonstration views; a corrupt one clears all.
+
+        Returns:
+            Up to eight views, oldest first, or ``()``.
+        """
         try:
             return tuple(fresh(run, ConsoleRun) for run in self._runs)
         except (ValueError, TypeError):
@@ -405,6 +475,11 @@ class ConsoleSession:
 
     @property
     def live_runs(self) -> "tuple[LiveRun, ...]":
+        """Revalidated synthetic canonical live views; a corrupt one clears all.
+
+        Returns:
+            Up to eight views, oldest first, or ``()``.
+        """
         if not self._live:
             return ()
         # The additive live boundary loads only when retained views exist.
@@ -412,7 +487,15 @@ class ConsoleSession:
 
         return runs(self._live)
 
-    def clear(self):
+    def clear(self) -> None:
+        """Discard every retained presentation view of this session.
+
+        Removes demonstration, scaling, synthetic live, current local live,
+        operational check and LangSmith inspection results. Nothing executes.
+
+        Raises:
+            ConsoleBusyError: A run is active; nothing was cleared.
+        """
         if not self._lock.acquire(blocking=False):
             raise ConsoleBusyError("A run is already active in this session.")
         try:
@@ -420,13 +503,19 @@ class ConsoleSession:
             self._scaling = None
             self._live.clear()
             self._operations = None
+            self._langsmith = None
             self._current_local = None
         finally:
             self._lock.release()
 
     @property
     def current_local(self) -> "CurrentLocalRun | None":
-        """Revalidate only sanitized current S5 evidence; never retain authority."""
+        """Revalidate only sanitized current S5 evidence; never retain authority.
+
+        Returns:
+            The current local attempt, or ``None`` when there is none or the
+            retained packet failed revalidation (it is then cleared).
+        """
         from .cockpit_local_live import CurrentLocalRun
 
         if self._current_local is None:
@@ -479,8 +568,10 @@ class ConsoleSession:
             ``unavailable`` state is a truthful outcome, not a failure.
 
         Raises:
-            ConsoleFaultError: Unexpected read-only boundary failure; no
-                cause and no diagnostics are retained.
+            ConsoleFaultError: Unexpected read-only boundary failure. Its
+                fixed message carries no diagnostics; the cause is chained
+                for in-process diagnostics only, the session stores neither,
+                and an earlier observation (if any) keeps its own timestamp.
         """
         from .cockpit_ops import LocalStackObservation, StoredOperationsObservation
         from .cockpit_ops import query_local_stack as perform
@@ -511,7 +602,8 @@ class ConsoleSession:
 
         Raises:
             ConsoleFaultError: The retained view was not revalidatable; the
-                stale value is cleared and the error carries no diagnostics.
+                stale value is cleared and the fixed message carries no
+                diagnostics (the validation cause is chained only).
         """
         from .cockpit_langsmith import StoredLangSmithObservation as stored_cls
 
@@ -541,17 +633,21 @@ class ConsoleSession:
         presence is never asked about and never authorizes anything.
 
         Args:
-            provider: A trusted read capability, or ``None`` (the honest
-                result is then an unavailable observation).
-            trace_id: Reserved for a single allowlisted target in a later
-                story; ``None`` inspects the call's default recorded trace.
+            provider: A trusted read capability supplied by application code,
+                or ``None`` (the honest result is then an unavailable
+                observation). The stock page never supplies one.
+            trace_id: One allowlisted recorded trace identifier, or ``None``
+                for the accepted deterministic delivery trace. Any other
+                value is refused as ``not-allowlisted`` without a read.
 
         Returns:
             The validated current observation with its acquisition time.
 
         Raises:
-            ConsoleFaultError: Unexpected inspection-boundary failure; no
-                cause and no diagnostics are retained.
+            ConsoleFaultError: Unexpected inspection-boundary failure. Its
+                fixed message carries no diagnostics; the cause is chained
+                for in-process diagnostics only, the session stores neither,
+                and an earlier inspection (if any) keeps its own timestamp.
         """
         from .cockpit_langsmith import (
             LangSmithObservation,
@@ -585,6 +681,12 @@ class ConsoleSession:
 
     @property
     def scaling(self) -> ScalingRun | None:
+        """The revalidated latest scaling report view, if any.
+
+        Returns:
+            The view, or ``None`` when absent or when the retained view failed
+            revalidation (it is then cleared).
+        """
         if self._scaling is None:
             return None
         try:
@@ -595,6 +697,12 @@ class ConsoleSession:
 
     def run_scaling(self, raw: object) -> ScalingRun:
         """Run the accepted benchmark for a closed profile and keep its report.
+
+        Args:
+            raw: Untrusted submission data naming one closed profile.
+
+        Returns:
+            The revalidated report view, also retained as the latest one.
 
         Raises:
             ConsoleRequestError: The profile is not one of the closed choices.
@@ -627,6 +735,21 @@ class ConsoleSession:
         return view
 
     def run(self, raw: object) -> ConsoleRun:
+        """Run one explicit deterministic demonstration through accepted services.
+
+        Args:
+            raw: Untrusted submission data (mode, text, steps and deadline).
+
+        Returns:
+            The validated payload-free view; denied, timed-out, cancelled and
+            failed executions are recorded outcomes, not exceptions.
+
+        Raises:
+            ConsoleRequestError: The submission failed validation; nothing ran.
+            ConsoleBusyError: This session already has an active execution.
+            ConsoleFaultError: No recordable view was produced; no cause is
+                retained.
+        """
         try:
             checked = fresh(raw, ConsoleRequest)
         except (ValueError, TypeError) as exc:
@@ -652,6 +775,12 @@ class ConsoleSession:
         fixed; the gateway factory is the module-level synthetic demonstration
         factory, so no real provider connection is attempted. The accepted
         service classifies receipts as synthetic offline itself.
+
+        Args:
+            raw: Untrusted submission data holding the synthetic task text.
+
+        Returns:
+            The validated synthetic live view, also retained in the session.
 
         Raises:
             ConsoleRequestError: The submitted text was refused; nothing executed.
@@ -683,7 +812,7 @@ class ConsoleSession:
         finally:
             self._lock.release()
 
-    def _execute(self, command: ConsoleRequest):
+    def _execute(self, command: ConsoleRequest) -> ConsoleRun:
         runtime, topology, distributed = selection(command.mode)
         request = WorkflowRequest(
             runtime=runtime,
@@ -786,4 +915,16 @@ class ConsoleSession:
 
 
 def age_seconds(run: "ConsoleRun | ScalingRun | LiveRun") -> int:
-    return max(0, int((time.time_ns() - run.finished_ns) / 1_000_000_000))
+    """Whole seconds since a retained view finished; presentation only.
+
+    Delegates to the single S1 staleness helper so every tab ages identically.
+
+    Args:
+        run: A retained view carrying ``finished_ns``.
+
+    Returns:
+        The non-negative age in whole seconds.
+    """
+    from .cockpit_view import age_in_seconds
+
+    return age_in_seconds(run.finished_ns)

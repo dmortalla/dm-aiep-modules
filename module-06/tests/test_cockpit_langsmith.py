@@ -57,9 +57,6 @@ def forbid_langsmith_network(monkeypatch):
     """No LangSmith/network client import or call may occur in the page."""
     import sys
 
-    def explode(name):
-        raise AssertionError(f"S4 must not trigger {name}")
-
     for name in ("langsmith", "requests", "httpx"):
         monkeypatch.setitem(sys.modules, name, None)
     yield
@@ -100,15 +97,10 @@ def test_e_recorded_run5_is_untouched():
     assert record.delivery_confirmation.value == "unverified_write"
     assert record.service_read_confirmed is False
     assert record.accepted_classification == RUN5_CLASSIFICATION
-    exact_classification = (
-        "One-run live-model current-path LangSmith "
-        "projection and delivery verification (`unverified_write` "
-        "receipt); "
-        "authority-consumption status operator-attested and not "
-        "independently confirmed")
-    assert record.accepted_classification != exact_classification or (
-        record.accepted_classification == exact_classification
-    )
+    assert "(`unverified_write` receipt)" in record.accepted_classification
+    assert record.accepted_classification.endswith(
+        "operator-attested and not independently confirmed")
+    assert "authorized" not in record.accepted_classification.lower()
 
 
 def test_f_service_read_and_unverified_write_are_distinct():
@@ -268,10 +260,6 @@ def test_r_missing_capability_is_honest_unavailable():
 
 def test_s_failures_never_leak_raw_service_context():
     """Exceptions from the capability never reach stored output."""
-    class Exploding:
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-
     def grief(trace_id):
         raise TimeoutError(f"raw-socket-detail-{"x" * 20}")
 

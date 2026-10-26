@@ -61,7 +61,19 @@ class TraceReadProvider(Protocol):
     """
 
     def __call__(self, trace_id: str) -> object:
-        """Read one allowlisted recorded trace's bounded service facts."""
+        """Read one allowlisted recorded trace's bounded service facts.
+
+        Args:
+            trace_id: One allowlisted accepted recorded trace identifier.
+
+        Returns:
+            Untrusted reply data; only a dict whose ``trace_id`` and
+            ``project`` match the request counts as a service read.
+
+        Raises:
+            OSError: The service could not be reached or read.
+            ValueError: The reply could not be decoded.
+        """
 
 
 class LangSmithObservation(Contract):
@@ -91,7 +103,13 @@ class LangSmithObservation(Contract):
 
 
 class StoredLangSmithObservation(Contract):
-    """Presentation-scoped result of one explicit inspection; session-safe."""
+    """Presentation-scoped result of one explicit inspection; session-safe.
+
+    Attributes:
+        happened_ns: Wall-clock freshness marker of the inspection, in
+            nanoseconds.
+        observation: The validated current observation, or ``None``.
+    """
 
     happened_ns: int
     observation: LangSmithObservation | None
@@ -117,14 +135,15 @@ def allowlisted_targets() -> tuple[tuple[str, str], ...]:
 
 
 def inspect_recorded_trace(
-    trace_id: str,
+    trace_id: str | None,
     provider: TraceReadProvider | None,
 ) -> LangSmithObservation:
     """Read exactly one allowlisted recorded trace via a trusted capability.
 
     Args:
         trace_id: Exactly one accepted recorded trace identifier; anything
-            else is refused.
+            else, including ``None``, is refused without calling the
+            provider.
         provider: The trusted runtime's read capability; ``None`` means no
             compatible capability exists in the current posture and the
             honest result is ``unavailable`` — no credential lookup, no
@@ -134,9 +153,14 @@ def inspect_recorded_trace(
         A validated current observation of a recorded trace; it never
         claims execution, delivery or authority, and it never mutates the
         recorded historical classifications or their delivery semantics.
+        Expected read failures (``OSError``, ``ValueError``, ``TypeError``,
+        ``KeyError``, ``AttributeError``) and mismatched replies are the
+        truthful ``unavailable`` state.
 
     Raises:
-        Never; expected failures are the truthful result states.
+        Exception: Only an unexpected provider failure outside the expected
+            read failures propagates; the console boundary converts it into
+            a sanitized ``ConsoleFaultError``.
     """
     allowed = dict(allowlisted_targets())
     if type(trace_id) is not str or trace_id not in allowed:
@@ -174,7 +198,14 @@ def inspect_recorded_trace(
 def record_inspection(
     observation: LangSmithObservation,
 ) -> StoredLangSmithObservation:
-    """Wrap one observation with its acquisition time for presentation."""
+    """Wrap one observation with its acquisition time for presentation.
+
+    Args:
+        observation: A validated current observation.
+
+    Returns:
+        The revalidated presentation-scoped record, timestamped now.
+    """
     fresh = StoredLangSmithObservation.model_validate(
         {
             "happened_ns": time.time_ns(),

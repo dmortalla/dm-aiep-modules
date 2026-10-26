@@ -3,7 +3,8 @@
 import asyncio
 from collections.abc import Mapping
 
-from .contracts import WorkflowRequest
+from .contracts import ValidatedWorkflowResult, WorkflowRequest
+from .distributed_contracts import DistributedResult
 from .distributed_execution import execute_distributed_workflow
 from .errors import (
     ExecutionTimeoutError,
@@ -14,6 +15,7 @@ from .errors import (
 from .execution import execute_workflow
 from .observability import Observability
 from .observability_contracts import Outcome
+from .runtime import Runtime
 
 
 async def execute_observed_workflow(
@@ -21,13 +23,28 @@ async def execute_observed_workflow(
     *,
     observer: Observability,
     distributed: bool = False,
-    runtime=None,
-):
+    runtime: Runtime | None = None,
+) -> ValidatedWorkflowResult | DistributedResult:
     """No telemetry config in request data, no delivery or credential inspection.
 
     Invalid schemas without reliable correlation are rejected without emitting
     their content. Typed, correlated runtime/budget/validation denials are observed.
     Step traces describe validated completions, not inferred role start times.
+    Observation failures never replace the execution result or exception.
+
+    Args:
+        request: The workflow request, with an explicitly selected runtime.
+        observer: Trusted application-constructed observation service.
+        distributed: Whether to use the explicit distributed service.
+        runtime: Optional trusted runtime injection (not for distribution).
+
+    Returns:
+        The accepted service's validated result, unchanged.
+
+    Raises:
+        InvalidWorkflowRequestError: The request or path selection is invalid.
+        Exception: Any accepted-service exception is re-raised unchanged after
+            its outcome is observed.
     """
     try:
         data = (

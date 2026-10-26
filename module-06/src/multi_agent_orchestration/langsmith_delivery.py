@@ -198,7 +198,8 @@ class ReplyHint(Contract):
     ] = ()
 
     @model_validator(mode="after")
-    def canonical(self):
+    def canonical(self) -> "ReplyHint":
+        """Require sorted unique mentions consistent with the observation."""
         if list(self.mentions) != sorted(set(self.mentions)):
             raise ValueError("Mentions must be unique and sorted.")
         if self.observed in ("empty", "unknown") and self.mentions:
@@ -409,7 +410,8 @@ class DeliveryReceipt(Contract):
     ) = None
 
     @model_validator(mode="after")
-    def consistency(self):
+    def consistency(self) -> "DeliveryReceipt":
+        """Reject receipts whose counters contradict the confirmation."""
         if (
             self.requests != 1 + self.read_attempts
             or (self.confirmation == "service_read" and self.read_attempts < 1)

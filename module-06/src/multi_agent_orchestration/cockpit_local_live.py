@@ -114,7 +114,32 @@ class LocalIntentError(ValueError):
 
 
 class CurrentLocalRun(Contract):
-    """Only bounded presentation facts; no payload, client, grant or authority."""
+    """Only bounded presentation facts; no payload, client, grant or authority.
+
+    Attributes:
+        finished_ns: Wall-clock marker of when the attempt finished.
+        evidence: S1 evidence view: ``canonical_real_local`` with
+            ``local_provider_execution`` and ``not_sent``, or ``unavailable``
+            for a refusal that executed nothing.
+        outcome: Closed workflow outcome of this attempt.
+        failure: Coarse closed failure value, ``None`` only on completion.
+        category: The accepted ``LiveFailureCategory`` verbatim, when the
+            canonical boundary reported one.
+        workflow_id: Application-owned correlation identifier.
+        task_id: Application-owned task identifier.
+        trace_id: Correlated finalized local trace identifier.
+        model_calls: Model calls, bounded by the NORMAL profile.
+        repair_attempts: Repairs, bounded by the NORMAL profile.
+        transport_retries: Always zero when known.
+        duration_ms: Observed workflow duration.
+        input_tokens: Provider-reported input tokens, when available.
+        output_tokens: Provider-reported output tokens, when available.
+        validated_roles: Number of roles that passed validation.
+        cleanup: Supervised child cleanup state.
+        langsmith: Local LangSmith projection status (never a delivery).
+        otel: Local OpenTelemetry projection status (never an export).
+        metrics: Local metric-window status (never a delivery).
+    """
 
     finished_ns: Annotated[int, Field(strict=True, ge=1)]
     evidence: EvidenceView
@@ -140,6 +165,13 @@ class CurrentLocalRun(Contract):
 
     @model_validator(mode="after")
     def observational_only(self) -> "CurrentLocalRun":
+        """Reject delivery claims and completions lacking correlated NORMAL facts.
+
+        Raises:
+            ValueError: An unavailable packet carries execution facts, a
+                current packet claims delivery, outcome and failure disagree,
+                or a completion lacks correlated NORMAL-profile facts.
+        """
         if self.evidence.execution_kind == ExecutionKind.UNAVAILABLE:
             if self.outcome != "denied" or self.trace_id is not None:
                 raise ValueError("Unavailable is not execution evidence.")
@@ -168,7 +200,7 @@ class CurrentLocalRun(Contract):
         return self
 
 
-def refused(reason: str) -> CurrentLocalRun:
+def refused(reason: Failure) -> CurrentLocalRun:
     """Build a nonexecuted refusal without historical data.
 
     Args:
@@ -274,6 +306,10 @@ class TrustedLocalRuntime:
 
     def consume(self, permit: object) -> CurrentLocalRun:
         """Consume exactly once before delegating to the accepted live boundary.
+
+        The pending grant and its authorization are cleared before validation
+        or execution, so a failed, timed-out or cancelled attempt can never
+        reopen it. Every failure becomes a closed refusal or outcome value.
 
         Args:
             permit: Exact outstanding owner-bound intent, at most 30 seconds old.
