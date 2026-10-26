@@ -1,6 +1,379 @@
 # Module 6 Traceability
 
-## Live Observability Slice 4 candidate
+This is the single authoritative Module 6 requirement-to-evidence record. The 26
+source requirement IDs and meanings are frozen in
+[SOURCE_REQUIREMENTS.md](SOURCE_REQUIREMENTS.md) and are reproduced here
+verbatim; nothing is renamed or reinterpreted. Engineering status and gate
+provenance live in [PROJECT_STATUS.md](PROJECT_STATUS.md).
+
+## Final reconciliation (S7 candidate)
+
+Baseline: `feature/module-06-architecture` at
+`998b0d8da8cadc4cb0e9a2230dbe8b1e39276161` (S1–S6 accepted and committed). The
+statuses below are the S7 candidate's reconciliation of the earlier
+slice-by-slice records; they take effect only when S7 is independently accepted
+and committed. They rest on evidence already in the repository; no new
+execution, inference or external operation was performed to produce them.
+
+The status transition follows the human closeout decisions of 2026-10-13
+(deterministic agents accepted as verified-with-limitation evidence for
+M6-022/025/026 at transition; the console is a local, loopback-only reviewer
+system; hosted deployment is a separate gate). The slice sections further below
+are dated historical records: where they say "Planned", "candidate" or "pending",
+that was true when written and is superseded by this section.
+
+### Status legend
+
+- `Planned` - requirement frozen; implementation not yet accepted.
+- `Implemented` - implementation exists but final evidence is incomplete.
+- `Verified` - implementation and required evidence are accepted without a
+  material limitation.
+- `Verified with limitation` - implementation and evidence are accepted, with the
+  documented limitation stated for that requirement.
+
+No requirement is `Verified` without limitation, and none is `Planned` or
+`Implemented`. `Verified with limitation` never means production, hosted,
+SLA/SLO, load-tested, cloud-scale or statistically reliable.
+
+### Summary
+
+| ID | Source requirement | Final status | Evidence classification |
+| --- | --- | --- | --- |
+| M6-001 | Demonstrate sequential agents. | Verified with limitation | deterministic (+ real-local canonical) |
+| M6-002 | Demonstrate parallel agents. | Verified with limitation | deterministic |
+| M6-003 | Demonstrate hierarchical agents. | Verified with limitation | deterministic |
+| M6-004 | Demonstrate coordinator-worker systems. | Verified with limitation | deterministic |
+| M6-005 | Demonstrate distributed orchestration. | Verified with limitation | deterministic; local multi-process |
+| M6-006 | Demonstrate context passing. | Verified with limitation | deterministic (+ real-local canonical) |
+| M6-007 | Demonstrate inter-agent communication. | Verified with limitation | deterministic |
+| M6-008 | Demonstrate shared memory. | Verified with limitation | deterministic |
+| M6-009 | Demonstrate task delegation. | Verified with limitation | deterministic |
+| M6-010 | Demonstrate workflow synchronisation. | Verified with limitation | deterministic; local multi-process |
+| M6-011 | Use CrewAI meaningfully. | Verified with limitation | deterministic |
+| M6-012 | Use LangGraph meaningfully. | Verified with limitation | deterministic; real-local canonical |
+| M6-013 | Use Google ADK meaningfully. | Verified with limitation | deterministic; local multi-process |
+| M6-014 | Use LangSmith meaningfully. | Verified with limitation | local projection; `service_read`; `unverified_write` |
+| M6-015 | Implement workflow state management. | Verified with limitation | deterministic |
+| M6-016 | Implement execution tracing. | Verified with limitation | application trace; LangSmith; local operational telemetry |
+| M6-017 | Demonstrate scaling workflows. | Verified with limitation | deterministic; local single-host measurement |
+| M6-018 | Demonstrate distributed processing. | Verified with limitation | deterministic; local multi-process |
+| M6-019 | Demonstrate cost optimisation. | Verified with limitation | deterministic zero-call; real-local accounting |
+| M6-020 | Demonstrate reliability patterns. | Verified with limitation | deterministic; local operational alert rules |
+| M6-021 | Build a coordinator-worker workflow. | Verified with limitation | deterministic |
+| M6-022 | Create a collaborative AI system. | Verified with limitation | deterministic (+ real-local canonical) |
+| M6-023 | Implement distributed orchestration. | Verified with limitation | deterministic; local multi-process |
+| M6-024 | Deliver a multi-agent orchestration platform. | Verified with limitation | local Streamlit cockpit |
+| M6-025 | Deliver a collaborative AI workflow. | Verified with limitation | deterministic; synthetic; real-local canonical |
+| M6-026 | Demonstrate scalable AI system orchestration using multi-agent architectures. | Verified with limitation | deterministic; local single-host measurement |
+
+### Evidence vocabulary used below
+
+- *Deterministic*: real framework execution with deterministic (non-model)
+  agents; zero model, provider and external calls.
+- *Synthetic*: the canonical live workflow driven by a fixed synthetic gateway;
+  receipts classified `synthetic_offline`.
+- *Real-local*: the canonical workflow with local Ollama inference
+  (`local_provider_execution`). Recorded runs: Run 3 `out_of_policy_observation`
+  (a technical timing observation, never an authorized live success); Run 4
+  "Authorized current-path real-local verification" (no recorded identifier);
+  Run 5 below. Four recorded real runs is a floor, not a proven total.
+- *Local projection*: LangSmith/OpenTelemetry/metric projections built locally
+  after a run; never external delivery.
+- *External write / confirmation*: `service_read` (the service returned the
+  recorded run) and `unverified_write` (HTTP 2xx write, no read-back) are
+  distinct and never merged.
+- The five accepted presentation dimensions are `execution_kind`, `provenance`,
+  `delivery_confirmation`, `operational_classification` and `source`
+  (`fresh_execution` or `recorded_historical`).
+
+Source directory: `../src/multi_agent_orchestration/`; tests: `../tests/`.
+Cockpit tabs: Deterministic demo, Live / BYOK, Operations, LangSmith tracing,
+Guide (`../app.py`).
+
+### Per-requirement evidence
+
+**M6-001 Sequential agents - Verified with limitation.**
+Implementation: sequential LangGraph topology (`topologies.py`,
+`_langgraph_topologies.py`); the canonical Researcher -> Analyst -> Critic
+workflow (`canonical_workflow.py`, `live_execution.py`). Tests:
+`test_langgraph_topologies.py` (actual compile/invoke, ordering, validated
+handoff), `test_canonical_workflow.py`, `test_live_execution.py`. Reviewer
+surface: Demo "LangGraph sequential" and the synthetic canonical workflow; Live
+tab for the trusted-local run. Limitation: fixed roles and topology; agents are
+deterministic outside the real-local canonical runs, whose quality is not
+claimed.
+
+**M6-002 Parallel agents - Verified with limitation.**
+Implementation: native two-branch fan-out with waiting-edge fan-in under a
+per-run cap of two (`_langgraph_topologies.py`, `topologies.py`). Tests:
+`test_langgraph_topologies.py` (barrier-proven overlap, both completion orders,
+cleanup). Reviewer surface: Demo "LangGraph parallel". Limitation: concurrency
+inside one local workflow only; the scaling benchmark varies concurrency between
+workflows and adds no parallel-agent evidence.
+
+**M6-003 Hierarchical agents - Verified with limitation.**
+Implementation: supervisor -> lead -> specialist delegation, depth two
+(`topologies.py`, `_langgraph_topologies.py`). Tests:
+`test_langgraph_topologies.py` (role/phase execution, depth and work limits,
+authority-forgery denial). Reviewer surface: Demo "LangGraph hierarchical".
+Limitation: a fixed local hierarchy, not dynamic delegation.
+
+**M6-004 Coordinator-worker systems - Verified with limitation.**
+Implementation: coordinator -> worker -> coordinator validation
+(`coordinator_worker.py`, `adapters.py`). Tests: `test_langgraph_workflow.py`.
+Reviewer surface: Demo "LangGraph coordinator-worker". Limitation: one local
+worker per run in this topology; multi-process workers are M6-005.
+
+**M6-005 Distributed orchestration - Verified with limitation.**
+Implementation: coordinator dispatch of serialized assignments to two
+independent local ADK worker interpreters (`distributed.py`,
+`distributed_contracts.py`, `distributed_execution.py`,
+`_distributed_processes.py`, `_distributed_worker.py`, `_distributed_adk.py`).
+Tests: `test_distributed_orchestration.py` (distinct PIDs, serialized IPC,
+barrier, replay/forgery, cleanup); `test_benchmark.py`. Reviewer surface: Demo
+"Local multi-process distributed orchestration" (worker PIDs, reaping).
+Limitation: genuine multi-process on one host; no remote-host, cluster or cloud
+distribution is claimed.
+
+**M6-006 Context passing - Verified with limitation.**
+Implementation: typed immutable workflow context (`contracts.py`) revalidated at
+every handoff (`topologies.py`, `collaboration.py`, `orchestration.py`,
+`distributed.py`). Tests: `test_contracts.py`, `test_langgraph_workflow.py`,
+`test_langgraph_topologies.py`, `test_crewai_collaboration.py`,
+`test_adk_orchestration.py`. Reviewer surface: validated evidence per result.
+Limitation: per-run bounded context; no persistent or global context store.
+
+**M6-007 Inter-agent communication - Verified with limitation.**
+Implementation: validated CrewAI `Task.context` exchange (`_crewai_adapter.py`),
+ADK role events (`orchestration.py`, `_adk_adapter.py`), bounded serialized
+inter-process packets (`distributed.py`, `distributed_contracts.py`). Tests:
+`test_crewai_collaboration.py`, `test_adk_orchestration.py`,
+`test_distributed_orchestration.py` (forgery and malformed-packet rejection).
+Limitation: fixed role-to-role protocols; no general messaging system.
+
+**M6-008 Shared memory - Verified with limitation.**
+Implementation: bounded immutable workflow-scoped collaboration state
+(`collaboration.py`, `CollaborationState`; at most three 256-character messages
+with owner/source checks). Tests: `test_crewai_collaboration.py` (provenance,
+bounds, concurrent isolation). Limitation: workflow-scoped only; there is no
+persistent, global or distributed memory, by design.
+
+**M6-009 Task delegation - Verified with limitation.**
+Implementation: coordinator-owned assignment before result generation
+(`coordinator_worker.py`), fixed hierarchical delegation (`topologies.py`),
+launcher-bound worker assignments with explicit release (`distributed.py`).
+Tests: `test_langgraph_workflow.py`, `test_langgraph_topologies.py`,
+`test_distributed_orchestration.py`. Limitation: fixed, authorized delegation;
+no dynamic or remote delegation.
+
+**M6-010 Workflow synchronisation - Verified with limitation.**
+Implementation: finite ordered graph edges and validated completion
+(`adapters.py`), native fan-in join (`_langgraph_topologies.py`), IPC start
+barrier with deterministic fan-in (`_distributed_processes.py`). Tests:
+`test_langgraph_workflow.py`, `test_langgraph_topologies.py`,
+`test_distributed_orchestration.py` (both workers active at the barrier).
+Limitation: single-host synchronisation; no distributed failure recovery.
+
+**M6-011 CrewAI - Verified with limitation.**
+Implementation: real `Crew`/`Task` kickoff, sequential scheduling, task
+ownership/context and callbacks with deterministic `BaseAgent` role executors
+(`_crewai_adapter.py`, `_crewai_worker.py`, `collaboration.py`). Tests:
+`test_crewai_collaboration.py` (real kickoff/scheduler/task spies, child
+execution, external-access denial). Reviewer surface: Demo "CrewAI
+collaboration". Limitation: no LLM behind the CrewAI agents; the model-backed
+collaboration is the separate LangGraph canonical workflow.
+
+**M6-012 LangGraph - Verified with limitation.**
+Implementation: real compiled and invoked `StateGraph` for four topologies
+(`adapters.py`, `_langgraph_topologies.py`) and the canonical live graph
+(`live_execution.py`). Tests: `test_langgraph_workflow.py`,
+`test_langgraph_topologies.py`, `test_live_execution.py`. Limitation: model
+inference occurs only in the recorded trusted-local canonical runs.
+
+**M6-013 Google ADK - Verified with limitation.**
+Implementation: real `Workflow`/`Runner`/`BaseAgent` execution
+(`_adk_adapter.py`, `orchestration.py`), including one native role per worker
+process (`_distributed_adk.py`). Tests: `test_adk_orchestration.py`,
+`test_distributed_orchestration.py`. Reviewer surface: Demo "Google ADK
+orchestration". Limitation: deterministic roles; no model-backed ADK.
+
+**M6-014 LangSmith - Verified with limitation.**
+Implementation: local RunTree tracing adapter (`observability_adapters.py`
+`LocalLangSmith`); explicit deterministic delivery (`langsmith_delivery.py`,
+`run_langsmith.py`); live-family local projection and delivery
+(`live_langsmith.py`); read-only recorded-evidence boundary
+(`cockpit_langsmith.py`). Tests: `test_observability.py`,
+`test_langsmith_delivery.py`, `test_live_langsmith.py`,
+`test_cockpit_langsmith.py`. Evidence, kept distinct:
+(1) the deterministic sanitized trace `01a166fa-1c8d-7b40-9686-a08cfd14444f`
+delivered once to project `module6-verification` (202, 4 runs accepted) and read
+back - classification "current-path external LangSmith delivery verification",
+`service_read`, independently accepted 2026-10-22; evidence artifact held
+outside the repository; (2) Run 5, trace `e48944ac-1e67-4562-b6e7-e3cab5abbb4c`,
+classified exactly: "One-run live-model current-path LangSmith projection and
+delivery verification (`unverified_write` receipt); authority-consumption status
+operator-attested and not independently confirmed." Reviewer surface: the
+LangSmith tracing tab shows both as recorded/historical, never merged, with an
+explicit read-only inspection that reports unavailable on the stock page.
+Limitation: Run 5 has no service-read confirmation, so live-model traces are not
+read back; not every live run is delivered or read back; the LangSmith project
+must not be claimed to hold exactly one Run 5 trace.
+
+**M6-015 Workflow state management - Verified with limitation.**
+Implementation: typed immutable phases and bounded transition history
+(`contracts.py`, `coordinator_worker.py`), per-run evidence, and bounded
+revalidated session views (`console.py` `ConsoleSession`). Tests:
+`test_contracts.py`, `test_langgraph_workflow.py`, `test_console.py`,
+`test_console_app.py`, `test_cockpit_*.py`. Limitation: in-memory, per-run and
+per-browser-session state; no persistence.
+
+**M6-016 Execution tracing - Verified with limitation.**
+Three layers, none claimed beyond what exists. (a) Application trace/evidence
+contracts: payload-free correlated `RunTrace` and live terminal observations
+(`observability.py`, `observability_contracts.py`, `live_observation.py`). (b)
+LangSmith AI/agent tracing (M6-014). (c) Operational telemetry:
+OpenTelemetry -> OTel Collector -> Prometheus -> Grafana, metrics only
+(`observability_adapters.py`, `live_otel.py`, `live_metrics.py`,
+`live_metric_delivery.py`, `telemetry_delivery.py`, `run_telemetry.py`,
+`../telemetry/`). Tests: `test_observability.py`, `test_live_observation.py`,
+`test_live_otel.py`, `test_live_metrics.py`, `test_live_metric_delivery.py`,
+`test_telemetry_delivery.py`. Verified end-to-end locally on 2026-10-23 as an
+"authorized deterministic local operational-telemetry pipeline verification"
+(14/14 workflows, 3 alert rules loaded, dashboard provisioned). Limitation: per
+ADR-006 and the Collector configuration (metrics pipeline only; traces and logs
+have no pipeline) no additional trace or log storage backend exists or is
+claimed; the stack is local and loopback-only, not hosted, public or production.
+
+**M6-017 Scaling workflows - Verified with limitation.**
+Implementation: opt-in bounded benchmark at admission caps 1, 2 and 4
+(`benchmark.py`, `run_benchmark.py`) and throughput/active/worker-reaping
+metrics with a provisioned Grafana dashboard. Tests: `test_benchmark.py`,
+`test_telemetry_delivery.py`. Reviewer surface: the Demo tab's local scaling
+benchmark. Evidence: one local run on 2026-10-12 completed 8 of 8 workflows at
+each cap in 28.09 s, 15.68 s and 9.68 s on one Windows workstation. Limitation:
+deterministic, single-host and machine-specific; speedup is descriptive, not a
+pass criterion. No production load test, capacity, saturation, queue/utilisation
+or cloud/horizontal scaling is claimed.
+
+**M6-018 Distributed processing - Verified with limitation.**
+Implementation: two independent worker processes process disjoint fragments
+through native ADK roles; the benchmark runs up to eight concurrently (see
+M6-005, M6-017). Tests: `test_distributed_orchestration.py`,
+`test_benchmark.py`. Limitation: one host; no remote, cluster or cloud
+processing.
+
+**M6-019 Cost optimisation - Verified with limitation.**
+Implementation: deterministic zero-cost default; per-run budgets, deadlines and
+call/repair/retry bounds (`live_contracts.py` `LiveBudget`); the ADR-008 NORMAL
+profile as policy data (`live_policy.py`); no silent escalation and credentials
+never authorize spending; validated call/token/latency accounting with
+unavailable values never invented (`COST_GOVERNANCE.md`). Tests:
+`test_live_policy.py`, `test_live_contracts.py`, `test_execution.py`,
+`test_canonical_workflow.py`. Evidence: Run 4 and Run 5 record local compute with
+provider charge classified `no_provider_charge_local_compute`. Limitation: no
+hosted-provider pricing, estimated or provider-reported monetary cost, or
+comparative optimisation measurement exists.
+
+**M6-020 Reliability patterns - Verified with limitation.**
+Implementation: deadlines, cancellation, step/task budgets, fail-closed denial,
+bounded single repair, supervised child processes with kill/reap, observation
+failure isolation and three Prometheus alert rules (`execution.py`, `errors.py`,
+`live_execution.py`, `observability.py`, `../telemetry/rules/`). Tests:
+`test_execution.py`, `test_live_execution.py`, `test_distributed_orchestration.py`,
+`test_observability.py`, `test_telemetry_delivery.py`. Limitation: transport
+retries are zero by design; there is no recovery, circuit breaker, host-failure
+handling or alert routing; one alert was driven to firing locally and two were not
+triggered. See the known timing observation in `PROJECT_STATUS.md`.
+
+**M6-021 Coordinator-worker lab - Verified with limitation.**
+Implementation: the accepted coordinator-worker workflow with a runnable offline
+example (`LANGGRAPH_COORDINATOR_WORKER.md`) and the guided console. Tests:
+`test_langgraph_workflow.py`, `test_console_app.py`. Limitation: deterministic
+agents; the human browser review of the console is a separate release gate.
+
+**M6-022 Collaborative AI system - Verified with limitation.**
+Implementation: CrewAI collaboration (M6-011) and the canonical Researcher ->
+Analyst -> Critic workflow with real-local, synthetic and deterministic modes.
+Tests: `test_crewai_collaboration.py`, `test_canonical_workflow.py`,
+`test_console_app.py`. Evidence: accepted as verified-with-limitation for
+deterministic agents by the 2026-10-13 human decision; Run 4 is the authorized
+real-local verification. Limitation: model output quality and semantic
+correctness are not proven.
+
+**M6-023 Distributed orchestration lab - Verified with limitation.**
+Implementation: the accepted local process service with a runnable example
+(`DISTRIBUTED_ORCHESTRATION.md`) and console exposure. Tests:
+`test_distributed_orchestration.py`, `test_console_app.py`. Limitation: local
+multi-process only; human browser review is a separate release gate.
+
+**M6-024 Multi-agent orchestration platform - Verified with limitation.**
+Implementation: the Streamlit reviewer cockpit (`../app.py`, `console.py`,
+`cockpit_view.py`, `cockpit_ops.py`, `cockpit_langsmith.py`,
+`cockpit_local_live.py`) over the accepted services; the five tabs are each
+independently accepted (S1–S6). Tests: `test_console.py`, `test_console_app.py`,
+`test_console_live.py`, `test_cockpit_view.py`, `test_cockpit_demo.py`,
+`test_cockpit_ops.py`, `test_cockpit_langsmith.py`, `test_cockpit_local_live.py`,
+`test_cockpit_s6.py`. Limitation: delivered and verified as a local, loopback
+reviewer cockpit; human browser acceptance, hosted deployment verification and
+release are separate, still-open gates. Public live execution is intentionally
+unavailable (below).
+
+**M6-025 Collaborative AI workflow - Verified with limitation.**
+Implementation: the canonical workflow (`canonical_workflow.py`,
+`canonical_contracts.py`, `live_execution.py`) with application-owned validation
+and evidence. Tests: `test_canonical_workflow.py`, `test_live_execution.py`,
+`test_cockpit_local_live.py`. Evidence: accepted for deterministic agents by the
+2026-10-13 decision; synthetic runs classified `synthetic_offline`; real-local
+Run 4 ("Authorized current-path real-local verification") with 3 calls, 0 repairs,
+0 retries in 48,407 ms. Run 3 stays an `out_of_policy_observation`. Limitation:
+structural validation is not proof of semantic correctness; the live repair path
+is unexercised.
+
+**M6-026 Scalable AI orchestration using multi-agent architectures - Verified with limitation.**
+Implementation and evidence: the combined bounded orchestration architectures
+(M6-001..005), three runtimes (M6-011..013), the local benchmark and operational
+metrics (M6-017), distribution (M6-018) and the reviewer-visible cockpit.
+Accepted as verified-with-limitation by the 2026-10-13 decision. Limitation:
+local single-host, deterministic and machine-specific; no production scaling,
+SLA, capacity or cloud-scale validation is claimed.
+
+### Observability reconciliation
+
+- AI / agent observability: LangSmith (M6-014).
+- Operational observability: OpenTelemetry -> OTel Collector -> Prometheus ->
+  Grafana, verified end-to-end locally only. The Collector has the accepted
+  metrics pipeline only; no trace or log storage backend is implied.
+- Unified reviewer presentation: the Streamlit cockpit, with no iframe,
+  embedding or link to localhost services.
+- Not claimed: hosted production telemetry, public Grafana or Prometheus, an SLA,
+  production deployment.
+
+### Live / BYOK reconciliation
+
+Deterministic, no-key Demo is the deployed-safe baseline. Local Live/BYOK is
+trusted-operator only: BYOK means the trusted runtime brings its own provider
+connectivity, never a public key textbox. Credential presence never authorizes
+execution; each run needs a fresh single-use `LiveAuthorization` under the
+ADR-008 NORMAL profile. Public/deployed live is fail-closed and no deployment
+authority boundary exists. There is no automatic LangSmith write and no
+automatic operational query; external writes need separate authority.
+
+### Verification rule
+
+No requirement becomes `Verified` merely because documentation says it exists.
+Evidence must match the claim: simulated distribution cannot prove genuine
+distributed execution; an installed dependency cannot prove meaningful framework
+use; an adapter test cannot prove live remote tracing; an estimated cost cannot
+be represented as provider-reported cost; deterministic fixture execution cannot
+be represented as live-model evidence.
+
+### Historical evidence log
+
+The sections below are the slice-by-slice records as written at the time. They
+are kept unchanged as history; any status or "candidate/pending" wording in them
+is superseded by the reconciliation above.
+
+## Live Observability Slice 4 (historical candidate record)
 
 [Live metrics Slice 4](LIVE_METRICS_SLICE_4.md) records the additive candidate in
 `live_metrics.py`, `live_metric_delivery.py` and their maintained tests. It adds
@@ -10,64 +383,6 @@ one-shot OTLP delivery and workflow failure isolation. Evidence is offline SDK
 and test-owned loopback only. External pipeline/storage, curated live UI,
 continuous monitoring and independent Reviewer acceptance remain deferred.
 All 26 source meanings and Planned statuses remain unchanged.
-
-## Status Legend
-
-- `Planned` - requirement frozen; implementation not yet accepted.
-- `Implemented` - implementation exists but final evidence is incomplete.
-- `Verified` - implementation and required evidence are accepted.
-- `Verified with limitation` - accepted with a documented limitation.
-
-## Source-to-Evidence Matrix
-
-| ID | Requirement | Status | Implementation | Tests | Evidence |
-| --- | --- | --- | --- | --- | --- |
-| M6-001 | Sequential agents | Planned | Compiled researcher -> analyst -> critic graph | Real native invocation, ordering and validated handoff | Partial deterministic evidence below; acceptance pending |
-| M6-002 | Parallel agents | Planned | Native two-branch fan-out and waiting-edge fan-in | Barrier-proven overlap, cap two, both completion orders, cleanup | Local deterministic concurrency; scaling/acceptance unverified |
-| M6-003 | Hierarchical agents | Planned | Supervisor -> lead -> specialist delegation and validated return | Native role/phase execution, depth/work limits, authority forgery denial | Fixed local hierarchy; full source acceptance pending |
-| M6-004 | Coordinator-worker systems | Planned | Deterministic coordinator-worker slice | Real graph node ordering/delegation | Partial local evidence below; acceptance pending |
-| M6-005 | Distributed orchestration | Planned | Coordinator dispatch to two independent local ADK workers | Serialized IPC, distinct PIDs, concurrent native-role barrier | Genuine local multi-process evidence below; remote/acceptance pending |
-| M6-006 | Context passing | Planned | Typed immutable WorkflowState | Context integrity and concurrent isolation | Partial local evidence below; acceptance pending |
-| M6-007 | Inter-agent communication | Planned | Validated CrewAI Task.context exchange | Real task/context execution and forgery rejection | Partial local deterministic evidence below |
-| M6-008 | Shared memory | Planned | Bounded immutable workflow-scoped collaboration state | Provenance, bounds, concurrent isolation | No global/persistent/distributed memory; acceptance pending |
-| M6-009 | Task delegation | Planned | Explicit bounded worker assignment | Delegation-before-output and step checks | Partial local evidence below; acceptance pending |
-| M6-010 | Workflow synchronisation | Planned | Finite ordered graph and validated completion | Ordered execution, timeout/cancellation | Partial local evidence below; distributed behavior unverified |
-| M6-011 | CrewAI | Planned | Real Crew/Task scheduling with deterministic BaseAgent roles | Real kickoff/scheduler/task spies and child execution | Offline orchestration, no AI inference; acceptance pending |
-| M6-012 | LangGraph | Planned | Real compiled/invoked StateGraph | Real compile/ainvoke spies and topology | Deterministic local graph; no AI inference or platform acceptance |
-| M6-013 | Google ADK | Planned | Real local Workflow/Runner/BaseAgent execution | Native scheduling/state/event and adversarial tests | Partial offline evidence below; distribution/acceptance unverified |
-| M6-014 | LangSmith | Planned | Application-owned local RunTree tracing adapter | Real SDK trees/children/end, minimization, credential non-authorization | Partial offline SDK evidence; accepted current-path external sanitized-trace delivery (2026-10-22); one recorded live-model projection and live-family delivery (`unverified_write`, 2026-10-22; authority-consumption operator-attested); live-model correlation unverified |
-| M6-015 | Workflow state management | Planned | Typed phases/history and bounded curated console views | State/evidence consistency, forged views and session isolation | Partial local UI/state evidence; persistence/full acceptance unverified |
-| M6-016 | Execution tracing | Planned | Application lifecycle traces; local LangSmith and OpenTelemetry adapters | Actual SDK correlation, minimization, cardinality, bounded collection failure | Partial local evidence incl. opt-in local OTLP metric delivery/collection with the end-to-end local pipeline verified (2026-10-23); live trace delivery and hosted backend unverified |
-| M6-017 | Scaling workflows | Planned | Throughput, active-workflow and worker-reaping metrics delivered locally; opt-in bounded local benchmark at caps 1/2/4; queue/utilisation metrics not implemented | Bounded labels verified; cap, integrity and cleanup invariants; no timing assertion | Partial local metrics, Grafana dashboard and one local benchmark run; sustained load, capacity and curated scale view pending |
-| M6-018 | Distributed processing | Planned | Two independent worker interpreters process disjoint assignments | Real PID/parent separation, native ADK processing and validated results | Local multi-process evidence; remote distribution/metrics/acceptance pending |
-| M6-019 | Cost optimisation | Planned | Bounded telemetry resources; validated zero-call or unavailable accounting | No invented tokens/prices/billing; credential non-authorization and bounds | Partial offline governance; live optimisation/pricing/console unverified |
-| M6-020 | Reliability patterns | Planned | Local budgets/deadlines/cancellation; bounded observation failure isolation | Execution/collection failure, timeout/cancellation and telemetry isolation tests | Partial local reliability incl. local alert rules; recovery and alert routing unverified |
-| M6-021 | Coordinator-worker lab | Planned | Accepted workflow exposed through guided local console | Real Streamlit run/evidence and bounded denial tests | Partial human-facing prerequisite; full lab acceptance pending |
-| M6-022 | Collaborative AI lab | Planned | Accepted CrewAI collaboration exposed through guided console | Real native execution and Streamlit result/evidence tests | Offline human-facing prerequisite; live AI/full lab acceptance pending |
-| M6-023 | Distributed orchestration lab | Planned | Accepted local process service exposed through guided console | Real native workers, Streamlit PID/evidence and prior lifecycle tests | Partial human-facing prerequisite; full lab acceptance pending |
-| M6-024 | Multi-agent orchestration platform | Planned | Additive guided Streamlit console via validation/curation services | Eight actual paths, isolation, minimization, failure/stale/unavailable views | Partial local platform UI; specialist links/deployment/full acceptance pending |
-| M6-025 | Collaborative AI workflow | Planned | Researcher -> Analyst -> Critic deterministic workflow | Ordered task ownership, validation, synthesis | Partial local collaboration; full AI deliverable unverified |
-| M6-026 | Scalable multi-agent orchestration objective | Planned | Bounded role orchestration alongside accepted LangGraph slice; local benchmark of the distributed path | Per-run bounds/isolation; benchmark invariants without performance thresholds | Local single-host measurement only; scalable AI objective unverified |
-
-## Verification Rule
-
-No requirement becomes `Verified` merely because implementation exists.
-
-Evidence must match the type of claim being made. In particular:
-
-- simulated distribution cannot prove genuine distributed execution;
-- an installed dependency cannot prove meaningful framework use;
-- an adapter test cannot prove live remote tracing;
-- an estimated cost cannot be represented as provider-reported cost;
-- deterministic fixture execution cannot be represented as live-model evidence.
-
-## Approved Observability Evidence Planning
-
-ADR-006 is additive architecture/evidence planning, not a new source requirement.
-All 26 IDs, requirement meanings, and Planned statuses remain frozen. The rows
-above describe intended implementation and verification, not accepted evidence.
-LangSmith remains the source-required AI tracing tool; operational metrics do not
-replace execution tracing or genuine distributed-processing evidence.
 
 ## Runtime Foundation Evidence (Partial Prerequisite Only)
 

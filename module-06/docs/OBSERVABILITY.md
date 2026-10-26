@@ -1,4 +1,4 @@
-﻿# Module 6 Observability
+# Module 6 Observability
 
 ## Objective
 
@@ -168,9 +168,13 @@ remain unchanged. This is actual offline SDK integration and remains the default
 [Operational Telemetry](OPERATIONAL_TELEMETRY.md) adds an explicit, opt-in
 loopback OTLP metric delivery adapter and a local Docker Compose stack
 (Collector, Prometheus, Grafana, alert rules), verified on one workstation.
-Live LangSmith delivery and any hosted or production deployment of the
-operational path remain future work.
+The operational path was later verified end-to-end locally (2026-10-23;
+metrics pipeline only, loopback-only), and one deterministic LangSmith delivery
+was independently accepted with `service_read` confirmation (2026-10-22); Run 5
+remains `unverified_write`. Any hosted or production deployment of the
+operational path remains future work and is not claimed.
 [Operations Console](OPERATIONS_CONSOLE.md) now presents bounded session-scoped
 curated local evidence, freshness and unavailable specialist references through
 application services. It does not persist raw telemetry or configure delivery.
-All 26 requirements remain Planned.
+Requirement status is reconciled in [TRACEABILITY.md](TRACEABILITY.md); the
+slice-level candidate and "Planned" wording in this document is historical.

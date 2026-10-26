@@ -2,31 +2,41 @@
 
 ## Current State
 
-Reviewer-experience chronology: S1, S2, S3, S4 and S5 are accepted and
-committed; S5 is committed at `bb383fcbdee624e64aa9ac025018389d41bc905c`. S6
-(reviewer guidance/polish and final code-quality/full-gate closeout) is the
-current candidate, uncommitted and awaiting independent review; S7
-(documentation/traceability reconciliation) remains future. Earlier milestone
+Baseline for this record: `feature/module-06-architecture` at
+`998b0d8da8cadc4cb0e9a2230dbe8b1e39276161`. Reviewer-experience stories S1, S2,
+S3, S4, S5 and S6 are independently accepted and committed (S5 at
+`bb383fcbdee624e64aa9ac025018389d41bc905c`, S6 at
+`998b0d8da8cadc4cb0e9a2230dbe8b1e39276161`). S7 (final requirements,
+traceability and documentation reconciliation) is the current candidate:
+documentation-only, unstaged and awaiting independent review. Earlier milestone
 paragraphs below describe the state at their recorded time, including
-historical "future"/"candidate" wording; they are not current status.
-The deployed/public posture remains deterministic/no-key. Local live requires an
-explicit trusted private-operator runtime and fresh execution-scoped authority;
-credentials/connectivity are never authority. No actual live execution was
-performed for S5 or S6, and S6 performed no real model, LangSmith, telemetry,
-credential or container operation; live verification remains a separate future
-human-authorized action. No deployment, release, completion or source
-requirement advancement is claimed.
+historical "Planned"/"future"/"candidate" wording; they are not current status.
+
+Requirement status is reconciled in [TRACEABILITY.md](TRACEABILITY.md): the S7
+candidate records all 26 source requirements as `Verified with limitation`, none
+unqualified `Verified`, each with its stated limitation; the transition takes
+effect only when S7 is independently accepted and committed. The deployed/public
+posture remains deterministic/no-key. Local live requires an explicit trusted
+private-operator runtime and fresh execution-scoped authority; credentials and
+connectivity are never authority; public live is fail-closed. No real live
+execution, model, LangSmith, telemetry, credential or container operation was
+performed for S6 or S7.
+
+Module 6 is **not** complete. Still open and not claimed: human browser
+acceptance, hosted deployment and its verification, root README reconciliation,
+publication/release and recruiter-facing (LinkedIn) closeout. The reliability
+observation under "Known Reliability Observation" below is unresolved.
 
 | Item | State |
 | --- | --- |
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | Deterministic runtime/process slices, additive console, opt-in local operational telemetry and opt-in local scaling benchmark; full acceptance pending |
+| Phase | S1-S6 accepted and committed; S7 reconciliation candidate; release gates open |
 | Source requirements | 26 frozen |
-| Requirements verified | 0 / 26 |
-| Required labs | 0 / 3 complete |
-| Required deliverables | 0 / 2 complete |
+| Requirements (S7 candidate) | 26 / 26 `Verified with limitation`; 0 unqualified `Verified`; effective on S7 acceptance |
+| Required labs | 3 / 3 `Verified with limitation` (M6-021, M6-022, M6-023; S7 candidate) |
+| Required deliverables | 2 / 2 `Verified with limitation` (M6-024, M6-025; S7 candidate) |
 | Runtime targets | LangGraph, CrewAI, Google ADK |
 | AI tracing | LangSmith |
 | Execution budget policy | ADR-008 NORMAL named profile (policy data only; separate from execution authority) |
@@ -565,78 +575,86 @@ remain outstanding; no probe is performed by this milestone.
 
 ## Production-Grade Definition of Done
 
-The checklist below evaluates the complete platform. Bounded slice evidence does
-not establish platform, lab, or deployment acceptance.
+The checklist evaluates the complete platform from accepted S1-S6 evidence.
+`[x]` means accepted evidence exists within the stated scope (local,
+deterministic or recorded real-local, never hosted or production); `[ ]` means
+the item is not yet established. Bounded slice evidence does not establish
+deployment acceptance.
 
 ### Source Fidelity
 
-- [ ] 26 / 26 source requirements verified.
-- [ ] Coordinator-worker lab verified.
-- [ ] Collaborative AI lab verified.
-- [ ] Distributed orchestration lab verified.
-- [ ] Multi-agent orchestration platform delivered.
-- [ ] Collaborative AI workflow delivered.
+- [ ] 26 / 26 source requirements verified - S7 candidate records 26 / 26
+  `Verified with limitation`; pending independent acceptance.
+- [ ] Coordinator-worker lab verified - M6-021, S7 candidate.
+- [ ] Collaborative AI lab verified - M6-022, S7 candidate.
+- [ ] Distributed orchestration lab verified - M6-023, S7 candidate.
+- [ ] Multi-agent orchestration platform delivered - M6-024, S7 candidate.
+- [ ] Collaborative AI workflow delivered - M6-025, S7 candidate.
 
 ### Product
 
-- [ ] Runnable Streamlit operations console.
-- [ ] Built-in user/test guidance.
-- [ ] Final result and relevant run evidence visible without code inspection.
+- [x] Runnable Streamlit operations console (local, loopback).
+- [x] Built-in user/test guidance on every tab and the Guide.
+- [x] Final result and relevant run evidence visible without code inspection.
 
 ### Architecture
 
-- [ ] Framework-neutral contracts implemented.
-- [ ] LangGraph runtime implemented.
-- [ ] CrewAI runtime implemented.
-- [ ] Google ADK runtime implemented.
-- [ ] Module remains standalone from Modules 1-5.
+- [x] Framework-neutral contracts implemented.
+- [x] LangGraph runtime implemented.
+- [x] CrewAI runtime implemented.
+- [x] Google ADK runtime implemented.
+- [x] Module remains standalone from Modules 1-5.
 
 ### Reliability
 
-- [ ] Bounded execution.
-- [ ] Retries and timeouts.
-- [ ] Failure isolation.
-- [ ] Resource/concurrency limits where appropriate.
-- [ ] Expected failure paths tested.
+- [x] Bounded execution.
+- [x] Timeouts and cancellation; transport retries are zero by design.
+- [x] Failure isolation.
+- [x] Resource/concurrency limits where appropriate.
+- [x] Expected failure paths tested.
+- [ ] Known reliability observation resolved - see "Known Reliability
+  Observation"; future hardening is not scheduled.
 
 ### Security
 
-- [ ] Trust boundaries implemented.
-- [ ] Prompt-injection tests.
-- [ ] Forged-authority tests.
-- [ ] Secret handling verified.
-- [ ] Model/agent output cannot grant itself application authority.
-- [ ] Cross-run state isolation verified.
+- [x] Trust boundaries implemented.
+- [x] Prompt-injection and hostile-output tests.
+- [x] Forged-authority tests.
+- [x] Secret handling verified.
+- [x] Model/agent output cannot grant itself application authority.
+- [x] Cross-run state isolation verified.
 
 ### Cost
 
-- [ ] Deterministic CI makes no billable inference calls.
-- [ ] Live/billable execution requires explicit authorization.
-- [ ] Per-run budgets enforced.
-- [ ] No silent premium escalation.
-- [ ] Cost/resource evidence surfaced.
+- [x] Deterministic CI makes no billable inference calls.
+- [x] Live/billable execution requires explicit authorization.
+- [x] Per-run budgets enforced.
+- [x] No silent premium escalation.
+- [x] Cost/resource evidence surfaced (calls, tokens where available, latency;
+  no monetary cost is computed).
 
 ### Observability
 
-- [ ] Normalized telemetry implemented.
-- [ ] LangSmith integration verified.
-- [ ] OpenTelemetry integration verified.
-- [ ] Collector/compatible collection boundary and Prometheus metrics verified.
-- [ ] Grafana specialist operational view and alerting verified.
-- [ ] Streamlit curated workflow, health, reliability, cost, and trace references verified.
-- [ ] Redaction, bounded cardinality, retention, export/query resource controls verified.
-- [ ] Observability failure cannot corrupt workflow semantics.
+- [x] Normalized telemetry implemented.
+- [x] LangSmith integration verified - with limitation (Run 5 is `unverified_write`).
+- [x] OpenTelemetry integration verified locally.
+- [x] Collector and Prometheus metrics verified locally (metrics pipeline only).
+- [x] Grafana specialist view and alerting verified locally (one alert driven to
+  firing; two untriggered).
+- [x] Streamlit curated workflow, health, reliability, cost and trace references.
+- [x] Redaction, bounded cardinality, retention, export/query resource controls.
+- [x] Observability failure cannot corrupt workflow semantics.
 
 ### Engineering Evidence
 
-- [ ] Ruff passes.
-- [ ] pytest passes.
-- [ ] compileall passes.
-- [ ] Security/adversarial verification passes.
-- [ ] Traceability reconciled.
+- [x] Ruff passes.
+- [x] pytest passes (see gate provenance below).
+- [x] compileall passes.
+- [x] Security/adversarial verification passes.
+- [ ] Traceability reconciled - S7 candidate, pending acceptance.
 - [ ] Production-readiness review complete.
 - [ ] Deployment evidence complete.
-- [ ] Human UI review complete.
+- [ ] Human UI (browser) review complete.
 
 ## Current Risks
 
@@ -652,14 +670,53 @@ not establish platform, lab, or deployment acceptance.
 
 ## Next Recommended Work
 
-The operations console, the local operational telemetry pipeline and the local
-scaling benchmark are delivered and the benchmark is independently accepted;
-its console presentation awaits independent acceptance. Closeout actions are
-listed in the section above. Earlier candidate steps, each still needing its own
-authorization and none required for closeout: curated
-operational availability in the console through an application service, live
-LangSmith delivery, or model/provider integration. Preserve the approved
-boundaries. See [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitations).
+Remaining gates after S7 acceptance, each needing its own approval and none
+implied by cockpit or reconciliation completion: human browser acceptance of the
+reviewer cockpit; Streamlit deployment and deployed-environment verification
+(deterministic/no-key Demo only unless a separate deployment-compatible
+authority boundary is built and verified); root README reconciliation;
+publication/release; recruiter-facing (LinkedIn) closeout; and, separately, any
+future live verification (fresh human authorization) and the reliability
+hardening below. Preserve the approved boundaries. See
+[remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitations).
+
+## Known Reliability Observation (Unresolved) and Future Hardening
+
+During the S6 root-suite gate, first-run failures were recorded by two evidence
+sources that name different tests; they are reported separately and not merged.
+
+1. S6 Builder's first root run: 2 failed, 4,907 passed, 6 skipped. Failed nodes:
+   `module-06/tests/test_distributed_orchestration.py::test_real_native_processes_serialization_overlap_order_and_credentials[worker_left]`
+   (real native worker processes in the distributed-orchestration suite) and
+   `module-06/tests/test_langsmith_delivery.py::test_distributed_trace_omits_process_and_assignment_identity`.
+   Tracebacks were not retained. The earlier S6 wording "distributed" labelled
+   these nodes loosely; the node names above are the exact record.
+2. Independent S6 Reviewer, as stated in the S6 review record supplied with the
+   S7 instruction (not stored in this repository): failures of
+   `module-06/tests/test_live_execution.py::test_stalled_parent_repeatedly_reaps_before_timeout_propagates`
+   in the `[hang]` and `[delayed]` cases. This is a live supervised-runtime
+   test using a real gateway child process under a 2,000 ms budget, not part of
+   the distributed-orchestration suite.
+
+Evidence available: repeated isolation runs passed in each source; later complete
+root reruns were green (S6 Builder: 4,909 passed, 6 skipped, 3 existing ChromaDB
+warnings). The stalled-parent test has a pre-existing documented history of
+unexplained timing failures, including a failure in isolation at an earlier
+baseline ([LIVE_LANGSMITH_SLICE_2.md](LIVE_LANGSMITH_SLICE_2.md)); the CrewAI
+console demonstration has a separate documented cold-start timeout history
+([LIVE_MODEL_SLICE.md](LIVE_MODEL_SLICE.md)).
+
+Classification: an existing, probable load-sensitive timing flake. The cause is
+**unproven**: it is not established as machine load, and no S6 code-path
+causality was established. As recorded in the S6 acceptance, S6 was accepted
+because code-path evidence did not establish S6 as the cause, not merely because
+a rerun passed.
+
+Future hardening (not scheduled; requires a separately approved story): make
+`test_stalled_parent_repeatedly_reaps_before_timeout_propagates[hang]` and
+`[delayed]` reliable. Do not address it by lengthening deadlines, weakening
+assertions, adding retries or changing production code without that approval.
+S7 changes none of these.
 
 ## Compatibility Evidence
 
@@ -801,7 +858,10 @@ performed during S5 implementation; live verification remains a separate
 future human-authorized action after independent review. S6-S7 remain future;
 no deployment/release/completion claim and no requirement status advanced.
 
-## Reviewer Cockpit S6 (Candidate, Not Accepted): Guidance, Polish and Code-Quality Closeout
+## Reviewer Cockpit S6 (Accepted, Committed at `998b0d8`): Guidance, Polish and Code-Quality Closeout
+
+The paragraphs below are the S6 candidate record as written before acceptance;
+the first-root-run wording is reconciled under "Known Reliability Observation".
 
 Story S6 makes the five-tab cockpit one guided reviewer experience and performs
 the B4 closing quality gate; design and audit record:
@@ -824,11 +884,45 @@ Gates (2026-10-25, fail-fast): Ruff `check .` clean; focused S6 **30 passed**;
 S1–S5 cockpit **101 passed**; live runtime/observability/delivery **2,004
 passed**; console/app/console-live **134 passed**; execution/contract/registry/
 distributed/benchmark failure paths **239 passed**; complete Module 6 **2,794
-passed**; root full pytest: first run **2 failed, 4,907 passed, 6 skipped** (two
-real-process distributed nodes; tracebacks not retained), both exact nodes then
-passed in isolation three times, and a complete root rerun gave **4,909 passed,
-6 skipped, 3 existing ChromaDB warnings**; compileall clean; candidate
+passed**; root full pytest: first run **2 failed, 4,907 passed, 6 skipped** (nodes named
+under "Known Reliability Observation"; tracebacks not retained), repeated
+isolation runs of those nodes passed, and a complete root rerun gave **4,909
+passed, 6 skipped, 3 existing ChromaDB warnings**; compileall clean; candidate
 UTF-8/BOM/LF/whitespace and `git diff --check` clean. No real model, provider,
-LangSmith, telemetry, credential or container operation occurred. S7 remains
-future; no deployment, release, completion or requirement advancement is
-claimed, and nothing is staged or committed.
+LangSmith, telemetry, credential or container operation occurred. S7 was future
+when this was recorded; no deployment, release, completion or requirement
+advancement was claimed.
+
+## Reviewer Cockpit S7 (Candidate, Not Accepted): Requirements, Traceability and Documentation Reconciliation
+
+Story S7 reconciles documentation only; no source or test behavior changed, and
+architecture, evidence taxonomy, ADR-008, the cockpit and all runtime boundaries
+are frozen. It rewrites the authoritative [TRACEABILITY.md](TRACEABILITY.md)
+(M6-001..M6-026 with implementation, test and reviewer evidence, evidence
+classification, final status and limitation; slice records retained as dated
+history), rewrites the Module [README](../README.md) for recruiters and
+reviewers, and reconciles this status page and stale current-status wording in
+the observability, console and reviewer documents. Observability stays exact:
+LangSmith for AI/agent tracing, OpenTelemetry -> Collector -> Prometheus ->
+Grafana (metrics pipeline only) verified end-to-end locally, and the Streamlit
+cockpit as the unified presentation, with no hosted, public, SLA or production
+claim. Run 3 remains `out_of_policy_observation`, Run 4 carries no recorded
+identifier, and Run 5 keeps its exact `unverified_write` classification.
+
+Gates (2026-10-26, fail-fast, S7 Builder; documentation-only diff): Ruff `check .`
+clean; documentation validation (26 requirement IDs, per-requirement limitation,
+links, commit references, exact Run 5 text, no unsupported Run 4 identifier,
+no secrets or private paths, no overclaim phrases) clean; focused
+cockpit/console/contract/policy suites **244 passed**; full Module 6 first run
+**1 failed, 2,793 passed** - the failure was
+`test_console_app.py::test_actual_accepted_demonstrations_run_through_ui[CrewAI collaboration]`,
+the documented CrewAI cold-start/timing observation, and the exact node then
+passed in a single bounded rerun (11.65 s); because no source, test or
+application file changed in this candidate, candidate causality is excluded.
+Root full pytest, run once: **4,909 passed, 6 skipped, 3 existing ChromaDB
+warnings**, with no failure, so the S6 stalled-parent observation did not recur
+in this run (which does not prove its cause). Compileall and
+encoding/LF/whitespace checks are recorded in the S7 report. Still open and not
+claimed: independent S7 acceptance, human browser acceptance, deployment
+verification, root README reconciliation, publication/release and LinkedIn
+closeout.

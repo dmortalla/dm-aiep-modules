@@ -1,5 +1,7 @@
 # S6 candidate: reviewer guidance, polish and code-quality closeout
 
+> **Status note (S7).** S6 was independently accepted and committed at `998b0d8da8cadc4cb0e9a2230dbe8b1e39276161`; the "candidate" wording below is the record as written before acceptance. The root-suite first-run record is reconciled in [PROJECT_STATUS.md](PROJECT_STATUS.md#known-reliability-observation-unresolved-and-future-hardening).
+
 Baseline: clean `feature/module-06-architecture` at
 `bb383fcbdee624e64aa9ac025018389d41bc905c`, empty index. S1–S5 are accepted and
 committed. This candidate implements S6 only; S7 documentation/traceability

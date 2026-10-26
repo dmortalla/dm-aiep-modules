@@ -1,5 +1,7 @@
 # S5 candidate: secure private-local live presentation
 
+> **Status note (S7).** S5 was independently accepted and committed at `bb383fcbdee624e64aa9ac025018389d41bc905c`; the "candidate" wording below is the record as written before acceptance. See [PROJECT_STATUS.md](PROJECT_STATUS.md).
+
 Baseline: clean `feature/module-06-architecture` at
 `5e61cf2bac766eb9c642cf2dd7dbd364ce3ee3e6`, empty index. S1–S4 are accepted;
 this candidate implements S5 only, not S6 guidance/closeout or S7 reconciliation.

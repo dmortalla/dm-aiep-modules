@@ -1,5 +1,7 @@
 # Opt-In LangSmith Trace Delivery
 
+> **Status note (S7).** Dated historical record. Where it says "Planned", "candidate" or "pending", that was true when written; current requirement status is in [TRACEABILITY.md](TRACEABILITY.md) and engineering status in [PROJECT_STATUS.md](PROJECT_STATUS.md). The body below is unchanged.
+
 Verified starting branch: `feature/module-06-architecture`; clean HEAD
 `9029e6eddc3f6c8f047a33415ea2f0de322fdb5b`, subject
 `feat: expose local scaling benchmark in operations console`. A bounded real

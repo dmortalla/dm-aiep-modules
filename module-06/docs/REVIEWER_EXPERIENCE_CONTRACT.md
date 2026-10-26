@@ -1,5 +1,7 @@
 # Reviewer Experience Contract: Unified Module 6 Observability Cockpit
 
+> **Status note (S7).** Stories S1-S6 are delivered, independently accepted and committed; S7 reconciliation is a candidate. This contract remains the planning record it was written as; delivery status is in [PROJECT_STATUS.md](PROJECT_STATUS.md).
+
 ## Purpose and status
 
 This contract defines the final reviewer-facing Module 6 Streamlit

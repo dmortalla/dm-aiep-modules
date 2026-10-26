@@ -1,5 +1,7 @@
 # Canonical Researcher → Analyst → Critic candidate
 
+> **Status note (S7).** Dated historical record. Where it says "Planned", "candidate" or "pending", that was true when written; current requirement status is in [TRACEABILITY.md](TRACEABILITY.md) and engineering status in [PROJECT_STATUS.md](PROJECT_STATUS.md). The body below is unchanged.
+
 ## Scope and evidence
 
 This is an offline implementation candidate on the accepted Architecture B+.
