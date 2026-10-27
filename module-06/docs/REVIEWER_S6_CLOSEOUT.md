@@ -9,6 +9,22 @@ reconciliation is not started. Architecture, evidence taxonomy, the trusted-loca
 capability, `LiveAuthorization`, ADR-008 and the public fail-closed posture are
 unchanged. No dependency or lockfile changed.
 
+## Later presentation update (not part of S6)
+
+After S6 acceptance the cockpit presentation evolved. The current app has six
+tabs with the Guide first (Guide, Deterministic Demo, Live / BYOK, Operations,
+LangSmith Tracing, Implementation Evidence), restores every accepted
+`GUIDANCE_SECTIONS` panel in the Guide, and contains exactly one bounded,
+application-owned static CSS block rendered with `unsafe_allow_html=True`.
+The security invariant is not that the flag never appears: the allowed surface
+is one literal `<style>` element, no workflow, model, user, tool or provider
+value can flow into it, untrusted text stays inert, and there is no iframe,
+component or link surface (pinned by AST and rendered-page tests in
+`tests/test_cockpit_s6.py`). A separate private-local launcher
+(`run_local_live.py`) supplies the trusted runtime to a private operator; the
+stock app and public posture are unchanged. The S6 description below is the
+accepted S6 state and is preserved as history.
+
 ## Reviewer experience
 
 Each workflow tab now opens with compact Purpose / Action / Expected result /
@@ -26,7 +42,9 @@ fail-closed), the composed evidence labels, recorded versus fresh evidence, the
 observability layers, current-host localhost semantics, LangSmith, how to test
 each capability and what evidence does not prove. The Operations tab now shows
 the Grafana data-source total; the LangSmith tab shows each recorded trace
-identifier as inert text. No widget, link, iframe or HTML was added.
+identifier as inert text. No widget, link, iframe or HTML was added in S6 (as
+committed at `998b0d8`; the later presentation update below changes the HTML
+statement).
 
 ## Non-blocker disposition
 
@@ -61,7 +79,9 @@ future work or overstated "never raises".
   pinned by test); session state holds only the console of closed revalidated
   views; no authorization, permit or runtime is retained (S5 object-walk tests
   unchanged); dynamic values render through `st.text`/`st.metric`/`st.json` or
-  closed literals; no `unsafe_allow_html`, links, iframes or components; endpoints,
+  closed literals; at S6 acceptance no `unsafe_allow_html`, and no links, iframes
+or components (a later presentation update adds one bounded static CSS block,
+see below); endpoints,
   trace targets, provider, model and budget are application constants; localhost is
   never trust; nothing executes, queries or writes on render.
 - Docstrings and types: Google-style docstrings and return types now cover every

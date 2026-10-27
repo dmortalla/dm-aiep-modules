@@ -87,8 +87,11 @@ SLA/SLO, load-tested, cloud-scale or statistically reliable.
   (`fresh_execution` or `recorded_historical`).
 
 Source directory: `../src/multi_agent_orchestration/`; tests: `../tests/`.
-Cockpit tabs: Deterministic demo, Live / BYOK, Operations, LangSmith tracing,
-Guide (`../app.py`).
+Cockpit tabs (`../app.py`, Guide first): Guide, Deterministic Demo, Live / BYOK,
+Operations, LangSmith Tracing, Implementation Evidence. The first five tabs were
+the cockpit at S6 acceptance; the Implementation Evidence tab (abridged verbatim
+source excerpts naming file and function, never proof of delivery or service
+state) and the Guide-first ordering are later presentation updates.
 
 ### Per-requirement evidence
 
@@ -309,11 +312,16 @@ multi-process only; human browser review is a separate release gate.
 **M6-024 Multi-agent orchestration platform - Verified with limitation.**
 Implementation: the Streamlit reviewer cockpit (`../app.py`, `console.py`,
 `cockpit_view.py`, `cockpit_ops.py`, `cockpit_langsmith.py`,
-`cockpit_local_live.py`) over the accepted services; the five tabs are each
-independently accepted (S1–S6). Tests: `test_console.py`, `test_console_app.py`,
+`cockpit_local_live.py`) over the accepted services; the five tabs accepted in
+S1–S6 are Deterministic Demo, Live / BYOK, Operations, LangSmith Tracing and
+Guide, with the later Implementation Evidence tab and a separate private-local
+launcher (`../run_local_live.py`, `../private_local_app.py`,
+`../private_local_runtime.py`) that supplies the trusted runtime to a private
+operator only. Tests: `test_console.py`, `test_console_app.py`,
 `test_console_live.py`, `test_cockpit_view.py`, `test_cockpit_demo.py`,
 `test_cockpit_ops.py`, `test_cockpit_langsmith.py`, `test_cockpit_local_live.py`,
-`test_cockpit_s6.py`. Limitation: delivered and verified as a local, loopback
+`test_cockpit_s6.py`, `test_private_local_launcher.py`. Limitation: delivered and
+verified as a local, loopback
 reviewer cockpit; human browser acceptance, hosted deployment verification and
 release are separate, still-open gates. Public live execution is intentionally
 unavailable (below).
@@ -344,7 +352,9 @@ SLA, capacity or cloud-scale validation is claimed.
   Grafana, verified end-to-end locally only. The Collector has the accepted
   metrics pipeline only; no trace or log storage backend is implied.
 - Unified reviewer presentation: the Streamlit cockpit, with no iframe,
-  embedding or link to localhost services.
+  embedding or link to localhost services. Its only unsafe-HTML surface is one
+  static, application-owned CSS block; no workflow, model, user, tool or
+  provider value can flow into it.
 - Not claimed: hosted production telemetry, public Grafana or Prometheus, an SLA,
   production deployment.
 
@@ -352,8 +362,9 @@ SLA, capacity or cloud-scale validation is claimed.
 
 Deterministic, no-key Demo is the deployed-safe baseline. Local Live/BYOK is
 trusted-operator only: BYOK means the trusted runtime brings its own provider
-connectivity, never a public key textbox. Credential presence never authorizes
-execution; each run needs a fresh single-use `LiveAuthorization` under the
+connectivity, never a public key textbox. Local Ollama inference does not itself
+require a credential; a provider that needs one has it held by that runtime.
+Credential presence never authorizes execution; each run needs a fresh single-use `LiveAuthorization` under the
 ADR-008 NORMAL profile. Public/deployed live is fail-closed and no deployment
 authority boundary exists. There is no automatic LangSmith write and no
 automatic operational query; external writes need separate authority.

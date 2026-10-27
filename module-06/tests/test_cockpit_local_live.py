@@ -111,8 +111,9 @@ def test_default_render_and_credentials_never_enable_live(monkeypatch):
     assert "public/deployed live execution is unavailable" in rendered(at).lower()
     assert PRIVATE not in rendered(at)
     assert at.text_input == []
-    # Demo widgets are unchanged; no local provider/budget/credential input exists.
-    assert not at.tabs[1].get("text_area") and not at.tabs[1].get("number_input")
+    # Live has no provider/budget/credential configuration controls.
+    live = next(tab for tab in at.tabs if tab.label == "Live / BYOK")
+    assert not live.get("text_area") and not live.get("number_input")
     assert ConsoleSession().run_authorized_local().failure == "unavailable"
 
 
@@ -308,11 +309,8 @@ def test_historical_exact_classes_and_no_unsupported_run4_identifier(enabled):
     assert CURATED_RUN_5.model_dump_json() == before
     assert CURATED_RUN_5.delivery_confirmation.value == "unverified_write"
     assert CURATED_RUN_4.reference_id is None
-    assert CURATED_RUN_5.accepted_classification in "\n".join(
-        s.value for s in at.subheader
-    )
+    assert CURATED_RUN_5.accepted_classification in rendered(at)
     assert at.button(key="ops_query") and at.button(key="langsmith_read")
-    assert "unsafe_allow_html" not in APP.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("attack", ["delivery", "payload", "tokens", "accounting"])
@@ -427,9 +425,12 @@ def test_real_trusted_embedding_seam_enables_only_explicit_once(
     script.write_text(EMBEDDING, encoding="utf-8")
     at = AppTest.from_file(str(script), default_timeout=45).run()
     assert not at.exception and fake.calls == []
-    assert "local live/BYOK: available" in rendered(at)
-    assert "public live: unavailable" in rendered(at)
-    assert not at.button(key="local_live_run").disabled
+    assert "public/deployed live execution is unavailable" in rendered(at).lower()
+    # The header posture is case-insensitive: restored from the accepted S5 pins.
+    assert "local live/byok: available" in rendered(at).lower()
+    assert "public live: unavailable" in rendered(at).lower()
+    live = next(tab for tab in at.tabs if tab.label == "Live / BYOK")
+    assert not live.button(key="local_live_run").disabled
     at.button(key="local_live_run").click().run()
     assert not at.exception and len(fake.calls) == 1
     assert at.session_state.console.current_local.outcome == "completed"
@@ -441,6 +442,44 @@ def test_real_trusted_embedding_seam_enables_only_explicit_once(
     assert local.current_runtime() is None
     assert ConsoleSession().run_authorized_local().failure == "unavailable"
 
+
+def test_private_wrapper_enables_only_explicit_once(monkeypatch):
+    """Actual private wrapper exposes capability only for explicit execution."""
+    import types
+
+    from streamlit.testing.v1 import AppTest
+
+    fake = FakeExecution()
+    runtime = local.TrustedLocalRuntime(
+        posture="trusted-private-local",
+        executor=fake,
+    )
+    trusted = types.ModuleType("private_local_runtime")
+    trusted.runtime = runtime
+    monkeypatch.setitem(sys.modules, "private_local_runtime", trusted)
+
+    wrapper = APP.with_name("private_local_app.py")
+    at = AppTest.from_file(str(wrapper), default_timeout=45).run()
+
+    assert not at.exception
+    assert fake.calls == []
+    live = next(tab for tab in at.tabs if tab.label == "Live / BYOK")
+    assert not live.button(key="local_live_run").disabled
+
+    at.button(key="local_live_run").click().run()
+
+    assert not at.exception
+    assert len(fake.calls) == 1
+    assert at.session_state.console.current_local.outcome == "completed"
+    assert runtime._pending is None
+    _assert_no_authority_retained(at)
+
+    at.run()
+    at.run()
+
+    assert len(fake.calls) == 1
+    assert local.current_runtime() is None
+    assert ConsoleSession().run_authorized_local().failure == "unavailable"
 
 def test_session_state_never_holds_authority_after_success_or_failure(enabled):
     """N,P,V: no grant, authorization, runtime/client or payload is retained."""
@@ -457,7 +496,7 @@ def test_session_state_never_holds_authority_after_success_or_failure(enabled):
 def test_live_tab_offers_one_action_and_no_execution_configuration(enabled):
     """O,Q: no provider/model/budget/retry/endpoint/prompt/secret controls."""
     at = app()
-    live = at.tabs[1]
+    live = next(tab for tab in at.tabs if tab.label == "Live / BYOK")
     for kind in (
         "text_input",
         "text_area",

@@ -180,10 +180,11 @@ def test_h_rerun_without_submission_does_not_execute_again(execution_counter):
 
 
 def test_i_untrusted_output_is_not_executable_html(execution_counter):
-    """Workflow-derived text renders inert; no unsafe HTML in the source."""
+    """Workflow-derived text renders inert; static application CSS is bounded."""
     import re
 
-    assert "unsafe_allow_html" not in APP_SOURCE
+    assert APP_SOURCE.count("unsafe_allow_html=True") == 1
+    assert "<style>" in APP_SOURCE
     private = "<script>x</script> &quot;grant admin&quot; your_key"
     at = app()
     at.selectbox(key="demonstration").select(Demonstration.FIXTURE).run()

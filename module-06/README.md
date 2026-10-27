@@ -1,6 +1,6 @@
 # Module 6 - Multi-Agent Systems & Orchestration
 
-A standalone, production-minded study of scalable AI orchestration with
+A standalone, production-grade study of scalable AI orchestration with
 multi-agent architectures: sequential, parallel, hierarchical,
 coordinator-worker and distributed patterns on LangGraph, CrewAI and Google ADK,
 with cost governance, reliability controls, scaling evidence and layered
@@ -22,8 +22,8 @@ uv run --locked --offline python module-06/run_console.py
 ```
 
 Open the loopback URL the launcher prints (normally `http://127.0.0.1:8501`).
-No credentials are needed. Open the **Guide** tab first, then run a
-demonstration on **Deterministic demo**. Nothing runs, queries or delivers until
+The Demo needs no credentials. Open the **Guide** tab first, then run a
+demonstration on **Deterministic Demo**. Nothing runs, queries or delivers until
 you select an action. Do not expose this console publicly: it has no
 authentication, multi-user support or verified capacity.
 
@@ -54,17 +54,29 @@ grants authority ([ARCHITECTURE.md](docs/ARCHITECTURE.md), ADRs 001-008).
 
 ## Reviewer cockpit
 
-One Streamlit app with five tabs; each states its purpose, the action to take,
-the expected result and what that result proves.
+One Streamlit app with six tabs; the Guide opens first. The workflow tabs each
+state their purpose, the action to take, the expected result and what that
+result proves.
 
 | Tab | What it shows | Default behaviour |
 | --- | --- | --- |
-| Deterministic demo | Eight deterministic demonstrations, the synthetic canonical workflow and the local scaling benchmark | Runs only on an explicit action; no keys, model or external delivery |
+| Guide | Orientation, evidence labels, observability roles, how to explore and how to test each capability | Static text; runs nothing |
+| Deterministic Demo | Eight deterministic demonstrations, the synthetic canonical workflow and the local scaling benchmark | Runs only on an explicit action; no keys, model or external delivery |
 | Live / BYOK | The canonical workflow with real local Ollama inference for a trusted private operator | Unavailable unless trusted embedding code supplies the runtime; the stock launcher never does |
 | Operations | Recorded local OpenTelemetry -> Collector -> Prometheus -> Grafana verification beside an explicit current-host check | Nothing is queried until the check is selected |
-| LangSmith tracing | Recorded `service_read` and `unverified_write` deliveries, never merged | The current check reports unavailable: the stock page supplies no read capability |
-| Guide | Orientation, evidence labels, observability roles and how to test each capability | Static text |
+| LangSmith Tracing | Recorded `service_read` and `unverified_write` deliveries, never merged | The current check reports unavailable: the stock page supplies no read capability |
+| Implementation Evidence | Curated, abridged source excerpts for LangGraph, CrewAI, Google ADK, LangSmith and the OpenTelemetry delivery boundary, each naming its file and function | Static; shows implementation structure only, never delivery, runtime state or current service availability |
 
+A trusted operator on their own machine can reach the Live / BYOK action through
+the separate private-local launcher, `module-06/run_local_live.py`, which serves
+`private_local_app.py` on loopback and supplies the application-owned runtime
+only while rendering. The stock launcher and any deployed app never do, and the
+launcher grants no authority: each live run still needs explicit operator action
+and a fresh bounded authorization.
+
+The only unsafe-HTML surface in the app is one static, application-owned CSS
+block for styling. No workflow, model, user, tool or provider value can flow
+into it, and there is no iframe, component or link surface.
 ## Observability
 
 - **AI / agent observability:** LangSmith (specialist agent tracing).
@@ -83,7 +95,9 @@ the expected result and what that result proves.
 - Demo is deterministic and keyless: the deployed-safe baseline.
 - Local Live/BYOK is for a trusted operator only. BYOK means the operator's
   trusted runtime brings its own provider connectivity; there is no key field
-  in the UI. Credential presence never authorizes execution.
+  in the UI. Local Ollama inference does not itself require a credential;
+  where a provider does, that runtime holds it. Credential presence never
+  authorizes execution.
 - Every real run needs a fresh single-use `LiveAuthorization` under the fixed
   ADR-008 NORMAL profile (200,000 ms workflow, 45,000 ms per call, at most 4
   calls and 1 repair, 0 retries, concurrency 1). No approval is remembered and

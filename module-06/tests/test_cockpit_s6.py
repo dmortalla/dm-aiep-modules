@@ -13,6 +13,8 @@ Grafana, LangSmith, model, credential or external network action occurs.
 import ast
 import http.client
 import http.server
+import re
+import textwrap
 import threading
 from pathlib import Path
 
@@ -32,6 +34,7 @@ from multi_agent_orchestration.cockpit_view import (
 from multi_agent_orchestration.console import (
     ConsoleFaultError,
     ConsoleSession,
+    Demonstration,
     age_seconds,
 )
 from streamlit.testing.v1 import AppTest
@@ -81,37 +84,79 @@ def valid_stack(url, body=None):
 
 
 def test_every_tab_states_purpose_action_expected_result_and_proof():
-    """Each workflow tab carries compact what/how/expect/proves guidance."""
+    """Accepted workflow tabs retain guidance; Guide and evidence remain distinct."""
     at = app()
     assert not at.exception
-    demo, live, ops, tracing, guide = (rendered(tab) for tab in at.tabs)
+    assert len(at.tabs) == 6
+    guide, demo, live, ops, tracing, implementation = (
+        rendered(tab) for tab in at.tabs
+    )
     for text in (demo, live, ops, tracing):
         for label in ("Purpose", "Action", "Expected result"):
             assert label in text, label
         assert "prove" in text
     assert "does not prove" in demo and "does not prove" in live
-    assert "Purpose:" in demo and "What it does not prove:" in demo  # scaling
+    assert "Purpose:" in demo and "What it does not prove:" in demo
+    assert "Welcome to the Multi-Agent Orchestration System" in guide
+    assert "What this module demonstrates" in guide
+    assert "How to explore" in guide
     assert all(section.title in guide for section in GUIDANCE_SECTIONS)
+    assert "Implementation Evidence" in implementation
+    assert "What this proves" in implementation
 
 
 def test_guide_is_complete_orientation_without_stale_story_wording():
-    """The Guide renders every panel; no 'later story' placeholders remain."""
+    """Verify the accepted Guide is first, complete, and free of stale story text."""
     at = app()
-    guide = at.tabs[4]
-    titles = [str(item.value) for item in guide.subheader]
-    assert titles == [section.title for section in GUIDANCE_SECTIONS]
+    guide = at.tabs[0]
+    guide_text = rendered(guide)
     text = rendered(at).lower()
+    titles = [str(item.value) for item in guide.subheader]
+    accepted_titles = [section.title for section in GUIDANCE_SECTIONS]
+    assert titles[-len(accepted_titles):] == accepted_titles
     for required in (
-        "start here", "coordinator-worker", "hierarchical", "crewai",
-        "two independent local worker processes", "researcher -> analyst",
-        "public live is intentionally fail-closed", "byok means",
-        "how to test each capability", "fresh_execution",
-        "recorded_historical", "local projections", "out_of_policy_observation",
+        "Welcome to the Multi-Agent Orchestration System",
+        "What this module demonstrates",
+        "How to explore",
+        "Deterministic Demo",
+        "Live / BYOK",
+        "Operations",
+        "LangSmith Tracing",
+        "Implementation Evidence",
+        "credential presence alone never grants authority",
+        "Public live execution is not enabled",
+        "Recorded evidence",
+        "OpenTelemetry",
+        "Prometheus",
+        "Grafana",
+        "LangSmith",
+    ):
+        assert required in guide_text, required
+
+    for required in (
+        "coordinator-worker",
+        "hierarchical",
+        "crewai",
+        "two independent local worker processes",
+        "researcher -> analyst",
+        "public live is intentionally fail-closed",
+        "byok means",
+        "how to test each capability",
+        "fresh_execution",
+        "recorded_historical",
+        "local projections",
+        "out_of_policy_observation",
     ):
         assert required in text, required
-    for stale in ("later story", "(s6)", "story is pending", "candidate build",
-                  "offered by a later"):
-        assert stale not in text, stale
+    lowered = rendered(at).lower()
+    for stale in (
+        "later story",
+        "(s6)",
+        "story is pending",
+        "candidate build",
+        "offered by a later",
+    ):
+        assert stale not in lowered, stale
 
 
 def test_observability_story_is_prominent_and_evidence_bounded():
@@ -130,8 +175,9 @@ def test_observability_story_is_prominent_and_evidence_bounded():
     ):
         assert overclaim not in text, overclaim
     source = APP.read_text(encoding="utf-8")
-    for banned in ("st.iframe", "<iframe", "unsafe_allow_html", "components",
-                   "href="):
+    assert source.count("unsafe_allow_html=True") == 1
+    assert "<style>" in source
+    for banned in ("st.iframe", "<iframe", "components", "href="):
         assert banned not in source
 
 
@@ -140,8 +186,10 @@ def test_historical_wording_is_exact_and_run4_identifier_absent():
     at = app()
     text = rendered(at)
     assert text.count(CURATED_RUN_5.accepted_classification) >= 2  # Live + tracing
-    assert "Recorded · out_of_policy_observation" in text
-    assert "Recorded · Authorized current-path real-local verification" in text
+    assert "Run 3 · Out-of-policy observation" in text
+    assert "Run 4 · Authorized real-local verification" in text
+    assert "out_of_policy_observation" in text
+    assert "Authorized current-path real-local verification" in text
     assert "recorded reference: none recorded" in text
     assert UNSUPPORTED_RUN_4_ID not in text
     for path in (APP, *PACKAGE.glob("*.py")):
@@ -151,7 +199,7 @@ def test_historical_wording_is_exact_and_run4_identifier_absent():
 def test_recorded_langsmith_trace_references_are_inert_text():
     """S4 non-blocker: recorded trace references are shown, never as links."""
     at = app()
-    plain = "\n".join(str(item.value) for item in at.tabs[3].get("text"))
+    plain = "\n".join(str(item.value) for item in at.tabs[4].get("text"))
     for trace_id, _ in allowlisted_targets():
         assert f"recorded trace: {trace_id}" in plain
     markdown = "\n".join(str(item.value) for item in at.get("markdown"))
@@ -416,3 +464,188 @@ def test_guidance_and_module_docs_drop_superseded_future_story_claims():
     for stale in ("later story", "rendering happens later",
                   "is available only when a"):
         assert stale not in text, stale
+
+
+# Implementation Evidence provenance (N-4) ---------------------------------
+
+EVIDENCE_SOURCES = {
+    "LangGraph": ("_langgraph_topologies.py", {"compile_topology"}),
+    "CrewAI": ("_crewai_adapter.py", {"build_crew", "run_crew"}),
+    "Google ADK": ("_adk_adapter.py", {"build_workflow", "run_adk"}),
+    "LangSmith": ("langsmith_delivery.py", {"LangSmithTraceDelivery._run"}),
+    "OpenTelemetry": ("telemetry_delivery.py", {"OtlpMetricDelivery.__init__"}),
+}
+
+
+def implementation_tab(at):
+    return next(tab for tab in at.tabs if tab.label == "Implementation Evidence")
+
+
+def first_unmatched_line(excerpt: str, source: str):
+    """Return the first excerpt line absent from the source in order, else None."""
+    lines = [line.strip() for line in source.splitlines()]
+    position = 0
+    for raw in excerpt.splitlines():
+        line = raw.strip()
+        if not line or line == "...":
+            continue
+        try:
+            position = lines.index(line, position) + 1
+        except ValueError:
+            return line
+    return None
+
+
+def defined_names(source: str) -> set[str]:
+    names = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.ClassDef):
+            names.add(node.name)
+            names.update(
+                f"{node.name}.{child.name}"
+                for child in node.body
+                if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef)
+            )
+        elif isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            names.add(node.name)
+    return names
+
+
+def test_implementation_excerpts_are_verbatim_current_source_with_durable_refs():
+    """Each excerpt is copied, in order, from the file and symbol it cites."""
+    at = app()
+    expanders = implementation_tab(at).expander
+    assert [e.label.split(" — ")[0].split(" →")[0] for e in expanders] == list(
+        EVIDENCE_SOURCES
+    )
+    for expander in expanders:
+        technology = next(k for k in EVIDENCE_SOURCES if expander.label.startswith(k))
+        filename, symbols = EVIDENCE_SOURCES[technology]
+        codes = expander.get("code")
+        sources = [c for c in expander.caption if str(c.value).startswith("Source:")]
+        assert len(codes) == 1 and len(sources) == 1, technology
+        caption = str(sources[0].value)
+        cited = re.findall(r"`([^`]+)`", caption)
+        assert cited[0] == f"src/multi_agent_orchestration/{filename}", caption
+        assert not re.search(r"\blines?\s+\d", caption), caption  # no brittle ranges
+        source_text = (PACKAGE / filename).read_text(encoding="utf-8")
+        assert set(cited[1:]) == symbols, (technology, cited)
+        assert symbols <= defined_names(source_text), (technology, symbols)
+        missing = first_unmatched_line(str(codes[0].value), source_text)
+        assert missing is None, (technology, missing)
+        assert codes[0].language == "python"
+
+
+def test_implementation_tab_keeps_claims_evidence_bounded_and_classified():
+    """Excerpts prove structure only; runtime and delivery stay separately labelled."""
+    at = app()
+    tab = implementation_tab(at)
+    text = rendered(tab)
+    lowered = text.lower()
+    assert text.count("What this proves:") == len(EVIDENCE_SOURCES)
+    for phrase in (
+        "not claims of hosted production scale",
+        "No code excerpt alone is treated as proof",
+        "current external-service state",
+        "separately labelled deterministic, local, recorded and externally verified",
+    ):
+        assert phrase.lower() in lowered, phrase
+    for overclaim in ("is deployed", "currently running", "is available now",
+                      "hosted production telemetry is", "verified in production",
+                      "production-ready", "meets an sla"):
+        assert overclaim not in lowered, overclaim
+    langsmith = next(e for e in tab.expander if e.label.startswith("LangSmith"))
+    langsmith_text = rendered(langsmith)
+    assert "does not show that any delivery happened" in langsmith_text
+    assert "service_read" in langsmith_text and "unverified_write" in langsmith_text
+    otel = next(e for e in tab.expander if e.label.startswith("OpenTelemetry"))
+    assert "does not show that run or the state of any service now" in rendered(otel)
+    assert "recorded local verification" in rendered(otel)
+    assert UNSUPPORTED_RUN_4_ID not in text
+    assert "](http" not in text and "github.com" not in lowered
+
+
+# Bounded static HTML/CSS contract (N-5) -------------------------------------
+
+
+def app_tree() -> ast.Module:
+    return ast.parse(APP.read_text(encoding="utf-8"))
+
+
+def unsafe_html_calls(tree: ast.AST):
+    return [
+        (node, keyword)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        for keyword in node.keywords
+        if keyword.arg == "unsafe_allow_html"
+    ]
+
+
+def allowed_css(tree: ast.AST) -> str:
+    (node, keyword), = unsafe_html_calls(tree)
+    assert isinstance(keyword.value, ast.Constant) and keyword.value.value is True
+    assert isinstance(node.func, ast.Attribute) and node.func.attr == "markdown"
+    assert isinstance(node.func.value, ast.Name) and node.func.value.id == "st"
+    # One positional literal: an f-string, name, call or concatenation is not a
+    # Constant, so no dynamic value can ever flow into the allowed HTML block.
+    assert len(node.args) == 1 and [k.arg for k in node.keywords] == [
+        "unsafe_allow_html"
+    ]
+    assert isinstance(node.args[0], ast.Constant)
+    assert isinstance(node.args[0].value, str)
+    return node.args[0].value
+
+
+def test_unsafe_html_surface_is_exactly_one_static_literal_css_block():
+    """The invariant is a bounded static surface, not 'the flag never appears'."""
+    tree = app_tree()
+    css = allowed_css(tree)
+    block = re.fullmatch(r"\s*<style>(.*)</style>\s*", css, re.S)
+    assert block, "the allowed surface is a single <style> element and nothing else"
+    body = block.group(1).lower()
+    assert "<" not in body  # no nested tag or comment can open inside the block
+    for banned in ("@import", "url(", "expression(", "javascript:", "behavior:",
+                   "-moz-binding", "<script", "<iframe", "<a ", "href", "src="):
+        assert banned not in css.lower(), banned
+    # No other HTML, component or frame surface anywhere in the app or launchers.
+    names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+    attrs = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
+    assert not {"html", "iframe", "components", "v1"} & (names | attrs)
+    imported = {
+        alias.name
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Import | ast.ImportFrom)
+        for alias in n.names
+    } | {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)}
+    assert not any("components" in str(name) for name in imported)
+    for path in (
+        MODULE / "private_local_app.py",
+        MODULE / "private_local_runtime.py",
+        MODULE / "run_local_live.py",
+        *PACKAGE.glob("*.py"),
+    ):
+        assert "unsafe_allow_html" not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_hostile_workflow_text_never_reaches_the_allowed_html_surface():
+    """Untrusted text stays inert; the one HTML element is the static literal."""
+    static = textwrap.dedent(allowed_css(app_tree())).strip()
+    hostile = (
+        "<script>alert(1)</script><style>body{display:none}</style>"
+        '<iframe src="x"></iframe>[go](javascript:alert(1))'
+    )
+    at = app()
+    html = [m for m in at.markdown if m.allow_html]
+    assert [m.value.strip() for m in html] == [static]
+    at.selectbox(key="demonstration").select(Demonstration.FIXTURE).run()
+    at.text_area(key="task_text").set_value(hostile)
+    at.button(key="run").click().run()
+    assert not at.exception
+    assert at.session_state.console.runs[-1].outcome.value == "completed"
+    html = [m for m in at.markdown if m.allow_html]
+    assert [m.value.strip() for m in html] == [static]
+    page = rendered(at)
+    for fragment in ("<script", "<iframe", "alert(1)", "display:none", "javascript:"):
+        assert fragment not in page, fragment
+        assert all(fragment not in str(m.value) for m in at.markdown if m.allow_html)

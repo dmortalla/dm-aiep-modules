@@ -44,9 +44,87 @@ console = st.session_state.console
 orientation, _, operations_state = DEFAULT_COCKPIT_STATE
 # S1 postures for this render: only an injected trusted capability enables local live.
 live_capability = local_live_capability()
-st.title("Module 6 reviewer cockpit")
+# MODULE_6_USER_COCKPIT_SHARED_STYLES
+st.markdown(
+    """
+    <style>
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.35rem;
+        padding: 0.45rem;
+        border-radius: 0.75rem;
+        background: rgba(30, 41, 59, 0.78);
+        border: 1px solid rgba(148, 163, 184, 0.20);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        min-height: 2.75rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        border-radius: 0.55rem;
+        background: transparent;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: rgba(59, 130, 246, 0.18);
+    }
+
+    .stButton > button[kind="primary"] {
+        border-radius: 0.55rem;
+        font-weight: 600;
+    }
+
+    .stButton > button[kind="primary"]:not(:disabled) {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .stButton > button[kind="primary"]:not(:disabled):hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #ffffff;
+    }
+
+    .stButton > button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+def render_page_intro(title: str, purpose: str) -> None:
+    """Render a consistent presentation heading for a cockpit page.
+
+    Args:
+        title: Human-facing page title.
+        purpose: Concise explanation of the page's purpose.
+    """
+    st.subheader(title)
+    st.info(purpose)
+
+
+def render_techademy_footer() -> None:
+    """Render the standard Techademy attribution for the active cockpit page."""
+    st.divider()
+    left, center, right = st.columns([1.0, 3.4, 1.2])
+    with left:
+        st.markdown("**🎓 Techademy**")
+    with center:
+        st.caption(
+            "Developed from Techademy AI Engineering program requirements. "
+            "Independent implementation with production-grade engineering "
+            "enhancements; deployment verification is a separate, pending "
+            "release step."
+        )
+    with right:
+        st.caption("Module 6  |  User Cockpit v0.6.0")
+
+st.title("Multi-Agent Orchestration System: User Cockpit")
 st.caption(
-    "Multi-agent orchestration • deterministic local execution • no credentials needed"
+    "Production-grade multi-agent orchestration • deterministic local "
+    "execution • the Demo needs no credentials"
 )
 st.info(
     "Demo is the baseline posture of this cockpit: real LangGraph, CrewAI and ADK "
@@ -57,22 +135,29 @@ st.info(
     "action."
 )
 st.caption(
-    "Observability • AI/agent tracing: LangSmith • operational: OpenTelemetry → "
+    "Observability • AI/agent tracing: LangSmith • Operational: OpenTelemetry → "
     "Collector → Prometheus → Grafana (verified end-to-end locally; not hosted) • "
-    "unified reviewer view: this Streamlit cockpit"
+    "Unified reviewer view: This Streamlit cockpit"
 )
 st.caption(
-    f"Mode: {orientation.value} (baseline) • local live/BYOK: "
+    f"Mode: {orientation.value.title()} (baseline) • Local live/BYOK: "
     f"{'available' if live_capability.local_live_available else 'unavailable'} • "
-    "public live: "
+    "Public live: "
     + ("available" if live_capability.deployed_public_live_available else "unavailable")
     + " • "
-    f"operations queries: {operations_state.state.value} (nothing is queried until "
+    f"Operations queries: {operations_state.state.value} (nothing is queried until "
     "you select a check on the Operations tab)"
 )
 
-demo_tab, live_tab, ops_tab, tracing_tab, guide_tab = st.tabs(
-    ["Deterministic demo", "Live / BYOK", "Operations", "LangSmith tracing", "Guide"]
+guide_tab, demo_tab, live_tab, ops_tab, tracing_tab, implementation_tab = st.tabs(
+    [
+        "Guide",
+        "Deterministic Demo",
+        "Live / BYOK",
+        "Operations",
+        "LangSmith Tracing",
+        "Implementation Evidence",
+    ]
 )
 
 with demo_tab:
@@ -335,6 +420,7 @@ with demo_tab:
         if st.button(
             "Run live workflow demonstration",
             key="run_live",
+            type="primary",
             icon=":material/bolt:",
         ):
             with st.spinner("Running the bounded canonical live workflow…"):
@@ -518,6 +604,7 @@ with demo_tab:
             "Run scaling benchmark",
             key="run_scaling",
             disabled=profile is None,
+            type="primary",
             icon=":material/speed:",
         ):
             with st.spinner("Running bounded local worker processes…"):
@@ -641,18 +728,24 @@ with demo_tab:
             "recorded in the Module 6 traceability document, not on this page."
         )
 
+    render_techademy_footer()
+
 with live_tab:
     st.info(
         "Purpose: Local Live runs the accepted Researcher → Analyst → Critic "
         "workflow with real local inference through Ollama, for a trusted private "
-        "operator only; Demo stays deterministic and needs no keys. Public/deployed "
-        "live execution is unavailable by design: no deployment authority boundary "
-        "is accepted, so a public visitor can never spend an operator's compute or "
-        "credentials. BYOK means the operator's trusted runtime brings its own "
-        "provider connectivity, never a secret pasted into this page; credentials "
-        "and model availability are connectivity, not execution authority."
+        "operator only; Demo stays deterministic and needs no keys. Local Ollama "
+        "inference does not itself require a credential. Public/deployed live "
+        "execution is unavailable by design: no deployment authority boundary is "
+        "accepted, so a public visitor can never spend an operator's compute or "
+        "any credential. BYOK means the operator's trusted runtime brings its own "
+        "provider connectivity, supplying a credential only where a provider needs "
+        "one and never as a secret pasted into this page; credentials and model "
+        "availability are connectivity, not execution authority."
     )
-    st.text(local_live_profile())
+    with st.container(border=True):
+        st.markdown("**Execution profile**")
+        st.code(local_live_profile(), language=None)
     st.caption(
         "Action: select Run authorized local live workflow. Each click explicitly "
         "authorizes one fresh, bounded NORMAL execution of a fixed application "
@@ -719,8 +812,16 @@ with live_tab:
             st.success("Canonical local workflow completed with validated evidence.")
         st.json(current_local.model_dump(mode="json"))
     with st.expander("Recorded historical real-local runs (not current)"):
-        for record in (CURATED_RUN_3, CURATED_RUN_4, CURATED_RUN_5):
-            st.text(f"Recorded · {record.accepted_classification}")
+        historical_records = (
+            ("Run 3 · Out-of-policy observation", CURATED_RUN_3),
+            ("Run 4 · Authorized real-local verification", CURATED_RUN_4),
+            ("Run 5 · Live-model LangSmith projection", CURATED_RUN_5),
+        )
+        for index, (label, record) in enumerate(historical_records):
+            if index:
+                st.divider()
+            st.markdown(f"**{label}**")
+            st.caption(f"Accepted classification: {record.accepted_classification}")
             st.caption(
                 f"source: {record.source.value} · kind: "
                 f"{record.execution_kind.value} · provenance: "
@@ -736,6 +837,8 @@ with live_tab:
                 f"{record.summary}\nrecorded reference: "
                 f"{record.reference_id or 'none recorded'}"
             )
+
+    render_techademy_footer()
 
 with ops_tab:
     st.caption(
@@ -777,6 +880,7 @@ with ops_tab:
     if st.button(
         "Check current local observability stack",
         key="ops_query",
+        type="primary",
         icon=":material/query_stats:",
     ):
         with st.spinner("Bounded read-only local check…"):
@@ -876,6 +980,8 @@ with ops_tab:
                 # inert text. Never usable from a visitor's browser host.
                 st.text(f"Dashboard (current host only): {obs.dashboard_reference}")
 
+    render_techademy_footer()
+
 with tracing_tab:
     st.info(
         "Purpose: AI/agent observability. LangSmith remains the specialist "
@@ -895,8 +1001,13 @@ with tracing_tab:
         "unavailable state, because this page supplies no read capability. What "
         "the records prove: exactly their accepted classifications, no more."
     )
-    for record in (CURATED_LANGSMITH_DELIVERY, CURATED_RUN_5):
-        st.subheader(f"Recorded · {record.accepted_classification}")
+    langsmith_records = (
+        ("Deterministic delivery verification", CURATED_LANGSMITH_DELIVERY),
+        ("Live-model LangSmith delivery", CURATED_RUN_5),
+    )
+    for label, record in langsmith_records:
+        st.subheader(f"Recorded · {label}")
+        st.caption(f"Accepted classification: {record.accepted_classification}")
         st.caption(
             f"evidence class: {record.source.value} · delivery confirmation: "
             f"{record.delivery_confirmation.value} — "
@@ -936,6 +1047,7 @@ with tracing_tab:
     if st.button(
         "Check current LangSmith evidence",
         key="langsmith_read",
+        type="primary",
         icon=":material/manage_search:",
     ):
         with st.spinner("Bounded read-only recorded-trace check…"):
@@ -984,11 +1096,270 @@ with tracing_tab:
             )
             st.text(f"Inspected recorded trace: {obs.target_trace_id}")
 
+    render_techademy_footer()
+
 with guide_tab:
-    st.caption(
-        "Reviewer orientation: static guidance only; reading it runs nothing. "
-        f"Current mode: {orientation.value}."
+    st.info(
+        "**Welcome to the Multi-Agent Orchestration System**  \n"
+        "This application demonstrates a secured, human-in-the-loop multi-agent "
+        "orchestration system using LangGraph, CrewAI and Google ADK, with "
+        "operational observability through OpenTelemetry → Collector → Prometheus "
+        "→ Grafana and AI/agent tracing through LangSmith."
     )
+
+    capabilities, exploration = st.columns(2, gap="medium")
+
+    with capabilities:
+        with st.container(border=True):
+            st.subheader("What this module demonstrates")
+            st.markdown(
+                "- ✅ Multi-agent orchestration with clear roles and boundaries\n"
+                "- ✅ Deterministic local Demo with no model inference\n"
+                "- ✅ Operator-only live model workflow (BYOK)\n"
+                "- ✅ Operational observability with OpenTelemetry, Prometheus "
+                "and Grafana\n"
+                "- ✅ AI/agent tracing with LangSmith\n"
+                "- ✅ Security, safety and human-approval controls"
+            )
+
+    with exploration:
+        with st.container(border=True):
+            st.subheader("How to explore")
+            st.markdown(
+                "1. **Guide** — understand the system and workflow\n"
+                "2. **Deterministic Demo** — run a complete offline workflow\n"
+                "3. **Live / BYOK** — inspect the trusted-local live boundary\n"
+                "4. **Operations** — inspect local operational observability\n"
+                "5. **LangSmith Tracing** — inspect recorded AI/agent evidence\n"
+                "6. **Implementation Evidence** — inspect architecture-to-code proof"
+            )
+
+    st.markdown(
+        "**Important**  \n"
+        "This is a demonstration environment. No model or LLM inference is "
+        "performed on the Deterministic Demo tab. Live model execution requires "
+        "separate trusted-local operator authorization. Local Ollama inference does "
+        "not itself need a credential; where a provider does, the operator's trusted "
+        "runtime supplies it and none is ever entered on this page; credential "
+        "presence alone never grants authority. Public live execution is not "
+        "enabled."
+    )
+
+    with st.expander("Evidence and deployment boundaries"):
+        st.markdown(
+            "- **Recorded evidence** is historical and is never presented as a "
+            "fresh current-host check.\n"
+            "- **Operations** can perform only an explicit bounded read-only check "
+            "of the Streamlit host's allowlisted local Prometheus/Grafana endpoints.\n"
+            "- **LangSmith Tracing** separates recorded delivery evidence from any "
+            "explicit current read capability.\n"
+            "- The verified local observability stack does **not** prove hosted "
+            "production scale, public observability, SLA performance or a "
+            "production deployment.\n"
+            "- Rendering this Guide performs no probes, model calls, credential "
+            "reads or external telemetry delivery."
+        )
+
     for section in GUIDANCE_SECTIONS:
         st.subheader(section.title)
         st.write(section.body)
+
+    render_techademy_footer()
+with implementation_tab:
+    render_page_intro(
+        "Implementation Evidence",
+        "Inspect selected production-source evidence behind the orchestration, "
+        "tracing and operational-observability capabilities demonstrated by " +
+        "this system.",
+    )
+
+    st.caption(
+        "These are curated, abridged architecture-to-code excerpts from the accepted "
+        "Module 6 implementation (`...` marks omitted code; lines shown are copied "
+        "verbatim). Each names its source file and function rather than line numbers, "
+        "which change as files evolve. They are evidence of implementation "
+        "structure—not claims of hosted production scale, delivery, or current "
+        "external-service state."
+    )
+
+    st.subheader("Orchestration frameworks")
+
+    with st.expander(
+        "LangGraph — graph topology compilation and execution", expanded=True
+    ):
+        st.markdown(
+            "**Requirement:** Sequential, parallel and hierarchical multi-agent "
+            "orchestration.  \n"
+            "**Technology:** LangGraph  \n"
+            "**Implementation:** `_langgraph_topologies.py` compiles application-owned "
+            "topologies into a real graph and executes the compiled graph through the "
+            "native async scheduler."
+        )
+        st.code(
+            '''graph.add_edge("__start__", "fanout")
+graph.add_edge("fanout", "left")
+graph.add_edge("fanout", "right")
+graph.add_edge(["left", "right"], "aggregate")
+graph.add_edge("aggregate", "__end__")
+return graph.compile()''',
+            language="python",
+        )
+        st.caption(
+            "Source: `src/multi_agent_orchestration/_langgraph_topologies.py` · "
+            "`compile_topology` (parallel topology)."
+        )
+        st.markdown(
+            "**What this proves:** The parallel demonstration uses an implemented "
+            "fan-out/fan-in graph with a synchronization barrier—not a UI simulation."
+        )
+
+    with st.expander("CrewAI — collaborative multi-agent workflow"):
+        st.markdown(
+            "**Requirement:** Collaborative AI workflow with shared validated " +
+            "context.  \n"
+            "**Technology:** CrewAI  \n"
+            "**Implementation:** `_crewai_adapter.py` constructs genuine CrewAI "
+            "`BaseAgent`, `Task` and `Crew` objects while keeping model execution "
+            "disabled for the deterministic demonstration."
+        )
+        st.code(
+            '''crew = Crew(
+    agents=agents,
+    tasks=tasks,
+    process=Process.sequential,
+    memory=False,
+    cache=False,
+    planning=False,
+    tracing=False,
+    verbose=False,
+)
+...
+output = crew.kickoff()''',
+            language="python",
+        )
+        st.caption(
+            "Source: `src/multi_agent_orchestration/_crewai_adapter.py` · "
+            "`build_crew` and `run_crew`."
+        )
+        st.markdown(
+            "**What this proves:** CrewAI owns the collaborative task scheduling while "
+            "application contracts validate role order, context and final output."
+        )
+
+    with st.expander("Google ADK — native workflow and session execution"):
+        st.markdown(
+            "**Requirement:** Google ADK orchestration and delegated agent " +
+            "execution.  \n"
+            "**Technology:** Google Agent Development Kit (ADK)  \n"
+            "**Implementation:** `_adk_adapter.py` creates native ADK agents and a "
+            "`Workflow`, then executes it through an `InMemoryRunner` with validated "
+            "application state."
+        )
+        st.code(
+            'return Workflow(name="bounded_adk", '
+            "edges=[(START, *agents)], max_concurrency=1)\n"
+            "...\n"
+            "async with InMemoryRunner(node=workflow, app_name=app_name) as runner:\n"
+            "    await runner.session_service.create_session(\n"
+            "        ...",
+            language="python",
+        )
+        st.caption(
+            "Source: `src/multi_agent_orchestration/_adk_adapter.py` · "
+            "`build_workflow` and `run_adk`."
+        )
+        st.markdown(
+            "**What this proves:** The ADK demonstration uses native workflow, agent, "
+            "runner and session primitives rather than an application-only imitation."
+        )
+
+    st.subheader("AI / agent tracing")
+
+    with st.expander("LangSmith — bounded trace delivery and verification"):
+        st.markdown(
+            "**Requirement:** Execution tracing with externally verifiable AI/agent "
+            "evidence.  \n"
+            "**Technology:** LangSmith  \n"
+            "**Implementation:** `langsmith_delivery.py` builds a sanitized, "
+            "payload-free run tree and uses the LangSmith client for one bounded "
+            "batch ingestion; the same module implements a bounded read-back "
+            "check."
+        )
+        st.code(
+            '''client = sdk.Client(
+    api_url=ORIGIN,
+    api_key=key,
+    auto_batch_tracing=False,
+    ...
+    retry_config=Retry(total=0),
+    ...
+    hide_inputs=True,
+    hide_outputs=True,
+    ...
+)
+...
+client.batch_ingest_runs(create=runs)''',
+            language="python",
+        )
+        st.caption(
+            "Source: `src/multi_agent_orchestration/langsmith_delivery.py` · "
+            "`LangSmithTraceDelivery._run`."
+        )
+        st.markdown(
+            "**What this proves:** LangSmith is implemented as the specialist AI/agent "
+            "tracing boundary with explicit delivery controls; it is not presented "
+            "as an orchestration framework. This excerpt does not show that any "
+            "delivery happened or was read back: the recorded `service_read` and "
+            "`unverified_write` events are shown, separately classified, on the "
+            "LangSmith Tracing tab."
+        )
+
+    st.subheader("Operational observability")
+
+    with st.expander(
+        "OpenTelemetry → Collector → Prometheus → Grafana — operational metrics"
+    ):
+        st.markdown(
+            "**Requirement:** Vendor-neutral operational telemetry with a local "
+            "collection, metrics and dashboard pipeline.  \n"
+            "**Technology:** OpenTelemetry / OTLP, OpenTelemetry Collector, "
+            "Prometheus and Grafana  \n"
+            "**Implementation:** `telemetry_delivery.py` constrains OTLP metric "
+            "delivery to an operator-selected loopback endpoint and constructs a "
+            "bounded `OTLPMetricExporter` with environment-derived transport settings "
+            "disabled."
+        )
+        st.code(
+            '''session = requests.Session()
+session.trust_env = False
+exporter = OTLPMetricExporter(
+    endpoint=config.endpoint,
+    headers={"X-Module6-Delivery": config.mode},
+    timeout=timeout_ms / 1000,
+    compression=Compression.NoCompression,
+    session=session,
+)''',
+            language="python",
+        )
+        st.caption(
+            "Source: `src/multi_agent_orchestration/telemetry_delivery.py` · "
+            "`OtlpMetricDelivery.__init__`."
+        )
+        st.markdown(
+            "**What this proves:** The application contains a real bounded "
+            "OTLP metrics handoff. Separately, the recorded local verification "
+            "(2026-10-23; see the Operations tab) exercised the downstream "
+            "Collector → Prometheus → Grafana pipeline end to end; this excerpt "
+            "does not show that run or the state of any service now."
+        )
+
+    st.info(
+        "**Evidence boundary**  \n"
+        "The excerpts above establish implemented framework and observability "
+        "boundaries. Runtime and delivery claims remain governed by the separately "
+        "labelled deterministic, local, recorded and externally verified evidence "
+        "shown elsewhere in this cockpit. No code excerpt alone is treated as proof "
+        "of a current external service state or hosted production deployment."
+    )
+
+    render_techademy_footer()

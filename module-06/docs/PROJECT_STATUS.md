@@ -909,6 +909,19 @@ cockpit as the unified presentation, with no hosted, public, SLA or production
 claim. Run 3 remains `out_of_policy_observation`, Run 4 carries no recorded
 identifier, and Run 5 keeps its exact `unverified_write` classification.
 
+Presentation update after S7 (candidate, not yet accepted): the current cockpit has
+six tabs with the Guide first (Guide, Deterministic Demo, Live / BYOK, Operations,
+LangSmith Tracing, Implementation Evidence), every accepted `GUIDANCE_SECTIONS`
+panel restored in the Guide, one bounded application-owned static CSS block (the
+only `unsafe_allow_html` surface; no dynamic value can flow into it), a
+truthful footer that claims no completed deployment, Implementation Evidence
+excerpts that are verbatim, cite file and function instead of line numbers and are
+never proof of delivery or service state, and a separate private-local launcher
+(`run_local_live.py`) for a trusted operator. Local Ollama inference does not
+itself require a credential; credential presence still never grants authority and
+public live remains fail-closed. This does not change any recorded requirement
+status or the open release gates below.
+
 Gates (2026-10-26, fail-fast, S7 Builder; documentation-only diff): Ruff `check .`
 clean; documentation validation (26 requirement IDs, per-requirement limitation,
 links, commit references, exact Run 5 text, no unsupported Run 4 identifier,
