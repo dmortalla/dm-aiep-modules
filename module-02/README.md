@@ -1,19 +1,34 @@
 # Module 2 — Prompt Engineering & Structured Output Systems
 
+![Python 3.12](https://img.shields.io/badge/Python-3.12-blue)
+![pytest](https://img.shields.io/badge/tests-pytest-brightgreen)
+![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
+![Pydantic](https://img.shields.io/badge/validation-Pydantic-blueviolet)
+![JSON Schema](https://img.shields.io/badge/schema-JSON%20Schema-informational)
+![LangChain](https://img.shields.io/badge/prompts-LangChain%20templates-1C3C3C)
+![OpenAI JSON Mode](https://img.shields.io/badge/OpenAI%20JSON%20Mode-mocked-412991)
+![PromptLayer](https://img.shields.io/badge/PromptLayer-mocked-lightgrey)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
+
 Teach engineers how to design reliable and controllable LLM interaction systems.
+
+## Executive overview
 
 Module 2 implements a structured prompting framework and deterministic prompt
 evaluation pipeline, with an offline Streamlit interface for inspecting their
 behavior. Application instructions, lower-trust content, untrusted provider
 output, and tool authority have separate boundaries.
 
-Stories 1–10 are accepted. Module 2 implementation, documentation, 28-requirement
+## Status and reviewer start-here
+
+Stories 1–10 are accepted and Module 2 is released under the annotated Git tag
+`v0.2.0-module-2`. Module 2 implementation, documentation, 28-requirement
 traceability, deterministic verification, runnable UI, and human review are complete.
 See [traceability](docs/TRACEABILITY.md), [verification](docs/VERIFICATION.md),
 the [frozen requirements](docs/SOURCE_REQUIREMENTS.md), and
 [architecture](docs/ARCHITECTURE.md).
 
-## Install and run
+## Run and reviewer instructions
 
 Run from the repository root with uv and Python 3.12 or newer:
 
@@ -226,3 +241,14 @@ credentials; UI network-isolation tests permit Windows asyncio loopback pipes
 while blocking external connections. See [VERIFICATION.md](docs/VERIFICATION.md)
 for this checkpoint's exact counts and [TRACEABILITY.md](docs/TRACEABILITY.md)
 for the mechanical source-ID coverage check.
+
+## Documentation
+
+[Architecture](docs/ARCHITECTURE.md) · [Source requirements](docs/SOURCE_REQUIREMENTS.md) ·
+[Traceability](docs/TRACEABILITY.md) · [Verification](docs/VERIFICATION.md) ·
+[Portfolio README](../README.md)
+
+---
+
+Developed from Techademy AI Engineering program requirements. Independent
+implementation and engineering enhancements.

@@ -1,4 +1,18 @@
-# Module 6 - Multi-Agent Systems & Orchestration
+# Module 6 — Multi-Agent Systems & Orchestration
+
+![Python 3.12](https://img.shields.io/badge/Python-3.12-blue)
+![pytest](https://img.shields.io/badge/tests-pytest-brightgreen)
+![Ruff](https://img.shields.io/badge/code%20quality-Ruff-brightgreen)
+![Pydantic](https://img.shields.io/badge/validation-Pydantic-blueviolet)
+![LangGraph](https://img.shields.io/badge/orchestration-LangGraph-1C3C3C)
+![CrewAI](https://img.shields.io/badge/orchestration-CrewAI-FF5A50)
+![Google ADK](https://img.shields.io/badge/orchestration-Google%20ADK-4285F4)
+![LangSmith](https://img.shields.io/badge/AI%20tracing-LangSmith-1C3C3C)
+![OpenTelemetry](https://img.shields.io/badge/telemetry-OpenTelemetry-425CC7)
+![Prometheus](https://img.shields.io/badge/metrics-Prometheus-E6522C)
+![Grafana](https://img.shields.io/badge/dashboards-Grafana-F46800)
+![Ollama](https://img.shields.io/badge/local%20inference-Ollama-lightgrey)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
 
 A standalone, production-grade study of scalable AI orchestration with
 multi-agent architectures: sequential, parallel, hierarchical,
@@ -6,32 +20,31 @@ coordinator-worker and distributed patterns on LangGraph, CrewAI and Google ADK,
 with cost governance, reliability controls, scaling evidence and layered
 observability, presented through one Streamlit reviewer cockpit.
 
-**Status:** the engineering stories are delivered as a local, loopback reviewer
-system. [TRACEABILITY.md](docs/TRACEABILITY.md) reconciles all 26 source
-requirements as `Verified with limitation` (none unqualified; that
-reconciliation is under independent review). Module 6 is not complete: hosted
-deployment, human browser acceptance and release are separate, still-open gates,
-and this module makes no production-deployment, SLA or hosted-telemetry claim.
-Canonical engineering status: [PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
+## Executive overview
 
-## Start here (reviewers)
+Module 6 keeps workflow contracts, authority, policy, cost governance, evidence
+and telemetry semantics in the application, and treats the three agent runtimes
+as interchangeable implementations behind those boundaries. Every result carries
+an explicit evidence class, so deterministic, synthetic, real-local, recorded and
+current evidence are never blurred.
 
-```powershell
-uv sync --locked --offline
-uv run --locked --offline python module-06/run_console.py
-```
+## Status and reviewer start-here
 
-Open the loopback URL the launcher prints (normally `http://127.0.0.1:8501`).
-The Demo needs no credentials. Open the **Guide** tab first, then run a
-demonstration on **Deterministic Demo**. Nothing runs, queries or delivers until
-you select an action. Do not expose this console publicly: it has no
-authentication, multi-user support or verified capacity.
+Module 6 engineering is independently reviewed and accepted, and the committed
+candidate (`3e2ed63e8621d3fc0d3760f763fb920f3c6c8ada`) passed local human browser
+acceptance. That browser acceptance is a recorded human decision made after the
+engineering candidate was committed and reviewed; the detailed engineering
+history in [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) has not yet been reconciled
+for the final release closeout and still records the earlier pre-closeout state,
+so it is not the current status source. [TRACEABILITY.md](docs/TRACEABILITY.md)
+reconciles all 26 source requirements as `Verified with limitation` (none
+unqualified). Module 6 is delivered as a local, loopback reviewer system. Public
+Streamlit deployment verification and the final release closeout are still
+pending, so Module 6 is not described as publicly deployed or released, and it
+makes no production-deployment, SLA or hosted-telemetry claim.
 
-To run the tests offline from the repository root:
-
-```powershell
-uv run --locked --offline pytest module-06/tests -q
-```
+**Start here:** run the cockpit (see [Run](#run-and-reviewer-instructions)), open
+the **Guide** tab first, then run a demonstration on **Deterministic Demo**.
 
 ## Architecture
 
@@ -50,9 +63,8 @@ grants authority ([ARCHITECTURE.md](docs/ARCHITECTURE.md), ADRs 001-008).
 | Context passing, task delegation, synchronisation, workflow-scoped shared state | typed immutable contracts revalidated at every hand-off |
 | Researcher -> Analyst -> Critic with bounded repair | the canonical workflow (deterministic, synthetic and real-local modes) |
 | Scaling | opt-in local benchmark at admission caps 1, 2 and 4 |
-| Cost and reliability | per-run budgets, deadlines, cancellation, supervised child processes with kill/reap, fail-closed denial, zero retries by design |
 
-## Reviewer cockpit
+## Key capabilities: the reviewer cockpit
 
 One Streamlit app with six tabs; the Guide opens first. The workflow tabs each
 state their purpose, the action to take, the expected result and what that
@@ -77,20 +89,25 @@ and a fresh bounded authorization.
 The only unsafe-HTML surface in the app is one static, application-owned CSS
 block for styling. No workflow, model, user, tool or provider value can flow
 into it, and there is no iframe, component or link surface.
-## Observability
 
-- **AI / agent observability:** LangSmith (specialist agent tracing).
-- **Operational observability:** OpenTelemetry -> OTel Collector -> Prometheus ->
-  Grafana, a containerized stack under [`telemetry/`](telemetry/). It was
-  verified end-to-end **locally** (2026-10-23: 14 of 14 workflows, 3 alert rules
-  loaded, dashboard provisioned). The Collector runs a metrics pipeline only;
-  traces and logs have no storage backend. It is loopback-only and is not hosted
-  telemetry, a public Grafana or Prometheus, or an SLA
-  ([OPERATIONAL_TELEMETRY.md](docs/OPERATIONAL_TELEMETRY.md)).
-- **Unified reviewer presentation:** the Streamlit cockpit curates both layers
-  natively. It never embeds or iframes Grafana, Prometheus or LangSmith.
+## Production-grade engineering
 
-## Security and authority model
+- **Cost and reliability:** per-run budgets, deadlines, cancellation, supervised
+  child processes with kill/reap, fail-closed denial, and zero retries by design
+  ([COST_GOVERNANCE.md](docs/COST_GOVERNANCE.md)).
+- **Observability:**
+  - AI / agent observability: LangSmith (specialist agent tracing).
+  - Operational observability: OpenTelemetry -> OTel Collector -> Prometheus ->
+    Grafana, a containerized stack under [`telemetry/`](telemetry/). It was
+    verified end-to-end **locally** (2026-10-23: 14 of 14 workflows, 3 alert
+    rules loaded, dashboard provisioned). The Collector runs a metrics pipeline
+    only; traces and logs have no storage backend. It is loopback-only and is not
+    hosted telemetry, a public Grafana or Prometheus, or an SLA
+    ([OPERATIONAL_TELEMETRY.md](docs/OPERATIONAL_TELEMETRY.md)).
+  - Unified reviewer presentation: the Streamlit cockpit curates both layers
+    natively. It never embeds or iframes Grafana, Prometheus or LangSmith.
+
+## Security and trust boundaries
 
 - Demo is deterministic and keyless: the deployed-safe baseline.
 - Local Live/BYOK is for a trusted operator only. BYOK means the operator's
@@ -107,11 +124,9 @@ into it, and there is no iframe, component or link surface.
 - No automatic LangSmith write and no automatic operational query; external
   writes require separate authority. See [SECURITY.md](docs/SECURITY.md).
 
-Use synthetic text rather than secrets.
+## Verification and evidence
 
-
-## Evidence classifications
-
+The Module 6 suite is run offline (see [Run](#run-and-reviewer-instructions)).
 Every result and recorded item is labelled by `execution_kind`, `provenance`,
 `delivery_confirmation`, `operational_classification` and `source`.
 
@@ -129,25 +144,49 @@ Every result and recorded item is labelled by `execution_kind`, `provenance`,
 - **LangSmith:** one deterministic delivery was read back (`service_read`); Run 5
   was not (`unverified_write`). Not every live run is delivered or read back.
 
-## Limitations
+## Limitations and evidence boundaries
 
 Local, single-host and deterministic evidence; one benchmark sample on one
 workstation; no production load test, capacity, SLA or cloud-scale claim; no
 remote-host distribution; no persistent shared memory; model output quality is
 not claimed; the live repair path is unexercised. One live-execution timing test
-is a known load-sensitive reliability observation under future hardening (see
-[PROJECT_STATUS.md](docs/PROJECT_STATUS.md)). Remaining release gates: human
-browser acceptance, deployment verification, root README reconciliation,
-publication and release.
+is a known load-sensitive reliability observation under future hardening (see the
+detailed engineering history, [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)). Remaining release gates: public
 
-## Documentation map
+## Run and reviewer instructions
+
+```powershell
+uv sync --locked --offline
+uv run --locked --offline python module-06/run_console.py
+```
+
+Open the loopback URL the launcher prints (normally `http://127.0.0.1:8501`).
+The Demo needs no credentials. Open the **Guide** tab first, then run a
+demonstration on **Deterministic Demo**. Nothing runs, queries or delivers until
+you select an action. Use synthetic text rather than secrets. Do not expose this
+console publicly: it has no authentication, multi-user support or verified
+capacity.
+
+To run the tests offline from the repository root:
+
+```powershell
+uv run --locked --offline pytest module-06/tests -q
+```
+
+## Documentation
 
 [SOURCE_REQUIREMENTS](docs/SOURCE_REQUIREMENTS.md) · [TRACEABILITY](docs/TRACEABILITY.md) ·
-[PROJECT_STATUS](docs/PROJECT_STATUS.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) ·
+[Detailed engineering history](docs/PROJECT_STATUS.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) ·
 [SECURITY](docs/SECURITY.md) · [COST_GOVERNANCE](docs/COST_GOVERNANCE.md) ·
 [OBSERVABILITY](docs/OBSERVABILITY.md) · [OPERATIONS_CONSOLE](docs/OPERATIONS_CONSOLE.md) ·
 [Reviewer experience contract](docs/REVIEWER_EXPERIENCE_CONTRACT.md) ·
 [SCALING_BENCHMARK](docs/SCALING_BENCHMARK.md) ·
-[LANGSMITH_DELIVERY](docs/LANGSMITH_DELIVERY.md). Per-slice records in `docs/`
-are dated history; where they say "Planned" or "candidate", the traceability
-document and project status supersede them.
+[LANGSMITH_DELIVERY](docs/LANGSMITH_DELIVERY.md) ·
+[Portfolio README](../README.md). Per-slice records in `docs/` are dated history;
+where they say "Planned" or "candidate", the traceability document supersedes
+them for requirement status.
+
+---
+
+Developed from Techademy AI Engineering program requirements. Independent
+implementation and engineering enhancements.
