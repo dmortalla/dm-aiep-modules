@@ -1,0 +1,142 @@
+{
+  "uid": "module6-operations",
+  "title": "Module 6 operations",
+  "description": "Cross-run operational metrics delivered explicitly over OTLP. Not AI tracing; LangSmith owns that. Token usage, cost, queue depth and worker utilisation are not measured and are not shown.",
+  "tags": ["module6"],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-30m", "to": "now"},
+  "timepicker": {"refresh_intervals": ["10s", "30s", "1m", "5m"]},
+  "templating": {"list": []},
+  "annotations": {"list": []},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Workflows started (process total)",
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "noValue": "Unavailable"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "none"},
+      "targets": [{"refId": "A", "expr": "sum(module6_workflow_started_total)", "instant": true}]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Workflows finished (process total)",
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "noValue": "Unavailable"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "none"},
+      "targets": [{"refId": "A", "expr": "sum(module6_workflow_finished_total)", "instant": true}]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Active workflows",
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "noValue": "Unavailable"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "area"},
+      "targets": [{"refId": "A", "expr": "sum(module6_workflow_active)"}]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Firing alerts",
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}
+        },
+        "overrides": []
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"},
+      "targets": [{"refId": "A", "expr": "count(ALERTS{alertname=~\"Module6.*\", alertstate=\"firing\"}) or vector(0)", "instant": true}]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Finished workflows per minute by outcome",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short", "custom": {"fillOpacity": 10, "stacking": {"mode": "normal"}}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"refId": "A", "expr": "sum by (outcome) (rate(module6_workflow_finished_total[1m])) * 60", "legendFormat": "{{outcome}}"}]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Workflow duration (p50 / p95, bucketed)",
+      "description": "Estimated from six fixed histogram buckets up to 30 s.",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ms"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {"refId": "A", "expr": "histogram_quantile(0.5, sum by (le) (rate(module6_workflow_duration_milliseconds_bucket[5m])))", "legendFormat": "p50"},
+        {"refId": "B", "expr": "histogram_quantile(0.95, sum by (le) (rate(module6_workflow_duration_milliseconds_bucket[5m])))", "legendFormat": "p95"}
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Finished workflows per minute by runtime and path",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"refId": "A", "expr": "sum by (runtime, topology, distributed) (rate(module6_workflow_finished_total[1m])) * 60", "legendFormat": "{{runtime}} / {{topology}} / distributed={{distributed}}"}]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Denials, timeouts, retries and worker reaping (range increase)",
+      "description": "Retries and worker reaping appear only for runs that reported them.",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {"refId": "A", "expr": "sum(increase(module6_workflow_finished_total{outcome=\"denied\"}[5m]))", "legendFormat": "denied"},
+        {"refId": "B", "expr": "sum(increase(module6_workflow_finished_total{outcome=\"timed_out\"}[5m]))", "legendFormat": "timed out"},
+        {"refId": "C", "expr": "sum(increase(module6_workflow_retries_total[5m]))", "legendFormat": "retries"},
+        {"refId": "D", "expr": "sum(increase(module6_worker_reaped_total[5m]))", "legendFormat": "workers reaped"}
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Observation health",
+      "description": "Dropped observations and adapter failures. Workflow results are unaffected by either.",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 21},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {"refId": "A", "expr": "sum(increase(module6_observation_drops_total[5m]))", "legendFormat": "observation drops"},
+        {"refId": "B", "expr": "sum(increase(module6_observation_adapter_failures_total[5m]))", "legendFormat": "adapter failures"},
+        {"refId": "C", "expr": "min(up{job=\"module6-collector\"})", "legendFormat": "collection boundary up"}
+      ]
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Model calls reported (process total)",
+      "description": "Cumulative since the delivering process started; resets when it restarts. Sum of model calls reported by completed runs. Accepted demonstrations are deterministic and report zero. Unavailable means no completed run reported a value.",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 21},
+      "datasource": {"type": "prometheus", "uid": "module6-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "noValue": "Unavailable"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "none", "graphMode": "none"},
+      "targets": [{"refId": "A", "expr": "sum(module6_model_calls_total)", "instant": true}]
+    }
+  ]
+}
