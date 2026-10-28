@@ -1740,7 +1740,10 @@ def test_well_formed_text_passes_and_normalizes_to_what_the_sdk_would_send(name)
     assert len(normalized) > 1 and all("!" <= char <= "~" for char in normalized)
 
 
-@pytest.mark.parametrize("value", [None, 42, b"lsv2_" + b"pt_bytes", ["x", "y"], {"a": 1}])
+@pytest.mark.parametrize(
+    "value",
+    [None, 42, b"lsv2_" + b"pt_bytes", ["x", "y"], {"a": 1}],
+)
 def test_non_text_is_never_a_valid_credential(value):
     assert not credential_format_valid(value)
     assert normalized_credential(value) == ""
