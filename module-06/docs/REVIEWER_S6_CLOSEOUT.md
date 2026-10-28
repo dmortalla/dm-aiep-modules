@@ -1,6 +1,8 @@
 # S6 candidate: reviewer guidance, polish and code-quality closeout
 
-> **Status note (S7).** S6 was independently accepted and committed at `998b0d8da8cadc4cb0e9a2230dbe8b1e39276161`; the "candidate" wording below is the record as written before acceptance. The root-suite first-run record is reconciled in [PROJECT_STATUS.md](PROJECT_STATUS.md#known-reliability-observation-unresolved-and-future-hardening).
+> **Status note (S7).** S6 was independently accepted and committed; the "candidate" wording below is the record as written before acceptance. Commit identifiers in this record refer to pre-publication history and are not authority. The root-suite first-run record is reconciled in [PROJECT_STATUS.md](PROJECT_STATUS.md#known-reliability-observation-unresolved-and-future-hardening).
+>
+> **Closeout note (2026-10-28).** The statements below that no deployment or release exists describe the S6 state only. The public Streamlit reviewer cockpit has since been deployed and human-verified (deterministic, no-key; Live / BYOK unavailable by design); see [PROJECT_STATUS.md](PROJECT_STATUS.md) for current status.
 
 Baseline: clean `feature/module-06-architecture` at
 `bb383fcbdee624e64aa9ac025018389d41bc905c`, empty index. S1–S5 are accepted and
@@ -118,7 +120,7 @@ concurrently, which duplicates no write or external effect. No lock was added.
 
 ## Validation
 
-Recorded in [PROJECT_STATUS](PROJECT_STATUS.md#reviewer-cockpit-s6-candidate-not-accepted-guidance-polish-and-code-quality-closeout).
+Recorded in [PROJECT_STATUS](PROJECT_STATUS.md#reviewer-cockpit-s6-accepted-committed-at-998b0d8-guidance-polish-and-code-quality-closeout).
 No real model, provider, LangSmith, telemetry, credential or container operation
 was performed. No deployment, release, completion or requirement advancement is
 claimed. The S6 candidate is not independently accepted.

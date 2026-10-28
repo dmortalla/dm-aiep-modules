@@ -115,8 +115,8 @@ def render_techademy_footer() -> None:
         st.caption(
             "Developed from Techademy AI Engineering program requirements. "
             "Independent implementation with production-grade engineering "
-            "enhancements; deployment verification is a separate, pending "
-            "release step."
+            "enhancements; the public reviewer deployment is verified, and "
+            "final release and LinkedIn closeout remain pending."
         )
     with right:
         st.caption("Module 6  |  User Cockpit v0.6.0")

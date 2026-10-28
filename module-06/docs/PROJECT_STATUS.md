@@ -2,50 +2,58 @@
 
 ## Current State
 
-Baseline for this record: `feature/module-06-architecture` at
-`998b0d8da8cadc4cb0e9a2230dbe8b1e39276161`. Reviewer-experience stories S1, S2,
-S3, S4, S5 and S6 are independently accepted and committed (S5 at
-`bb383fcbdee624e64aa9ac025018389d41bc905c`, S6 at
-`998b0d8da8cadc4cb0e9a2230dbe8b1e39276161`). S7 (final requirements,
-traceability and documentation reconciliation) is the current candidate:
-documentation-only, unstaged and awaiting independent review. Earlier milestone
-paragraphs below describe the state at their recorded time, including
-historical "Planned"/"future"/"candidate" wording; they are not current status.
+Closeout state (2026-10-28): Module 6 engineering is independently accepted, the
+reconciled history is published on `main`, the seven-README architecture is
+published, and the public Streamlit reviewer cockpit has been deployed and
+human-verified in the browser across all six tabs (Guide, Deterministic Demo,
+Live / BYOK, Operations, LangSmith Tracing, Implementation Evidence). Stories S1
+through S7 are accepted; S7 is no longer a candidate. Commit identifiers recorded
+in older sections of this file refer to pre-publication history and are not
+authority; the published `main` history is. Earlier milestone paragraphs below
+describe the state at their recorded time, including historical
+"Planned"/"future"/"candidate" wording; they are not current status.
 
-Requirement status is reconciled in [TRACEABILITY.md](TRACEABILITY.md): the S7
-candidate records all 26 source requirements as `Verified with limitation`, none
-unqualified `Verified`, each with its stated limitation; the transition takes
-effect only when S7 is independently accepted and committed. The deployed/public
-posture remains deterministic/no-key. Local live requires an explicit trusted
-private-operator runtime and fresh execution-scoped authority; credentials and
-connectivity are never authority; public live is fail-closed. No real live
-execution, model, LangSmith, telemetry, credential or container operation was
-performed for S6 or S7.
+Requirement status is reconciled in [TRACEABILITY.md](TRACEABILITY.md): all 26
+source requirements are `Verified with limitation`, none unqualified `Verified`,
+each with its stated limitation.
 
-Module 6 is **not** complete. Still open and not claimed: human browser
-acceptance, hosted deployment and its verification, root README reconciliation,
-publication/release and recruiter-facing (LinkedIn) closeout. The reliability
-observation under "Known Reliability Observation" below is unresolved.
+**Deployed working result.** One deployed deterministic workflow, the LangGraph
+coordinator-worker demonstration, completed successfully: recent runs 1,
+completed 1, other outcomes 0, evidence class `deterministic_demo`, source
+`fresh_execution`, application validation completed, zero model calls, zero
+external calls, with reviewer-visible local trace and span evidence.
+
+**Intentionally unavailable on the public deployment (correct evidence, not
+failures):** public Live / BYOK stays fail-closed; the Operations current-host
+check reports the local Prometheus/Grafana stack unavailable on the deployed
+host; and the LangSmith current-read check reports unavailable because no
+trusted read capability is supplied. Local live still requires an explicit
+trusted private-operator runtime and fresh execution-scoped authority;
+credentials and connectivity are never authority.
+
+**Not claimed:** public live model execution, hosted Grafana or Prometheus (the
+operational stack is verified locally only; the public Streamlit deployment does
+not make it hosted), production deployment, SLA/SLO, hosted telemetry, cloud
+scale or production capacity. LangSmith remains the specialist AI/agent tracing
+system and Streamlit remains the reviewer/presentation layer, not an
+observability backend.
+
+Module 6 is **not** yet fully complete. Remaining closeout: the release/tag step,
+if appropriate, and the LinkedIn closeout post. The reliability observation under
+"Known Reliability Observation" below remains unresolved future hardening.
 
 | Item | State |
 | --- | --- |
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | S1-S6 accepted and committed; S7 reconciliation candidate; release gates open |
+| Phase | S1-S7 accepted; published on `main`; public reviewer deployment and human browser verification complete; release/tag and LinkedIn closeout pending |
 | Source requirements | 26 frozen |
-| Requirements (S7 candidate) | 26 / 26 `Verified with limitation`; 0 unqualified `Verified`; effective on S7 acceptance |
-| Required labs | 3 / 3 `Verified with limitation` (M6-021, M6-022, M6-023; S7 candidate) |
-| Required deliverables | 2 / 2 `Verified with limitation` (M6-024, M6-025; S7 candidate) |
-| Runtime targets | LangGraph, CrewAI, Google ADK |
-| AI tracing | LangSmith |
-| Execution budget policy | ADR-008 NORMAL named profile (policy data only; separate from execution authority) |
-| Operational telemetry | OpenTelemetry instrumentation and Collector/compatible collection boundary |
-| Operational metrics backend | Prometheus |
-| Operations dashboard | Grafana specialist dashboards, PromQL exploration, and alerting |
-| Product / evidence UI | Streamlit unified curated human-facing operations console |
-| Default inference | Deterministic, zero external inference cost |
-| Release | Unreleased |
+| Requirements | 26 / 26 `Verified with limitation`; 0 unqualified `Verified` |
+| Required labs | 3 / 3 `Verified with limitation` (M6-021, M6-022, M6-023) |
+| Required deliverables | 2 / 2 `Verified with limitation` (M6-024, M6-025) |
+| Public reviewer deployment | Verified (deterministic, no-key); public Live / BYOK unavailable by design |
+| Human browser verification | Complete, all six tabs inspected |
 
 ## Approved Amendment
 
@@ -575,25 +583,27 @@ remain outstanding; no probe is performed by this milestone.
 
 ## Production-Grade Definition of Done
 
-The checklist evaluates the complete platform from accepted S1-S6 evidence.
-`[x]` means accepted evidence exists within the stated scope (local,
-deterministic or recorded real-local, never hosted or production); `[ ]` means
-the item is not yet established. Bounded slice evidence does not establish
-deployment acceptance.
+The checklist evaluates the complete platform from accepted evidence. `[x]` means
+accepted evidence exists within the stated scope (local, deterministic or
+recorded real-local, plus the verified public deterministic reviewer deployment;
+never hosted telemetry, production capacity or SLA); `[ ]` means the item is not
+yet established.
 
 ### Source Fidelity
 
-- [ ] 26 / 26 source requirements verified - S7 candidate records 26 / 26
-  `Verified with limitation`; pending independent acceptance.
-- [ ] Coordinator-worker lab verified - M6-021, S7 candidate.
-- [ ] Collaborative AI lab verified - M6-022, S7 candidate.
-- [ ] Distributed orchestration lab verified - M6-023, S7 candidate.
-- [ ] Multi-agent orchestration platform delivered - M6-024, S7 candidate.
-- [ ] Collaborative AI workflow delivered - M6-025, S7 candidate.
+- [x] 26 / 26 source requirements reconciled as `Verified with limitation`
+  (accepted; see [TRACEABILITY.md](TRACEABILITY.md)).
+- [x] Coordinator-worker lab - M6-021, `Verified with limitation`.
+- [x] Collaborative AI lab - M6-022, `Verified with limitation`.
+- [x] Distributed orchestration lab - M6-023, `Verified with limitation`.
+- [x] Multi-agent orchestration platform delivered - M6-024, `Verified with
+  limitation`.
+- [x] Collaborative AI workflow delivered - M6-025, `Verified with limitation`.
 
 ### Product
 
-- [x] Runnable Streamlit operations console (local, loopback).
+- [x] Runnable Streamlit operations console (local, loopback) and a public
+  deterministic reviewer deployment.
 - [x] Built-in user/test guidance on every tab and the Guide.
 - [x] Final result and relevant run evidence visible without code inspection.
 
@@ -640,7 +650,7 @@ deployment acceptance.
 - [x] OpenTelemetry integration verified locally.
 - [x] Collector and Prometheus metrics verified locally (metrics pipeline only).
 - [x] Grafana specialist view and alerting verified locally (one alert driven to
-  firing; two untriggered).
+  firing; two untriggered). Grafana and Prometheus are not publicly hosted.
 - [x] Streamlit curated workflow, health, reliability, cost and trace references.
 - [x] Redaction, bounded cardinality, retention, export/query resource controls.
 - [x] Observability failure cannot corrupt workflow semantics.
@@ -651,10 +661,14 @@ deployment acceptance.
 - [x] pytest passes (see gate provenance below).
 - [x] compileall passes.
 - [x] Security/adversarial verification passes.
-- [ ] Traceability reconciled - S7 candidate, pending acceptance.
-- [ ] Production-readiness review complete.
-- [ ] Deployment evidence complete.
-- [ ] Human UI (browser) review complete.
+- [x] Traceability reconciled and accepted.
+- [x] Production-readiness review complete, within the accepted scope: independent
+  engineering review, a deployed deterministic reviewer cockpit with fail-closed
+  public Live / BYOK, and no production-deployment, SLA, hosted-telemetry or
+  capacity claim.
+- [x] Deployment evidence complete (public reviewer deployment verified,
+  deterministic and no-key).
+- [x] Human UI (browser) review complete (all six tabs inspected).
 
 ## Current Risks
 
@@ -670,14 +684,10 @@ deployment acceptance.
 
 ## Next Recommended Work
 
-Remaining gates after S7 acceptance, each needing its own approval and none
-implied by cockpit or reconciliation completion: human browser acceptance of the
-reviewer cockpit; Streamlit deployment and deployed-environment verification
-(deterministic/no-key Demo only unless a separate deployment-compatible
-authority boundary is built and verified); root README reconciliation;
-publication/release; recruiter-facing (LinkedIn) closeout; and, separately, any
+Remaining closeout only, each needing its own approval: the release/tag step, if
+appropriate, and the LinkedIn closeout post. Separately and not scheduled: any
 future live verification (fresh human authorization) and the reliability
-hardening below. Preserve the approved boundaries. See
+hardening described below. Preserve the approved boundaries. See
 [remaining limits](OPERATIONAL_TELEMETRY.md#unverified-limitations).
 
 ## Known Reliability Observation (Unresolved) and Future Hardening
@@ -893,7 +903,10 @@ LangSmith, telemetry, credential or container operation occurred. S7 was future
 when this was recorded; no deployment, release, completion or requirement
 advancement was claimed.
 
-## Reviewer Cockpit S7 (Candidate, Not Accepted): Requirements, Traceability and Documentation Reconciliation
+## Reviewer Cockpit S7 (Accepted; recorded at candidate time): Requirements, Traceability and Documentation Reconciliation
+
+The paragraphs below are the S7 candidate record as written before acceptance;
+current status is under "Current State" and "Release Closeout Reconciliation".
 
 Story S7 reconciles documentation only; no source or test behavior changed, and
 architecture, evidence taxonomy, ADR-008, the cockpit and all runtime boundaries
@@ -939,3 +952,17 @@ encoding/LF/whitespace checks are recorded in the S7 report. Still open and not
 claimed: independent S7 acceptance, human browser acceptance, deployment
 verification, root README reconciliation, publication/release and LinkedIn
 closeout.
+
+## Release Closeout Reconciliation (2026-10-28)
+
+Final documentation reconciliation after publication and deployment verification.
+Engineering, tests, runtime behavior, security policy, the evidence taxonomy and
+the Module 6 requirements were not reopened. The status above is current; the
+long milestone log is preserved as dated history. Public Streamlit deployment and
+human browser verification are complete for the deterministic, no-key reviewer
+cockpit, with the deployed LangGraph coordinator-worker workflow recorded above.
+Run 3 remains `out_of_policy_observation`, Run 4 the accepted authorized
+current-path real-local verification, Run 5 its exact `unverified_write`
+classification, and the deterministic LangSmith `service_read` evidence stays
+distinct from Run 5. Not complete yet: the release/tag step, if appropriate, and
+the LinkedIn closeout post.

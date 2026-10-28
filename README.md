@@ -34,7 +34,7 @@ Module READMEs use these terms precisely: *deterministic/offline* verification, 
 | 3 | [RAG Engineering Foundations](module-03/README.md) | ✅ Complete (`v0.3.0-module-3`) |
 | 4 | [Advanced RAG & Evaluation Systems](module-04/README.md) | ✅ Complete (`v0.4.0-module-4`) |
 | 5 | [AI Agent Engineering](module-05/README.md) | ✅ Complete (`v0.5.0-module-5`), with a published production-grade upgrade |
-| 6 | [Multi-Agent Systems & Orchestration](module-06/README.md) | 🔶 Engineering accepted; public deployment verification and release closeout pending |
+| 6 | [Multi-Agent Systems & Orchestration](module-06/README.md) | 🔶 Engineering accepted; public reviewer deployment verified; release and LinkedIn closeout pending |
 
 ## Systems
 
@@ -59,7 +59,7 @@ A bounded, stateful, tool-using agent with allowlisted tool authority, three kin
 **[README](module-05/README.md)** · **[Live demo](https://dm-aiep-module-05.streamlit.app/)** · [User guide](module-05/docs/USER_GUIDE.md)
 
 ### Module 6 — Multi-Agent Systems & Orchestration
-Sequential, parallel, hierarchical, coordinator-worker and distributed orchestration on LangGraph, CrewAI and Google ADK, with cost governance, scaling evidence, and layered observability (LangSmith for AI tracing; OpenTelemetry → Collector → Prometheus → Grafana verified locally) in a six-tab reviewer cockpit. Public deployment and release are not yet claimed.
+Sequential, parallel, hierarchical, coordinator-worker and distributed orchestration on LangGraph, CrewAI and Google ADK, with cost governance, scaling evidence, and layered observability (LangSmith for AI tracing; OpenTelemetry → Collector → Prometheus → Grafana verified locally) in a six-tab reviewer cockpit. The public Streamlit reviewer deployment is verified (deterministic, no-key; Live/BYOK is unavailable by design). Hosted Grafana/Prometheus, production deployment and the final release closeout are not claimed.
 **[README](module-06/README.md)** · [Streamlit app](module-06/app.py)
 
 ## Quick start

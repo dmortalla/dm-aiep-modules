@@ -30,18 +30,32 @@ current evidence are never blurred.
 
 ## Status and reviewer start-here
 
-Module 6 engineering is independently reviewed and accepted, and the committed
-candidate (`3e2ed63e8621d3fc0d3760f763fb920f3c6c8ada`) passed local human browser
-acceptance. That browser acceptance is a recorded human decision made after the
-engineering candidate was committed and reviewed; the detailed engineering
-history in [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) has not yet been reconciled
-for the final release closeout and still records the earlier pre-closeout state,
-so it is not the current status source. [TRACEABILITY.md](docs/TRACEABILITY.md)
-reconciles all 26 source requirements as `Verified with limitation` (none
-unqualified). Module 6 is delivered as a local, loopback reviewer system. Public
-Streamlit deployment verification and the final release closeout are still
-pending, so Module 6 is not described as publicly deployed or released, and it
-makes no production-deployment, SLA or hosted-telemetry claim.
+Module 6 engineering is independently reviewed and accepted, and the reconciled
+history is published on `main`. The public Streamlit reviewer cockpit has been
+deployed and human-verified in the browser across all six tabs (Guide,
+Deterministic Demo, Live / BYOK, Operations, LangSmith Tracing and
+Implementation Evidence).
+[TRACEABILITY.md](docs/TRACEABILITY.md) reconciles all 26 source requirements as
+`Verified with limitation` (none unqualified), and
+[PROJECT_STATUS.md](docs/PROJECT_STATUS.md) records the engineering status and
+history.
+
+**Deployed working result.** One deployed deterministic workflow, the
+LangGraph coordinator-worker demonstration, completed successfully: one recent
+run, one completed and no other outcomes, evidence class `deterministic_demo`,
+source `fresh_execution`, application validation passed, zero model calls and
+zero external calls, with reviewer-visible local trace and span evidence.
+
+**Intentionally unavailable on the public deployment, and correct evidence
+rather than failures:** Live / BYOK stays fail-closed; the Operations
+current-host check reports the local Prometheus/Grafana stack unavailable on the
+deployed host; and the LangSmith current-read check reports unavailable because
+no trusted read capability is supplied.
+
+**Not claimed:** public live model execution, hosted Grafana or Prometheus (the
+observability stack is verified locally only), production deployment, SLA,
+cloud scale or production capacity. Module 6 is not yet fully closed out: the
+release/tag step, if appropriate, and the LinkedIn closeout post remain.
 
 **Start here:** run the cockpit (see [Run](#run-and-reviewer-instructions)), open
 the **Guide** tab first, then run a demonstration on **Deterministic Demo**.
@@ -150,8 +164,9 @@ Local, single-host and deterministic evidence; one benchmark sample on one
 workstation; no production load test, capacity, SLA or cloud-scale claim; no
 remote-host distribution; no persistent shared memory; model output quality is
 not claimed; the live repair path is unexercised. One live-execution timing test
-is a known load-sensitive reliability observation under future hardening (see the
-detailed engineering history, [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)). Remaining release gates: public
+is a known load-sensitive reliability observation under future hardening (see
+[PROJECT_STATUS.md](docs/PROJECT_STATUS.md)). Remaining closeout: the
+release/tag step, if appropriate, and the LinkedIn closeout post.
 
 ## Run and reviewer instructions
 
@@ -163,9 +178,10 @@ uv run --locked --offline python module-06/run_console.py
 Open the loopback URL the launcher prints (normally `http://127.0.0.1:8501`).
 The Demo needs no credentials. Open the **Guide** tab first, then run a
 demonstration on **Deterministic Demo**. Nothing runs, queries or delivers until
-you select an action. Use synthetic text rather than secrets. Do not expose this
-console publicly: it has no authentication, multi-user support or verified
-capacity.
+you select an action. Use synthetic text rather than secrets. Do not expose a
+local or private-operator launch publicly: it has no authentication, multi-user
+support or verified capacity. The public deployment is the deterministic,
+no-key reviewer cockpit with Live / BYOK unavailable.
 
 To run the tests offline from the repository root:
 
@@ -176,7 +192,7 @@ uv run --locked --offline pytest module-06/tests -q
 ## Documentation
 
 [SOURCE_REQUIREMENTS](docs/SOURCE_REQUIREMENTS.md) · [TRACEABILITY](docs/TRACEABILITY.md) ·
-[Detailed engineering history](docs/PROJECT_STATUS.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) ·
+[PROJECT_STATUS](docs/PROJECT_STATUS.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) ·
 [SECURITY](docs/SECURITY.md) · [COST_GOVERNANCE](docs/COST_GOVERNANCE.md) ·
 [OBSERVABILITY](docs/OBSERVABILITY.md) · [OPERATIONS_CONSOLE](docs/OPERATIONS_CONSOLE.md) ·
 [Reviewer experience contract](docs/REVIEWER_EXPERIENCE_CONTRACT.md) ·

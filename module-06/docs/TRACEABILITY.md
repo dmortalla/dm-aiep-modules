@@ -6,19 +6,21 @@ source requirement IDs and meanings are frozen in
 verbatim; nothing is renamed or reinterpreted. Engineering status and gate
 provenance live in [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-## Final reconciliation (S7 candidate)
+## Final reconciliation (accepted)
 
-Baseline: `feature/module-06-architecture` at
-`998b0d8da8cadc4cb0e9a2230dbe8b1e39276161` (S1–S6 accepted and committed). The
-statuses below are the S7 candidate's reconciliation of the earlier
-slice-by-slice records; they take effect only when S7 is independently accepted
-and committed. They rest on evidence already in the repository; no new
-execution, inference or external operation was performed to produce them.
+Baseline: the published `main` history (S1–S7 accepted; commit identifiers in
+older records refer to pre-publication history and are not authority). The
+statuses below are the accepted reconciliation of the earlier slice-by-slice
+records, with the closeout facts recorded under M6-024 and the sections that
+follow. They rest on evidence already in the repository and on the recorded
+human browser and public reviewer-deployment verification; this reconciliation
+itself performed no new execution, inference or external operation.
 
 The status transition follows the human closeout decisions of 2026-10-13
 (deterministic agents accepted as verified-with-limitation evidence for
 M6-022/025/026 at transition; the console is a local, loopback-only reviewer
-system; hosted deployment is a separate gate). The slice sections further below
+system; hosted deployment is a separate gate, since closed for the public
+deterministic reviewer cockpit; see M6-024). The slice sections further below
 are dated historical records: where they say "Planned", "candidate" or "pending",
 that was true when written and is superseded by this section.
 
@@ -292,7 +294,9 @@ triggered. See the known timing observation in `PROJECT_STATUS.md`.
 Implementation: the accepted coordinator-worker workflow with a runnable offline
 example (`LANGGRAPH_COORDINATOR_WORKER.md`) and the guided console. Tests:
 `test_langgraph_workflow.py`, `test_console_app.py`. Limitation: deterministic
-agents; the human browser review of the console is a separate release gate.
+agents. Human browser verification of the cockpit is complete (all six tabs
+inspected), and the deployed run was the LangGraph coordinator-worker
+demonstration; its deployed result is recorded under M6-024.
 
 **M6-022 Collaborative AI system - Verified with limitation.**
 Implementation: CrewAI collaboration (M6-011) and the canonical Researcher ->
@@ -307,7 +311,10 @@ correctness are not proven.
 Implementation: the accepted local process service with a runnable example
 (`DISTRIBUTED_ORCHESTRATION.md`) and console exposure. Tests:
 `test_distributed_orchestration.py`, `test_console_app.py`. Limitation: local
-multi-process only; human browser review is a separate release gate.
+multi-process only. Human browser verification of the cockpit is complete (all
+six tabs inspected); the recorded deployed workflow was the coordinator-worker
+demonstration, so the multi-process demonstration's own evidence remains the
+accepted local evidence.
 
 **M6-024 Multi-agent orchestration platform - Verified with limitation.**
 Implementation: the Streamlit reviewer cockpit (`../app.py`, `console.py`,
@@ -320,11 +327,17 @@ launcher (`../run_local_live.py`, `../private_local_app.py`,
 operator only. Tests: `test_console.py`, `test_console_app.py`,
 `test_console_live.py`, `test_cockpit_view.py`, `test_cockpit_demo.py`,
 `test_cockpit_ops.py`, `test_cockpit_langsmith.py`, `test_cockpit_local_live.py`,
-`test_cockpit_s6.py`, `test_private_local_launcher.py`. Limitation: delivered and
-verified as a local, loopback
-reviewer cockpit; human browser acceptance, hosted deployment verification and
-release are separate, still-open gates. Public live execution is intentionally
-unavailable (below).
+`test_cockpit_s6.py`, `test_private_local_launcher.py`. Closeout evidence: the
+reviewer cockpit is publicly deployed on Streamlit and human-browser verified
+across all six tabs. One deployed deterministic LangGraph coordinator-worker
+workflow completed (recent runs 1, completed 1, other outcomes 0, evidence class
+`deterministic_demo`, source `fresh_execution`, application validation
+completed, zero model calls, zero external calls, local trace and span evidence
+rendered). Limitation: public live inference is unavailable by design (Live /
+BYOK fail-closed); the local specialist observability stack is not publicly
+hosted, so the deployed Operations check and the LangSmith current-read check
+correctly report unavailable; and no production capacity, SLA or cloud-scale
+claim is made.
 
 **M6-025 Collaborative AI workflow - Verified with limitation.**
 Implementation: the canonical workflow (`canonical_workflow.py`,
@@ -355,8 +368,11 @@ SLA, capacity or cloud-scale validation is claimed.
   embedding or link to localhost services. Its only unsafe-HTML surface is one
   static, application-owned CSS block; no workflow, model, user, tool or
   provider value can flow into it.
-- Not claimed: hosted production telemetry, public Grafana or Prometheus, an SLA,
-  production deployment.
+- Public Streamlit reviewer deployment: verified (deterministic, no-key). It
+  does not make the local observability stack hosted.
+- Hosted Grafana/Prometheus: not present and not claimed.
+- Production deployment: not claimed. Also not claimed: hosted production
+  telemetry, public Grafana or Prometheus, an SLA.
 
 ### Live / BYOK reconciliation
 
@@ -366,8 +382,9 @@ connectivity, never a public key textbox. Local Ollama inference does not itself
 require a credential; a provider that needs one has it held by that runtime.
 Credential presence never authorizes execution; each run needs a fresh single-use `LiveAuthorization` under the
 ADR-008 NORMAL profile. Public/deployed live is fail-closed and no deployment
-authority boundary exists. There is no automatic LangSmith write and no
-automatic operational query; external writes need separate authority.
+authority boundary exists; the public deployment keeps Live / BYOK unavailable.
+There is no automatic LangSmith write and no automatic operational query;
+external writes need separate authority.
 
 ### Verification rule
 
