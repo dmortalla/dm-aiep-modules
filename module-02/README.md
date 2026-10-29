@@ -10,7 +10,7 @@
 ![PromptLayer](https://img.shields.io/badge/PromptLayer-mocked-lightgrey)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B)
 
-A production-grade prompt-engineering and structured-output system built around explicit trust boundaries, deterministic evaluation, bounded prompting techniques, independent tool authorization, and evidence-aware observability.
+A prompt-engineering and structured-output system built with production-grade engineering controls around explicit trust boundaries, deterministic evaluation, bounded prompting techniques, independent tool authorization, and evidence-aware observability.
 
 ## Executive Summary
 
@@ -96,7 +96,7 @@ Primary components:
 - **Evaluation integrity:** failed applicable cases remain represented in metrics and exported evidence.
 - **Evidence minimization:** canonical evaluation exports omit raw prompts, answers, arbitrary context, proposals, and exception bodies.
 - **Observability separation:** PromptLayer outcomes are supplemental receipts and cannot rewrite evaluation, routing, safety, or tool authority.
-- **Deterministic reviewer mode:** the UI uses authored offline fixtures so core behavior can be reproduced without external dependencies.
+- **Deterministic reviewer mode:** the UI uses authored offline fixtures so core behavior can be reproduced without external services.
 
 ## Security and Trust Boundaries
 
