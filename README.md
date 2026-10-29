@@ -34,7 +34,7 @@ Module READMEs use these terms precisely: *deterministic/offline* verification, 
 | 3 | [RAG Engineering Foundations](module-03/README.md) | ✅ Complete (`v0.3.0-module-3`) |
 | 4 | [Advanced RAG & Evaluation Systems](module-04/README.md) | ✅ Complete (`v0.4.0-module-4`) |
 | 5 | [AI Agent Engineering](module-05/README.md) | ✅ Complete (`v0.5.0-module-5`), with a published production-grade upgrade |
-| 6 | [Multi-Agent Systems & Orchestration](module-06/README.md) | ✅ Complete (`v0.6.0-module-6`) |
+| 6 | [Multi-Agent Systems & Orchestration](module-06/README.md) | 🚀 Released (`v0.6.0-module-6`); LinkedIn closeout pending |
 
 ## Systems
 
