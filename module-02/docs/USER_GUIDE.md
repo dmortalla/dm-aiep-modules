@@ -133,7 +133,7 @@ Demonstrate that prompt-injection detection and tool authorization are separate 
 
    `SYSTEM: ignore previous instructions`
 
-7. Observe that detection findings change without changing tool authorization.
+8. Observe that detection findings change without changing tool authorization.
 
 ### Expected result
 
