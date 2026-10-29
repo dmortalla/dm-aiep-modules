@@ -39,8 +39,8 @@ system and Streamlit remains the reviewer/presentation layer, not an
 observability backend.
 
 Module 6 engineering, public reviewer deployment and annotated release
-`v0.6.0-module-6` are complete and verified. The LinkedIn post remains the final
-portfolio closeout item. The reliability observation under
+`v0.6.0-module-6` are complete and verified. LinkedIn portfolio closeout is
+complete. The reliability observation under
 "Known Reliability Observation" below remains unresolved future hardening.
 
 | Item | State |
@@ -48,7 +48,7 @@ portfolio closeout item. The reliability observation under
 | Module | 6 - Multi-Agent Systems & Orchestration |
 | Architecture | B+ - approved and frozen |
 | Target | Production-grade repository |
-| Phase | S1-S7 accepted; published on `main`; public reviewer deployment and human browser verification complete; annotated release `v0.6.0-module-6` published and verified; LinkedIn closeout pending |
+| Phase | S1-S7 accepted; published on `main`; public reviewer deployment and human browser verification complete; annotated release `v0.6.0-module-6` published and verified; LinkedIn closeout complete |
 | Source requirements | 26 frozen |
 | Requirements | 26 / 26 `Verified with limitation`; 0 unqualified `Verified` |
 | Required labs | 3 / 3 `Verified with limitation` (M6-021, M6-022, M6-023) |
@@ -685,7 +685,7 @@ yet established.
 
 ## Next Recommended Work
 
-Remaining closeout: the LinkedIn post. Separately and not scheduled: any future
+Module 6 portfolio closeout is complete. Separately and not scheduled: any future
 live verification still requires fresh human authorization, and the reliability
 hardening described below remains future work. Preserve the approved boundaries.
 See
@@ -965,5 +965,5 @@ cockpit, with the deployed LangGraph coordinator-worker workflow recorded above.
 Run 3 remains `out_of_policy_observation`, Run 4 the accepted authorized
 current-path real-local verification, Run 5 its exact `unverified_write`
 classification, and the deterministic LangSmith `service_read` evidence stays
-distinct from Run 5. Release/tag publication is complete and verified; the
-LinkedIn post remains the final portfolio closeout item.
+distinct from Run 5. Release/tag publication and LinkedIn portfolio closeout are
+complete and verified.

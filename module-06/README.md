@@ -56,7 +56,7 @@ no trusted read capability is supplied.
 observability stack is verified locally only), production deployment, SLA,
 cloud scale or production capacity. Module 6 engineering, public reviewer
 deployment and annotated release `v0.6.0-module-6` are complete and verified;
-the LinkedIn post remains the final portfolio closeout item.
+LinkedIn portfolio closeout is complete.
 
 **Start here:** run the cockpit (see [Run](#run-and-reviewer-instructions)), open
 the **Guide** tab first, then run a demonstration on **Deterministic Demo**.
@@ -167,8 +167,8 @@ remote-host distribution; no persistent shared memory; model output quality is
 not claimed; the live repair path is unexercised. One live-execution timing test
 is a known load-sensitive reliability observation under future hardening (see
 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)). The annotated release
-`v0.6.0-module-6` is published and verified; the LinkedIn post remains the
-final portfolio closeout item.
+`v0.6.0-module-6` is published and verified; LinkedIn portfolio closeout is
+complete.
 
 ## Run and reviewer instructions
 
