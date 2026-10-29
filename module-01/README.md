@@ -17,25 +17,43 @@ streaming, structured-response parsing, retries and rate-limit handling, token
 cost management, queue-based execution and safe credential handling, presented
 through a runnable Streamlit application.
 
-## Executive overview
+## Executive Summary
 
-Module 1 implements Python-based AI engineering foundations: REST/API
-interaction, provider SDKs, asynchronous execution, streaming, structured
-response parsing, retries, timeouts, rate-limit handling, token cost management,
-logging, queue-based execution and safe API handling. It is a standalone module
-with its own source, tests and application, and it imports nothing from any other
-module.
+**What:** Module 1 is a provider-independent LLM engineering foundation that unifies OpenAI, Anthropic, and Gemini behind one validated application service.
 
-## Status and reviewer start-here
+**How:** Python 3.12, httpx, provider SDKs, Pydantic models, asynchronous execution, streaming, structured-response validation, retries, rate-limit handling, queue-based workflows, and explicit credential controls are composed behind application-owned interfaces.
+
+**Why:** The module establishes the reliable API, provider, concurrency, validation, resilience, and cost-management primitives that later portfolio systems build upon.
+
+**Proof:** Reviewers can launch the Streamlit application, exercise the provider-independent workflows, inspect the implementation and tests, and verify the recorded 84-test completion evidence together with provider, credential, streaming, queue, and rate-limit checks.
+
+## Start Here / Reviewer Path
+
+**Hands-on reviewer path:** follow the [Module 1 User Guide](docs/USER_GUIDE.md) for launch instructions, exact UI controls, safe credential handling, sample prompts, expected results, troubleshooting, and a five-minute review sequence.
 
 Module 1 is complete and released under the annotated Git tags
 `v0.1.0-module-1` and `v0.1.1-module-1`. Every source requirement is mapped to
 implementation and verification evidence in the table below.
 
-Start by launching the Streamlit application (see [Run](#run-and-reviewer-instructions)).
+Start by launching the Streamlit application (see [Run Locally](#run-locally)).
 It starts with **no authorized API credential**, so a visitor must explicitly
 authorize a provider for the current session before any provider request can be
 made.
+
+## Key Capabilities
+
+- Async REST client using httpx
+- OpenAI, Anthropic and Gemini SDK integrations
+- Provider-independent Pydantic models
+- Async generation and streaming service, with incremental browser streaming
+- Concurrent request execution and queue-based asynchronous execution
+- Event-driven workflows
+- Structured response parsing and validation
+- Token usage normalization and cost estimation
+- Retry, timeout, exponential-backoff and HTTP 429 `Retry-After` handling
+- Operational logging
+- Postman REST/API exercises
+- Zero-key startup and session-only credential authorization
 
 ## Architecture
 
@@ -59,22 +77,18 @@ Provider SDK differences are isolated inside the provider implementations, so
 `LLMService` and the application work against one normalized request/response and
 token-usage model.
 
-## Key capabilities
+## Technology Stack
 
-- Async REST client using httpx
-- OpenAI, Anthropic and Gemini SDK integrations
-- Provider-independent Pydantic models
-- Async generation and streaming service, with incremental browser streaming
-- Concurrent request execution and queue-based asynchronous execution
-- Event-driven workflows
-- Structured response parsing and validation
-- Token usage normalization and cost estimation
-- Retry, timeout, exponential-backoff and HTTP 429 `Retry-After` handling
-- Operational logging
-- Postman REST/API exercises
-- Zero-key startup and session-only public credential authorization
+| Role | Technologies |
+| --- | --- |
+| Language and validation | Python 3.12, Pydantic |
+| HTTP and API integration | httpx, REST APIs, Postman |
+| LLM providers | OpenAI SDK, Anthropic SDK, Gemini SDK |
+| Application layer | Provider-independent asynchronous LLM service |
+| Presentation | Streamlit |
+| Testing and quality | pytest, Ruff, Python compilation validation |
 
-## Production-grade engineering
+## Production-Grade Engineering
 
 - **Resilience:** bounded retries with exponential backoff, request timeouts and
   explicit rate-limit handling in the API client and providers.
@@ -86,16 +100,69 @@ token-usage model.
 - **Typed boundaries:** provider-independent Pydantic models and a structured
   parser at the response boundary.
 
-## Security and trust boundaries
+## Security and Trust Boundaries
 
-The public Streamlit application starts with no automatically authorized API
-credential. Credentials entered through the public UI are session-only and are
+The Streamlit application starts with no automatically authorized API
+credential. Credentials entered through the Streamlit UI are session-only and are
 not persisted by the UI. The underlying credential utilities demonstrate local
-credential-management patterns for the academic module, while the public
+credential-management patterns for the module, while the
 interface intentionally does not expose local or OS-level credential persistence
 controls. The local `.env` file is ignored by Git and must never be committed.
 
-## Source requirements traceability
+## Testing and Verification
+
+Recorded at module completion:
+
+- 84 automated tests passing
+- Ruff, pytest and Python compilation validation
+- Streamlit runtime smoke testing
+- Credential security tests
+- Provider contract tests
+- Rate-limit handling tests
+- Token-cost management tests
+- Queue-execution tests
+- Postman collection contract tests
+- Streaming regression tests
+- Live provider testing
+- Progressive Gemini browser-streaming verification
+
+The automated suite is under `tests/`. The live provider and browser-streaming
+items above are completion checks recorded in the accepted Module 1 completion
+checklist; this README does not repeat them and makes no claim beyond that
+record.
+
+## Run Locally
+
+From the repository root:
+
+```powershell
+uv sync
+uv run streamlit run module-01/app.py
+uv run pytest
+```
+
+`uv run pytest` runs the repository's configured suite, which includes this
+module's tests under `module-01/tests/`.
+
+## Documentation / Deep Dives
+
+Use these references when you want implementation-level evidence beyond the recruiter-facing overview.
+
+### Documentation Index
+
+- [User Guide](docs/USER_GUIDE.md) — hands-on launch, walkthroughs, expected results, security cleanup, and troubleshooting
+
+- [Portfolio README](../README.md)
+- Source: [`src/ai_engineering_foundations/`](src/ai_engineering_foundations/),
+  [`app.py`](app.py), [`tests/`](tests/),
+  [Postman collection](postman/module-01-rest-api-foundations.postman_collection.json)
+
+
+<details>
+<summary><strong>Source Requirements Traceability</strong></summary>
+
+Every source requirement is mapped to implementation and verification evidence.
+
 
 | Source requirement | Primary implementation evidence | Verification evidence |
 | --- | --- | --- |
@@ -123,50 +190,12 @@ controls. The local `.env` file is ignored by Git and must never be committed.
 | Production-ready API client | `api_client.py` | `test_api_client.py` |
 | Async LLM interaction service | `service.py` | `test_service.py`, `test_queue_execution.py` |
 
-## Verification and evidence
 
-Recorded at module completion:
+</details>
 
-- 84 automated tests passing
-- Ruff, pytest and Python compilation validation
-- Streamlit runtime smoke testing
-- Credential security tests
-- Provider contract tests
-- Rate-limit handling tests
-- Token-cost management tests
-- Queue-execution tests
-- Postman collection contract tests
-- Streaming regression tests
-- Live provider testing
-- Progressive Gemini browser-streaming verification
+<details>
+<summary><strong>Definition of Done</strong></summary>
 
-The automated suite is under `tests/`. The live provider and browser-streaming
-items above are completion checks recorded in the accepted Module 1 completion
-checklist; this README does not repeat them and makes no claim beyond that
-record.
-
-## Limitations and evidence boundaries
-
-- The credential utilities demonstrate local credential-management patterns for
-  an academic module; the public UI deliberately exposes only session-only
-  authorization.
-- This is a foundations module: it is not a deployed service, and no hosted
-  Streamlit deployment is claimed here.
-
-## Run and reviewer instructions
-
-From the repository root:
-
-```powershell
-uv sync
-uv run streamlit run module-01/app.py
-uv run pytest
-```
-
-`uv run pytest` runs the repository's configured suite, which includes this
-module's tests under `module-01/tests/`.
-
-## Definition of done
 
 - [x] Python implementation
 - [x] REST/API handling
@@ -182,12 +211,19 @@ module's tests under `module-01/tests/`.
 - [x] Automated tests and runtime verification
 - [x] Live provider verification
 
-## Documentation
 
-- [Portfolio README](../README.md)
-- Source: [`src/ai_engineering_foundations/`](src/ai_engineering_foundations/),
-  [`app.py`](app.py), [`tests/`](tests/),
-  [Postman collection](postman/module-01-rest-api-foundations.postman_collection.json)
+</details>
+
+## Evidence and Limitations
+
+- The credential utilities demonstrate local credential-management patterns for
+  the module; the Streamlit UI deliberately exposes only session-only
+  authorization.
+- This is a foundations module: it is not a deployed service, and no hosted
+  Streamlit deployment is claimed here.
+
+
+For the six-system engineering progression and links to the other modules, see the [portfolio README](../README.md).
 
 ---
 
