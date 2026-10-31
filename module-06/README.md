@@ -94,53 +94,7 @@ A recorded event never substitutes for a failed current action, and a successful
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    UI["Streamlit Reviewer Cockpit"]
-    CLI["Console / Local Launchers"]
-    APP["Application-Owned Control Plane"]
-
-    AUTH["Authority & Policy"]
-    CONTRACTS["Typed Workflow Contracts"]
-    COST["Budgets / Deadlines / Cancellation"]
-    EVIDENCE["Evidence & Provenance"]
-    TELEMETRY["Telemetry Semantics"]
-
-    LG["LangGraph Runtime"]
-    CREW["CrewAI Runtime"]
-    ADK["Google ADK Runtime"]
-
-    WORKERS["Supervised Local Workers"]
-    OLLAMA["Trusted-Local Ollama"]
-
-    LS["LangSmith"]
-    OTEL["OpenTelemetry"]
-    COL["OTel Collector"]
-    PROM["Prometheus"]
-    GRAF["Grafana"]
-
-    UI --> APP
-    CLI --> APP
-
-    APP --> AUTH
-    APP --> CONTRACTS
-    APP --> COST
-    APP --> EVIDENCE
-    APP --> TELEMETRY
-
-    APP --> LG
-    APP --> CREW
-    APP --> ADK
-
-    APP --> WORKERS
-    APP --> OLLAMA
-
-    TELEMETRY --> LS
-    TELEMETRY --> OTEL
-    OTEL --> COL
-    COL --> PROM
-    PROM --> GRAF
-```
+![Module 6 architecture](assets/architecture.png)
 
 The application—not the model or orchestration framework—owns:
 

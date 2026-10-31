@@ -57,21 +57,7 @@ made.
 
 ## Architecture
 
-```text
-module-01/
-    src/ai_engineering_foundations/
-        api_client.py        async httpx REST client: retries, timeouts, 429 Retry-After
-        base.py, models.py   provider contract and provider-independent Pydantic models
-        providers/           openai_provider.py, anthropic_provider.py, gemini_provider.py
-        service.py           LLMService: async generation, streaming, concurrency, queues
-        structured.py        structured response parsing and validation
-        costs.py             token-usage normalization and cost estimation
-        credentials.py       credential handling utilities
-        events.py            AsyncEventDispatcher and WorkflowEvent
-    app.py                   Streamlit application (presentation layer)
-    postman/                 REST/API exercise collection
-    tests/                   15 test files
-```
+![Module 1 architecture](assets/architecture.png)
 
 Provider SDK differences are isolated inside the provider implementations, so
 `LLMService` and the application work against one normalized request/response and

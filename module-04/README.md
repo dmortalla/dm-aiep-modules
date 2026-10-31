@@ -53,24 +53,7 @@ The default dashboard is deterministic, offline, and credential-free. The option
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    Q[Query] --> D[Dynamic retrieval policy]
-    D --> B[BM25]
-    D --> S[Chroma semantic retrieval]
-    B --> F[RRF fusion]
-    S --> F
-    F --> R[Reranking]
-    R --> C[Context filtering]
-    C --> G[Extractive generation]
-    G --> A[Answer + citations]
-
-    F --> K[Retrieval cache]
-    A --> T[Latency + cost telemetry]
-    A --> E[RAGAS evaluation]
-    A --> O[LangSmith / LangFuse evidence]
-    A --> X[Failure analysis]
-```
+![Module 4 architecture](assets/architecture.png)
 
 The reusable `advanced_rag_evaluation` package owns authoritative behavior. `module-04/app.py` is a presentation/orchestration consumer: it invokes public package APIs and renders returned contracts rather than reimplementing retrieval, ranking, filtering, generation, evaluation, or observability logic.
 

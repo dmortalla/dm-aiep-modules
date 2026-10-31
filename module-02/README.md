@@ -47,17 +47,7 @@ The Streamlit application is intentionally offline and deterministic: it require
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    UI[Streamlit UI] --> W[Application workflows]
-    W --> P[Prompt construction]
-    W --> V[Structured validation]
-    W --> E[Local evaluation]
-    W --> S[Safety and tool policy]
-    P --> G[Generation boundary]
-    G --> V
-    E --> O[Observability receipt]
-```
+![Module 2 architecture](assets/architecture.png)
 
 The core package does not import Streamlit. Presentation is kept outside the reusable prompt, validation, safety, evaluation, and integration layers.
 

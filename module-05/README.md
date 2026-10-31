@@ -71,31 +71,7 @@ Recommended reviewer sequence:
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    U[User goal] --> A[Application-owned AgentRunState]
-    A --> D[Decision provider]
-    D --> P[Proposed action]
-    P --> R[ToolRegistry authority boundary]
-    R --> V[Authorization + JSON Schema validation]
-    V --> T[Allowlisted tool execution]
-    T --> O[Observation]
-    O --> A
-    A --> F[Finish / budget exhausted / failed]
-
-    M[Short-term / Long-term / Episodic memory] --> A
-    X[Mem0 adapter] --> M
-
-    L[LangChain] --> R
-    OA[OpenAI Function Calling] --> R
-    AN[Anthropic Tool Use] --> R
-
-    OA --> LIVE1[Explicit OpenAI LIVE path]
-    AN --> LIVE2[Explicit Anthropic LIVE path]
-
-    A --> REL[Retry / Fallback / Timeout / Budgets]
-    A --> UI[Streamlit reviewer interface]
-```
+![Module 5 architecture](assets/architecture.png)
 
 The reusable `ai_agent_engineering` package owns authoritative agent, memory, provider, tool, and resilience behavior. `module-05/app.py` is a reviewer-facing presentation/orchestration layer over those accepted components.
 

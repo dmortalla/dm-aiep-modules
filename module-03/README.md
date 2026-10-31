@@ -47,16 +47,7 @@ The default Streamlit path is offline and credential-free. The only reviewer-ini
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    I[Ingestion] --> C[Chunking]
-    C --> E[Embeddings]
-    E --> V[Vector retrieval]
-    V --> Q[Query transformation]
-    Q --> X[Bounded context]
-    X --> G[Generation]
-    G --> R[RAG result + evidence]
-```
+![Module 3 architecture](assets/architecture.png)
 
 The reusable `rag_engineering_foundations` package owns domain behavior. `module-03/app.py` is a presentation layer and does not reimplement ingestion, chunking, embedding, retrieval, context-selection, or generation algorithms.
 
