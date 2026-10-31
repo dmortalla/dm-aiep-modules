@@ -134,33 +134,56 @@ def test_frozen_architecture_and_module_roadmap() -> None:
     assert hashlib.sha1(header + architecture).hexdigest() == ARCHITECTURE_BLOB
     assert architecture.decode() == _baseline("module-03/docs/ARCHITECTURE.md")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "| Module 3 - RAG Engineering Foundations | ✅ Complete |" in readme
-    # Module 4's release legitimately moved it out of the planned range.
-    assert (
-        "| Module 4 - Advanced RAG & Evaluation Systems | ✅ Complete |" in readme
+    expected_releases = (
+        (
+            1,
+            "Python, APIs, and LLM SDK Foundations",
+            "module-01/README.md",
+            "v0.1.1-module-1",
+        ),
+        (
+            2,
+            "Prompt Engineering & Structured Output Systems",
+            "module-02/README.md",
+            "v0.2.0-module-2",
+        ),
+        (3, "RAG Engineering Foundations", "module-03/README.md", "v0.3.0-module-3"),
+        (
+            4,
+            "Advanced RAG & Evaluation Systems",
+            "module-04/README.md",
+            "v0.4.0-module-4",
+        ),
+        (5, "AI Agent Engineering", "module-05/README.md", "v0.5.0-module-5"),
+        (
+            6,
+            "Multi-Agent Systems & Orchestration",
+            "module-06/README.md",
+            "v0.6.0-module-6",
+        ),
     )
-    # Module 5's later release legitimately moved it out of the planned range.
-    assert "| Module 5 - AI Agent Engineering | ✅ Complete |" in readme
+    for module_number, title, path, tag in expected_releases:
+        expected_row = (
+            f"| {module_number} | [{title}]({path}) | ✅ Complete (`{tag}`) |"
+        )
+        assert expected_row in readme, f"README is missing release row: {expected_row}"
+        tags = subprocess.run(
+            ["git", "tag", "--list", tag],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        ).stdout.split()
+        assert tags == [tag], f"README claims tag {tag!r}, which does not exist"
+        tag_type = subprocess.run(
+            ["git", "cat-file", "-t", f"refs/tags/{tag}"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        ).stdout.strip()
+        assert tag_type == "tag", f"README claims {tag!r}, which is not annotated"
     assert "| Modules 5-12 | Planned |" not in readme
     assert "Modules 3-12 | Planned" not in readme
-    release_match = re.search(
-        r"published as the annotated Git tag `([^`]+)`", readme
-    )
-    assert release_match, "README must name the Git tag backing its release claim"
-    tag = release_match.group(1)
-    tags = subprocess.run(
-        ["git", "tag", "--list", tag],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=30,
-    ).stdout.split()
-    assert tags == [tag], f"README claims tag {tag!r}, which does not exist"
-    for heading in (
-        "## Module 2 - Prompt Engineering & Structured Output Systems",
-        "## Module 1 - Python, APIs, and LLM SDK Foundations",
-    ):
-        assert (
-            readme.split(heading, 1)[1] == _baseline("README.md").split(heading, 1)[1]
-        )
