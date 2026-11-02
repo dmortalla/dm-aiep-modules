@@ -69,25 +69,25 @@ Each module stands on its own for review; the sequence shows increasing system c
 
 An asynchronous, provider-independent LLM client over OpenAI, Anthropic, and Gemini with normalized request/response contracts, streaming, structured parsing, retries, rate-limit handling, token-cost management, and session-scoped credential authorization.
 
-**Review path:** [README](module-01/README.md) · [User Guide](module-01/docs/USER_GUIDE.md) · [Streamlit app](module-01/app.py)
+**Review path:** [README](module-01/README.md) · [User Guide](module-01/docs/USER_GUIDE.md) · **[Live demo](https://dm-aiep-modules.streamlit.app/)**
 
 ### Module 2 — Prompt Engineering & Structured Output Systems
 
 Application-owned prompt construction with strict JSON/schema and typed-output validation, bounded prompting techniques, prompt-injection testing, independent tool authorization, deterministic evaluation, and explicit provider-boundary evidence.
 
-**Review path:** [README](module-02/README.md) · [User Guide](module-02/docs/USER_GUIDE.md) · [Streamlit app](module-02/app.py)
+**Review path:** [README](module-02/README.md) · [User Guide](module-02/docs/USER_GUIDE.md) · **[Live demo](https://dm-aiep-module-02.streamlit.app/)**
 
 ### Module 3 — RAG Engineering Foundations
 
 A complete RAG foundation covering provenance-aware ingestion, fixed/recursive/semantic chunking, embeddings, FAISS and ChromaDB, a Pinecone boundary, query transformation, bounded context construction, and both core and LangChain RAG paths.
 
-**Review path:** [README](module-03/README.md) · [User Guide](module-03/docs/USER_GUIDE.md) · [Streamlit app](module-03/app.py)
+**Review path:** [README](module-03/README.md) · [User Guide](module-03/docs/USER_GUIDE.md) · **[Live demo](https://dm-aiep-module-03.streamlit.app/)**
 
 ### Module 4 — Advanced RAG & Evaluation Systems
 
 A hybrid retrieval and evaluation system combining BM25 and semantic retrieval with reciprocal-rank fusion, reranking, filtering, caching, latency/cost telemetry, RAGAS evaluation, LangSmith/LangFuse boundaries, and structured failure analysis.
 
-**Review path:** [README](module-04/README.md) · [User Guide](module-04/docs/USER_GUIDE.md) · [Streamlit app](module-04/app.py)
+**Review path:** [README](module-04/README.md) · [User Guide](module-04/docs/USER_GUIDE.md) · **[Live demo](https://dm-aiep-module-04.streamlit.app/)**
 
 ### Module 5 — AI Agent Engineering
 
